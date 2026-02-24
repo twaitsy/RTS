@@ -31,13 +31,13 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
             if (definition == null)
                 continue;
 
-            foreach (var stat in definition.BaseStats)
+            foreach (var stat in definition.Stats.Entries)
             {
                 if (!StatRegistry.Instance.TryGet(stat.StatId, out _))
                     Debug.LogError($"{definition.Id} references unknown base stat '{stat.StatId}'.");
             }
 
-            foreach (var modifier in definition.EquipmentStatModifiers)
+            foreach (var modifier in definition.StatModifiers)
             {
                 if (!StatRegistry.Instance.TryGet(modifier.targetStatId, out _))
                     Debug.LogError($"{definition.Id} references unknown equipment targetStatId '{modifier.targetStatId}'.");
