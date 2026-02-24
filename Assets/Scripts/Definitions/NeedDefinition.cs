@@ -22,6 +22,9 @@ public class NeedDefinition : ScriptableObject, IIdentifiable
     [SerializeField] private List<string> statModifierIds = new();
     public IReadOnlyList<string> StatModifierIds => statModifierIds;
 
+    [SerializeField] private bool allowAnyModifierDomain;
+    public bool AllowAnyModifierDomain => allowAnyModifierDomain;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {

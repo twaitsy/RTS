@@ -9,7 +9,8 @@ public enum StatDomain
     AI,
     Environment,
     Social,
-    Utility
+    Utility,
+    Mood
 }
 
 public enum StatValueType
