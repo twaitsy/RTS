@@ -1,5 +1,5 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class StatModifierRegistry : DefinitionRegistry<StatModifierDefinition>
 {
@@ -26,22 +26,9 @@ public class StatModifierRegistry : DefinitionRegistry<StatModifierDefinition>
             return;
         }
 
-        foreach (var definition in defs)
-        {
-            if (definition == null)
-                continue;
-
-            foreach (var modifier in definition.Modifiers)
-            {
-                if (string.IsNullOrWhiteSpace(modifier.targetStatId))
-                {
-                    Debug.LogError($"{definition.Id} contains a stat modifier with an empty targetStatId.");
-                    continue;
-                }
-
-                if (!StatRegistry.Instance.TryGet(modifier.targetStatId, out _))
-                    Debug.LogError($"{definition.Id} references unknown targetStatId '{modifier.targetStatId}'.");
-            }
-        }
+        StatModifierLinkValidator.ValidateStatModifierDefinitions(
+            defs,
+            statId => StatRegistry.Instance.TryGet(statId, out _),
+            Debug.LogError);
     }
 }
