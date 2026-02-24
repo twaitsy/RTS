@@ -30,7 +30,7 @@ public static class StatFieldMigrationUtility
             if (obj == null) continue;
 
             var so = new SerializedObject(obj);
-            var baseStats = so.FindProperty("baseStats");
+            var baseStats = FindStatsEntriesProperty(so);
             var equipmentMods = so.FindProperty("equipmentStatModifiers");
 
             bool changed = false;
@@ -66,7 +66,7 @@ public static class StatFieldMigrationUtility
             if (obj == null) continue;
 
             var so = new SerializedObject(obj);
-            var baseStats = so.FindProperty("baseStats");
+            var baseStats = FindStatsEntriesProperty(so);
             bool changed = false;
             changed |= AddStatEntryIfMissing(baseStats, CanonicalStatIds.MoveSpeed, so.FindProperty("moveSpeed").floatValue);
             changed |= AddStatEntryIfMissing(baseStats, CanonicalStatIds.WorkSpeed, so.FindProperty("workSpeed").floatValue);
@@ -108,6 +108,19 @@ public static class StatFieldMigrationUtility
         return updates;
     }
 
+
+    private static SerializedProperty FindStatsEntriesProperty(SerializedObject serializedObject)
+    {
+        var statsContainer = serializedObject.FindProperty("stats");
+        if (statsContainer != null)
+        {
+            var entries = statsContainer.FindPropertyRelative("entries");
+            if (entries != null)
+                return entries;
+        }
+
+        return serializedObject.FindProperty("baseStats");
+    }
     private static bool AddStatEntryIfMissing(SerializedProperty arrayProp, string statId, float value)
     {
         if (HasStatEntry(arrayProp, statId)) return false;

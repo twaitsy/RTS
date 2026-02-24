@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/Civilian")]
 public class CivilianDefinition : ScriptableObject, IIdentifiable
@@ -11,8 +12,10 @@ public class CivilianDefinition : ScriptableObject, IIdentifiable
     [SerializeField] private string displayName;
     public string DisplayName => displayName;
 
-    [SerializeField] private List<StatEntry> baseStats = new();
-    public IReadOnlyList<StatEntry> BaseStats => baseStats;
+    [FormerlySerializedAs("baseStats")]
+    [SerializeField] private SerializedStatContainer stats = new();
+    public IReadOnlyList<StatEntry> BaseStats => stats.Entries;
+    public SerializedStatContainer Stats => stats;
 
     // Legacy (deprecated - use BaseStats)
     [SerializeField] private float moveSpeed;
@@ -23,13 +26,7 @@ public class CivilianDefinition : ScriptableObject, IIdentifiable
 
     private float GetBaseStat(string statId, float fallback)
     {
-        foreach (var stat in baseStats)
-        {
-            if (string.Equals(stat.StatId, statId, StringComparison.Ordinal))
-                return stat.Value;
-        }
-
-        return fallback;
+        return stats.TryGetValue(statId, out var value) ? value : fallback;
     }
 
 #if UNITY_EDITOR
