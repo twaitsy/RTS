@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/Skill")]
@@ -9,6 +10,9 @@ public class SkillDefinition : ScriptableObject, IIdentifiable
     [SerializeField] private string displayName;
     public string DisplayName => displayName;
 
+    [SerializeField] private List<StatModifier> statModifiers = new();
+    public IReadOnlyList<StatModifier> StatModifiers => statModifiers;
+
     [SerializeField] private Sprite icon;
     public Sprite Icon => icon;
 
@@ -17,6 +21,8 @@ public class SkillDefinition : ScriptableObject, IIdentifiable
     {
         if (string.IsNullOrWhiteSpace(id))
             id = name;
+
+        statModifiers ??= new();
     }
 #endif
 }

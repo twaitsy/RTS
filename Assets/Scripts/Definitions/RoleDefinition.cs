@@ -10,6 +10,9 @@ public class RoleDefinition : ScriptableObject, IIdentifiable
     [SerializeField] private string displayName;
     public string DisplayName => displayName;
 
+    [SerializeField] private List<StatModifier> statModifiers = new();
+    public IReadOnlyList<StatModifier> StatModifiers => statModifiers;
+
     [SerializeField] private List<string> behaviourIds = new();
     public IReadOnlyList<string> BehaviourIds => behaviourIds;
 
@@ -24,6 +27,8 @@ public class RoleDefinition : ScriptableObject, IIdentifiable
     {
         if (string.IsNullOrWhiteSpace(id))
             id = name;
+
+        statModifiers ??= new();
     }
 #endif
 }

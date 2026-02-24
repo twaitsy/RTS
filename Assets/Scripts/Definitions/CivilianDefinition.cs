@@ -23,6 +23,8 @@ public class CivilianDefinition : ScriptableObject, IIdentifiable
         if (string.IsNullOrWhiteSpace(id))
             id = name;
 
+        stats ??= new();
+
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {
             Debug.LogError($"[Validation] Asset '{name}' (id: '{id}') has duplicate stat '{duplicateStatId}' in its base stat container.");
