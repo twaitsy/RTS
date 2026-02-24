@@ -9,6 +9,16 @@ public struct NeedModifier
     public float deltaPerSecond;
 }
 [Serializable]
+public struct StatEntry
+{
+    [SerializeField] private string statId;
+    public string StatId => statId;
+
+    [SerializeField] private float value;
+    public float Value => value;
+}
+
+[Serializable]
 public struct StatModifier
 {
     public string targetStatId;

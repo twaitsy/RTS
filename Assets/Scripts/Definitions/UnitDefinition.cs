@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,19 +14,28 @@ public class UnitDefinition : ScriptableObject, IIdentifiable
     [SerializeField] private Sprite icon;
     public Sprite Icon => icon;
 
-    // Core stats
-    [Header("Core Stats")]
+    // Canonical stats
+    [Header("Canonical Stats")]
+    [SerializeField] private List<StatEntry> baseStats = new();
+    public IReadOnlyList<StatEntry> BaseStats => baseStats;
+
+    [SerializeField] private List<StatModifier> equipmentStatModifiers = new();
+    public IReadOnlyList<StatModifier> EquipmentStatModifiers => equipmentStatModifiers;
+
+    // Legacy core stats (deprecated - use BaseStats)
+    [Header("Legacy Core Stats (Deprecated)")]
     [SerializeField] private float maxHealth = 100f;
-    public float MaxHealth => maxHealth;
 
     [SerializeField] private float moveSpeed = 3f;
-    public float MoveSpeed => moveSpeed;
 
     [SerializeField] private float turnSpeed = 360f;
-    public float TurnSpeed => turnSpeed;
 
     [SerializeField] private float visionRange = 10f;
-    public float VisionRange => visionRange;
+
+    public float MaxHealth => GetBaseStat(CanonicalStatIds.MaxHealth, maxHealth);
+    public float MoveSpeed => GetBaseStat(CanonicalStatIds.MoveSpeed, moveSpeed);
+    public float TurnSpeed => GetBaseStat(CanonicalStatIds.TurnSpeed, turnSpeed);
+    public float VisionRange => GetBaseStat(CanonicalStatIds.VisionRange, visionRange);
 
     // Combat
     [Header("Combat")]
@@ -36,13 +46,12 @@ public class UnitDefinition : ScriptableObject, IIdentifiable
     public string ArmorTypeId => armorTypeId;
 
     [SerializeField] private float baseDamage;
-    public float BaseDamage => baseDamage;
-
     [SerializeField] private float attackSpeed;
-    public float AttackSpeed => attackSpeed;
-
     [SerializeField] private float attackRange;
-    public float AttackRange => attackRange;
+
+    public float BaseDamage => GetEquipmentStat(CanonicalStatIds.BaseDamage, baseDamage);
+    public float AttackSpeed => GetEquipmentStat(CanonicalStatIds.AttackSpeed, attackSpeed);
+    public float AttackRange => GetEquipmentStat(CanonicalStatIds.AttackRange, attackRange);
 
     [SerializeField] private List<DamageResistance> resistances = new();
     public IReadOnlyList<DamageResistance> Resistances => resistances;
@@ -91,10 +100,11 @@ public class UnitDefinition : ScriptableObject, IIdentifiable
     public IReadOnlyList<string> JobIds => jobIds;
 
     [SerializeField] private float workSpeed = 1f;
-    public float WorkSpeed => workSpeed;
 
     [SerializeField] private float carryCapacity = 10f;
-    public float CarryCapacity => carryCapacity;
+
+    public float WorkSpeed => GetBaseStat(CanonicalStatIds.WorkSpeed, workSpeed);
+    public float CarryCapacity => GetBaseStat(CanonicalStatIds.CarryCapacity, carryCapacity);
 
     // AI
     [Header("AI")]
@@ -122,6 +132,28 @@ public class UnitDefinition : ScriptableObject, IIdentifiable
     [Header("Faction")]
     [SerializeField] private string defaultFactionId;
     public string DefaultFactionId => defaultFactionId;
+
+    private float GetBaseStat(string statId, float fallback)
+    {
+        foreach (var stat in baseStats)
+        {
+            if (string.Equals(stat.StatId, statId, StringComparison.Ordinal))
+                return stat.Value;
+        }
+
+        return fallback;
+    }
+
+    private float GetEquipmentStat(string statId, float fallback)
+    {
+        foreach (var modifier in equipmentStatModifiers)
+        {
+            if (string.Equals(modifier.targetStatId, statId, StringComparison.Ordinal) && modifier.operation == StatOperation.Override)
+                return modifier.value;
+        }
+
+        return fallback;
+    }
 
 #if UNITY_EDITOR
     private void OnValidate()
