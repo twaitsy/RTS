@@ -7,6 +7,9 @@ public class BuildingUpgradeDefinition : ScriptableObject, IIdentifiable
     [SerializeField] private string id;
     public string Id => id;
 
+    [SerializeField] private List<StatModifier> statModifiers = new();
+    public IReadOnlyList<StatModifier> StatModifiers => statModifiers;
+
     [SerializeField] private string fromBuildingId;
     public string FromBuildingId => fromBuildingId;
 
@@ -24,6 +27,8 @@ public class BuildingUpgradeDefinition : ScriptableObject, IIdentifiable
     {
         if (string.IsNullOrWhiteSpace(id))
             id = name;
+
+        statModifiers ??= new();
     }
 #endif
 }
