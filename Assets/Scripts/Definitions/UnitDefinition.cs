@@ -25,8 +25,9 @@ public class UnitDefinition : ScriptableObject, IIdentifiable
     public SerializedStatContainer Stats => stats;
     public IReadOnlyList<StatEntry> BaseStats => stats.Entries;
 
-    [SerializeField] private List<StatModifier> equipmentStatModifiers = new();
-    public IReadOnlyList<StatModifier> EquipmentStatModifiers => equipmentStatModifiers;
+    [FormerlySerializedAs("equipmentStatModifiers")]
+    [SerializeField] private List<StatModifier> statModifiers = new();
+    public IReadOnlyList<StatModifier> StatModifiers => statModifiers;
 
     // ----------------------------------------------------------------------
     // Combat (non-numeric links only)
@@ -51,7 +52,7 @@ public class UnitDefinition : ScriptableObject, IIdentifiable
     public IReadOnlyList<string> TraitIds => traitIds;
 
     // ----------------------------------------------------------------------
-    // Skills (IDs only — numeric skill levels now live in stats)
+    // Skills (IDs only Â— numeric skill levels now live in stats)
     // ----------------------------------------------------------------------
 
     [Header("Skills")]
@@ -65,7 +66,7 @@ public class UnitDefinition : ScriptableObject, IIdentifiable
     public int LevelCap => levelCap;
 
     // ----------------------------------------------------------------------
-    // Needs & Mood (IDs only — numeric values now live in stats)
+    // Needs & Mood (IDs only Â— numeric values now live in stats)
     // ----------------------------------------------------------------------
 
     [Header("Needs & Mood")]
@@ -90,7 +91,7 @@ public class UnitDefinition : ScriptableObject, IIdentifiable
     public IReadOnlyList<string> StartingItemIds => startingItemIds;
 
     // ----------------------------------------------------------------------
-    // Work & Production (IDs only — numeric values now live in stats)
+    // Work & Production (IDs only Â— numeric values now live in stats)
     // ----------------------------------------------------------------------
 
     [Header("Work & Production")]

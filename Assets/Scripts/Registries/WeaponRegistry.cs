@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class WeaponRegistry : DefinitionRegistry<WeaponDefinition>
@@ -15,5 +16,32 @@ public class WeaponRegistry : DefinitionRegistry<WeaponDefinition>
 
         Instance = this;
         base.Awake();
+    }
+
+    protected override void ValidateDefinitions(List<WeaponDefinition> defs)
+    {
+        if (StatRegistry.Instance == null)
+        {
+            Debug.LogError("WeaponRegistry validation skipped: StatRegistry.Instance is null.");
+            return;
+        }
+
+        foreach (var definition in defs)
+        {
+            if (definition == null)
+                continue;
+
+            foreach (var stat in definition.Stats.Entries)
+            {
+                if (!StatRegistry.Instance.TryGet(stat.StatId, out _))
+                    Debug.LogError($"{definition.Id} references unknown base stat '{stat.StatId}'.");
+            }
+
+            foreach (var modifier in definition.StatModifiers)
+            {
+                if (!StatRegistry.Instance.TryGet(modifier.targetStatId, out _))
+                    Debug.LogError($"{definition.Id} references unknown targetStatId '{modifier.targetStatId}'.");
+            }
+        }
     }
 }
