@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class UnitRegistry : DefinitionRegistry<UnitDefinition>
@@ -15,5 +16,32 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
 
         Instance = this;
         base.Awake();
+    }
+
+    protected override void ValidateDefinitions(List<UnitDefinition> defs)
+    {
+        if (StatRegistry.Instance == null)
+        {
+            Debug.LogError("UnitRegistry validation skipped: StatRegistry.Instance is null.");
+            return;
+        }
+
+        foreach (var definition in defs)
+        {
+            if (definition == null)
+                continue;
+
+            foreach (var stat in definition.BaseStats)
+            {
+                if (!StatRegistry.Instance.TryGet(stat.StatId, out _))
+                    Debug.LogError($"{definition.Id} references unknown base stat '{stat.StatId}'.");
+            }
+
+            foreach (var modifier in definition.EquipmentStatModifiers)
+            {
+                if (!StatRegistry.Instance.TryGet(modifier.targetStatId, out _))
+                    Debug.LogError($"{definition.Id} references unknown equipment targetStatId '{modifier.targetStatId}'.");
+            }
+        }
     }
 }
