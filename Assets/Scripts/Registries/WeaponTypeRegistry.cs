@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class WeaponTypeRegistry : DefinitionRegistry<WeaponTypeDefinition>
@@ -15,5 +16,26 @@ public class WeaponTypeRegistry : DefinitionRegistry<WeaponTypeDefinition>
 
         Instance = this;
         base.Awake();
+    }
+
+    protected override void ValidateDefinitions(List<WeaponTypeDefinition> defs)
+    {
+        if (StatRegistry.Instance == null)
+        {
+            Debug.LogError("WeaponTypeRegistry validation skipped: StatRegistry.Instance is null.");
+            return;
+        }
+
+        foreach (var definition in defs)
+        {
+            if (definition == null)
+                continue;
+
+            foreach (var modifier in definition.StatModifiers)
+            {
+                if (!StatRegistry.Instance.TryGet(modifier.targetStatId, out _))
+                    Debug.LogError($"{definition.Id} references unknown targetStatId '{modifier.targetStatId}'.");
+            }
+        }
     }
 }

@@ -48,6 +48,17 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour
         return null;
     }
 
+    public bool TryGet(string id, out T definition)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            definition = null;
+            return false;
+        }
+
+        return lookup.TryGetValue(id, out definition);
+    }
+
     protected virtual void ValidateDefinitions(List<T> defs)
     {
         // Overridden in child registries

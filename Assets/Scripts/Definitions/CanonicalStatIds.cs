@@ -1,13 +1,13 @@
 public static class CanonicalStatIds
 {
-    public const string MaxHealth = "max_health";
-    public const string MoveSpeed = "move_speed";
-    public const string TurnSpeed = "turn_speed";
-    public const string VisionRange = "vision_range";
-    public const string WorkSpeed = "work_speed";
-    public const string CarryCapacity = "carry_capacity";
+    public const string MaxHealth = "combat.maxHealth";
+    public const string MoveSpeed = "locomotion.moveSpeed";
+    public const string TurnSpeed = "locomotion.turnSpeed";
+    public const string VisionRange = "ai.visionRange";
+    public const string WorkSpeed = "economy.workSpeed";
+    public const string CarryCapacity = "economy.carryCapacity";
 
-    public const string BaseDamage = "base_damage";
-    public const string AttackSpeed = "attack_speed";
-    public const string AttackRange = "attack_range";
+    public const string BaseDamage = "combat.baseDamage";
+    public const string AttackSpeed = "combat.attackSpeed";
+    public const string AttackRange = "combat.attackRange";
 }
