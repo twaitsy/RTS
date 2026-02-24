@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/Unit")]
 public class UnitDefinition : ScriptableObject, IIdentifiable
@@ -15,9 +16,11 @@ public class UnitDefinition : ScriptableObject, IIdentifiable
     public Sprite Icon => icon;
 
     // Canonical stats
-    [Header("Canonical Stats")]
-    [SerializeField] private List<StatEntry> baseStats = new();
-    public IReadOnlyList<StatEntry> BaseStats => baseStats;
+    [Header("Stats")]
+    [FormerlySerializedAs("baseStats")]
+    [SerializeField] private SerializedStatContainer stats = new();
+    public IReadOnlyList<StatEntry> BaseStats => stats.Entries;
+    public SerializedStatContainer Stats => stats;
 
     [SerializeField] private List<StatModifier> equipmentStatModifiers = new();
     public IReadOnlyList<StatModifier> EquipmentStatModifiers => equipmentStatModifiers;
@@ -135,13 +138,7 @@ public class UnitDefinition : ScriptableObject, IIdentifiable
 
     private float GetBaseStat(string statId, float fallback)
     {
-        foreach (var stat in baseStats)
-        {
-            if (string.Equals(stat.StatId, statId, StringComparison.Ordinal))
-                return stat.Value;
-        }
-
-        return fallback;
+        return stats.TryGetValue(statId, out var value) ? value : fallback;
     }
 
     private float GetEquipmentStat(string statId, float fallback)
