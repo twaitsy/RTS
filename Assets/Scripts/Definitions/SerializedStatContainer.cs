@@ -23,4 +23,22 @@ public class SerializedStatContainer
         value = default;
         return false;
     }
+
+    public IEnumerable<string> FindDuplicateStatIds()
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var duplicates = new HashSet<string>(StringComparer.Ordinal);
+
+        for (int i = 0; i < entries.Count; i++)
+        {
+            var statId = entries[i].StatId;
+            if (string.IsNullOrWhiteSpace(statId))
+                continue;
+
+            if (!seen.Add(statId))
+                duplicates.Add(statId);
+        }
+
+        return duplicates;
+    }
 }
