@@ -2,15 +2,29 @@ using UnityEngine;
 
 public enum StatDomain
 {
+    Core,
+    Movement,
     Combat,
-    Locomotion,
+    Defense,
+    Resistance,
+    Production,
     Economy,
     Needs,
+    Mood,
+    Skills,
     AI,
-    Environment,
     Social,
+    Building,
+    Weather,
+    Biome,
+    Item,
+    StatusEffects,
+    Governance,
+    Global,
     Utility,
-    Mood
+    // Legacy domains kept for compatibility with already-authored assets.
+    Locomotion,
+    Environment
 }
 
 public enum StatValueType

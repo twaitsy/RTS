@@ -14,6 +14,9 @@ public static class StatModifierLinkValidator
             if (statModifierDefinition == null)
                 continue;
 
+            var duplicateTargets = new HashSet<string>(StringComparer.Ordinal);
+            var seenTargets = new HashSet<string>(StringComparer.Ordinal);
+
             foreach (var modifier in statModifierDefinition.Modifiers)
             {
                 if (string.IsNullOrWhiteSpace(modifier.targetStatId))
@@ -22,10 +25,18 @@ public static class StatModifierLinkValidator
                     continue;
                 }
 
+                if (!seenTargets.Add(modifier.targetStatId))
+                    duplicateTargets.Add(modifier.targetStatId);
+
                 if (!statExists(modifier.targetStatId))
                 {
                     reportError($"[Validation] Asset '{statModifierDefinition.name}' (id: '{statModifierDefinition.Id}') references unknown targetStatId '{modifier.targetStatId}'.");
                 }
+            }
+
+            foreach (var duplicateTarget in duplicateTargets)
+            {
+                reportError($"[Validation] Asset '{statModifierDefinition.name}' (id: '{statModifierDefinition.Id}') contains duplicate targetStatId '{duplicateTarget}'.");
             }
         }
     }
