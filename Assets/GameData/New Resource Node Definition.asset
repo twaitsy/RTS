@@ -9,11 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 17feb836820b67f468306d973603a5c7, type: 3}
-  m_Name: ColdWeatherPenalty
-  m_EditorClassIdentifier: Assembly-CSharp::ModifierGroupDefinition
-  id: ColdWeatherPenalty
-  displayName: 
-  icon: {fileID: 0}
-  modifiers:
-  - {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 9231a1e019584bf48afedbac42d009d4, type: 3}
+  m_Name: New Resource Node Definition
+  m_EditorClassIdentifier: Assembly-CSharp::ResourceNodeDefinition
+  id: 
+  resourceId: 
+  amount: 0
+  respawnTime: 0
+  harvestTime: 0

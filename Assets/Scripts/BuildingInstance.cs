@@ -2,15 +2,14 @@ using UnityEngine;
 
 public class BuildingInstance : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [SerializeField] private BuildingDefinition definition;
+    public BuildingDefinition Definition => definition;
 
-    // Update is called once per frame
-    void Update()
+    private void Awake()
     {
-        
+        if (definition == null)
+        {
+            Debug.LogError($"BuildingInstance on '{name}' has no BuildingDefinition assigned.");
+        }
     }
 }

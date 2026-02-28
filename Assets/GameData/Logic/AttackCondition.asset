@@ -27,7 +27,7 @@ MonoBehaviour:
         children:
         - rid: 4222756312799248456
         - rid: 4222756312799248457
-        leafType: 0
+        leafType: 20
         floatValue: 0
         stringValue: 
         referencedCondition: {fileID: 0}

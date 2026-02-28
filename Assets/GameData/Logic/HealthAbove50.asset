@@ -12,13 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32bb3ad705b5e9a46820a053f6ba7a44, type: 3}
   m_Name: HealthAbove50
   m_EditorClassIdentifier: Assembly-CSharp::ConditionDefinition
-  id: 
+  id: HealthAbove50
   displayName: 
   icon: {fileID: 0}
   root:
-    op: 0
-    children: []
-    leafType: 0
-    floatValue: 0
-    stringValue: 
-    referencedCondition: {fileID: 0}
+    rid: 4222756312799248477
+  references:
+    version: 2
+    RefIds:
+    - rid: 4222756312799248477
+      type: {class: ConditionNode, ns: , asm: Assembly-CSharp}
+      data:
+        op: 0
+        children: []
+        leafType: 18
+        floatValue: 0
+        stringValue: 
+        referencedCondition: {fileID: 0}

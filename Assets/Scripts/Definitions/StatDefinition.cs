@@ -22,6 +22,7 @@ public enum StatDomain
     Governance,
     Global,
     Utility,
+    Resource,
     // Legacy domains kept for compatibility with already-authored assets.
     Locomotion,
     Environment

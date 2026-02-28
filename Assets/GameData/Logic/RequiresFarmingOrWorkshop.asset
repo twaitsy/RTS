@@ -23,9 +23,11 @@ MonoBehaviour:
     - rid: 4222756312799248451
       type: {class: RequirementNode, ns: , asm: Assembly-CSharp}
       data:
-        op: 0
+        op: 1
         children: []
         leafType: 0
-        stringValue: 
-        intValue: 0
+        leafData:
+          targetId: 
+          value: 0
+          comparison: 5
         referencedRequirement: {fileID: 0}

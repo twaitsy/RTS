@@ -215,7 +215,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e5ec27bd9a7e5f946b8a8cc3b31e9af6, type: 2}
   - {fileID: 11400000, guid: 70075b9c475de9342bf33eb636013c49, type: 2}
   - {fileID: 11400000, guid: 668e4d7cc572ca245a779c76d5b28fd7, type: 2}
-  - {fileID: 11400000, guid: 2fe53f2e1ce22ae45ac7529620b2ff32, type: 2}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -558,6 +557,7 @@ GameObject:
   - component: {fileID: 709939186}
   - component: {fileID: 709939185}
   - component: {fileID: 709939184}
+  - component: {fileID: 709939212}
   m_Layer: 0
   m_Name: Registries
   m_TagString: Untagged
@@ -1477,6 +1477,65 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AIMemoryRegistry
   definitions: []
+--- !u!114 &709939212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 709939140}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 438e648cfcbe46579b9c9e2fa707cba4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatRegistry
+  definitions: []
+--- !u!1 &821720337
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 821720339}
+  - component: {fileID: 821720338}
+  m_Layer: 0
+  m_Name: DebugSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &821720338
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 821720337}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 444663ed88a65e546a38c86fcbbe148b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DebugBuildingSpawner
+  houseDefinition: {fileID: 11400000, guid: 4cc08655b6d4e0b4a8c129bdf79cb273, type: 2}
+  housePrefab: {fileID: 7771315273194318374, guid: 5cd0a231c9f774549b34b0d55b2bfe07, type: 3}
+--- !u!4 &821720339
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 821720337}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1535,3 +1594,4 @@ SceneRoots:
   - {fileID: 832575519}
   - {fileID: 709939141}
   - {fileID: 236033038}
+  - {fileID: 821720339}
