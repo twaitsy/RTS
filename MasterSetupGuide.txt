@@ -1,36 +1,37 @@
 Master Setup Guide
 ==================
 
-Last updated: Strict canonical stat ID mode + migration-only compatibility mapping
+Last updated: Unified validation orchestration across runtime/editor/CI + repair planning from validator output
 
-Strict canonical stat ID mode (project-scoped editor setting):
-- Toggle via Unity menu: `Tools/Validation/Strict Canonical Stat IDs`.
-- Setting is stored per project/editor via `EditorPrefs`.
-- Default is OFF for rollout safety.
+Authoritative validation command:
+- Unity menu: `Tools/Validation/Validate All Definitions`
+- This command now runs one shared orchestrator that executes validators in deterministic order and returns a single `DefinitionValidationReport`.
+- Runtime bootstrap, editor menu validation, and CI now use the same orchestration core.
 
-Strict mode behavior:
-- Validation no longer treats legacy compatibility IDs as acceptable references.
-- Validation errors now include:
-  - asset path,
-  - serialized property path,
-  - required canonical stat ID,
-  - migration command to run.
-- Compatibility mapping is reserved for migration command flows only.
+CI entry point:
+- Run Unity batch mode with execute method: `DefinitionValidationMenu.ValidateAllForCI`
+- This CI entry point invokes the same `DefinitionValidationOrchestrator` used by runtime/editor command paths.
 
-Stat migration workflow (single supported command):
-- Run Unity menu command: `Tools/Validation/Migrate Legacy Stat IDs`.
-- This is the canonical migration entry point and executes all phases in order:
-  1) legacy field lift,
-  2) canonical statId rewrite,
-  3) cleanup/removals.
-- Migration output now logs per-phase counts so teams can verify parity and impact.
+Validation architecture:
+- Registry validators (`IDefinitionRegistryValidator`) are executed in deterministic registry-name order.
+- Editor validators (canonical stat IDs, stat modifier links, auto-repair candidate discovery) append issues into the same report.
+- Report code + severity pairs are standardized and consumed uniformly by all callers.
+
+Repair workflow (separated from validation):
+- Repair commands:
+  - `Tools/Validation/Definitions/Validate only`
+  - `Tools/Validation/Definitions/Validate + apply safe fixes`
+  - `Tools/Validation/Definitions/Validate + preview fix script`
+- Repair tools no longer rediscover fields independently; they consume planned safe-fix issues emitted during validation and then apply/preview those planned edits.
+
+Canonical stat migration and strict mode:
+- Migration command remains: `Tools/Validation/Migrate Legacy Stat IDs`
+- Strict mode toggle remains: `Tools/Validation/Strict Canonical Stat IDs`
+- Strict mode keeps legacy IDs as validation errors (migration-only compatibility mapping).
 
 Rollout steps:
 1) Run `Tools/Validation/Migrate Legacy Stat IDs` and commit migrated assets.
-2) Run `Tools/Validation/Validate Canonical Stat IDs` with strict mode OFF to baseline remaining issues.
+2) Run `Tools/Validation/Validate All Definitions` to get the single authoritative cross-validator report.
 3) Enable `Tools/Validation/Strict Canonical Stat IDs`.
-4) Re-run validation and fix remaining references exactly as reported (asset path + property path + required canonical ID).
-5) Keep strict mode enabled in team workflow/CI once project is clean.
-
-Deprecation note:
-- The old `Tools/DataDrivenRTS/Migrate Legacy Stats To Canonical Entries` menu path is deprecated and removed after parity confirmation.
+4) Re-run `Tools/Validation/Validate All Definitions` and resolve reported issues by asset path/property path/code.
+5) Use `DefinitionValidationMenu.ValidateAllForCI` in CI so batch mode matches runtime/editor validation behavior.

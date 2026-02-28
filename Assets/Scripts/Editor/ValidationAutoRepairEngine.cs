@@ -24,6 +24,8 @@ public sealed class ValidationAutoRepairOptions
 
 public static class ValidationAutoRepairEngine
 {
+    private const string ValidationRegistryName = nameof(ValidationAutoRepairEngine);
+
     private sealed class DefinitionAssetRecord
     {
         public ScriptableObject Asset;
@@ -64,16 +66,8 @@ public static class ValidationAutoRepairEngine
     {
         options ??= new ValidationAutoRepairOptions();
 
-        var report = new DefinitionValidationReport();
-        var records = CollectDefinitions();
-        var idSet = new HashSet<string>(records.Select(record => record.Id), StringComparer.Ordinal);
-        var inboundReferences = new Dictionary<string, int>(StringComparer.Ordinal);
-        var plannedChanges = new List<PlannedChange>();
-
-        ValidateAndPlanIdNormalization(records, report, plannedChanges);
-        ValidateDuplicateIds(records, report);
-        ValidateAndPlanMissingReferences(records, idSet, inboundReferences, report, plannedChanges, options);
-        ValidateOrphanedDefinitions(records, inboundReferences, report);
+        var report = DefinitionValidationOrchestrator.RunValidation();
+        var plannedChanges = BuildPlannedChangesFromIssues(report, options);
 
         if (mode == ValidationAutoRepairMode.ValidateAndApplySafeFixes)
             ApplyPlannedChanges(plannedChanges, report);
@@ -87,6 +81,18 @@ public static class ValidationAutoRepairEngine
             Debug.Log(summary);
 
         return report;
+    }
+
+    public static void AppendRepairableIssues(DefinitionValidationReport report)
+    {
+        var records = CollectDefinitions();
+        var idSet = new HashSet<string>(records.Select(record => record.Id), StringComparer.Ordinal);
+        var inboundReferences = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        AppendIdNormalizationIssues(records, report);
+        AppendDuplicateIdIssues(records, report);
+        AppendMissingReferenceIssues(records, idSet, inboundReferences, report);
+        AppendOrphanedDefinitionIssues(records, inboundReferences, report);
     }
 
     private static List<DefinitionAssetRecord> CollectDefinitions()
@@ -121,7 +127,7 @@ public static class ValidationAutoRepairEngine
         return records;
     }
 
-    private static void ValidateAndPlanIdNormalization(List<DefinitionAssetRecord> records, DefinitionValidationReport report, List<PlannedChange> plannedChanges)
+    private static void AppendIdNormalizationIssues(List<DefinitionAssetRecord> records, DefinitionValidationReport report)
     {
         var normalizedGroups = records
             .GroupBy(record => DefinitionIdLifecycle.NormalizeId(record.Id), StringComparer.Ordinal)
@@ -133,7 +139,6 @@ public static class ValidationAutoRepairEngine
             if (string.Equals(record.Id, normalized, StringComparison.Ordinal) && DefinitionIdLifecycle.IsValidIdFormat(record.Id))
                 continue;
 
-            var fix = $"Normalize id '{record.Id}' -> '{normalized}'.";
             report.AddIssue(new ValidationIssue(
                 code: "INVALID_OR_NONCANONICAL_ID",
                 severity: ValidationIssueSeverity.Warning,
@@ -142,7 +147,7 @@ public static class ValidationAutoRepairEngine
                 assetPath: record.Path,
                 assetId: record.Id,
                 field: "id",
-                suggestedFix: fix));
+                suggestedFix: $"Normalize id '{record.Id}' -> '{normalized}'."));
 
             if (string.IsNullOrWhiteSpace(normalized) || !DefinitionIdLifecycle.IsValidIdFormat(normalized))
                 continue;
@@ -150,29 +155,29 @@ public static class ValidationAutoRepairEngine
             if (normalizedGroups.TryGetValue(normalized, out var group) && group.Count > 1)
                 continue;
 
-            plannedChanges.Add(new PlannedChange
-            {
-                Asset = record.Asset,
-                Path = record.Path,
-                PropertyPath = "id",
-                PreviousValue = record.Id,
-                NewValue = normalized,
-                Reason = "normalize-id"
-            });
+            report.AddIssue(new ValidationIssue(
+                code: "SAFE_FIX_PLAN_NORMALIZE_ID",
+                severity: ValidationIssueSeverity.Info,
+                registry: ValidationRegistryName,
+                message: $"Planned safe fix: normalize id '{record.Id}' -> '{normalized}'.",
+                assetPath: record.Path,
+                assetId: record.Id,
+                field: "id",
+                suggestedFix: normalized));
 
-            plannedChanges.Add(new PlannedChange
-            {
-                Asset = record.Asset,
-                Path = record.Path,
-                PropertyPath = "finalizedId",
-                PreviousValue = string.Empty,
-                NewValue = normalized,
-                Reason = "sync-finalized-id"
-            });
+            report.AddIssue(new ValidationIssue(
+                code: "SAFE_FIX_PLAN_SYNC_FINALIZED_ID",
+                severity: ValidationIssueSeverity.Info,
+                registry: ValidationRegistryName,
+                message: $"Planned safe fix: sync finalizedId to '{normalized}'.",
+                assetPath: record.Path,
+                assetId: string.Empty,
+                field: "finalizedId",
+                suggestedFix: normalized));
         }
     }
 
-    private static void ValidateDuplicateIds(List<DefinitionAssetRecord> records, DefinitionValidationReport report)
+    private static void AppendDuplicateIdIssues(List<DefinitionAssetRecord> records, DefinitionValidationReport report)
     {
         foreach (var duplicateGroup in records.GroupBy(record => record.Id, StringComparer.Ordinal).Where(group => group.Count() > 1))
         {
@@ -192,13 +197,11 @@ public static class ValidationAutoRepairEngine
         }
     }
 
-    private static void ValidateAndPlanMissingReferences(
+    private static void AppendMissingReferenceIssues(
         List<DefinitionAssetRecord> records,
         HashSet<string> idSet,
         Dictionary<string, int> inboundReferences,
-        DefinitionValidationReport report,
-        List<PlannedChange> plannedChanges,
-        ValidationAutoRepairOptions options)
+        DefinitionValidationReport report)
     {
         foreach (var record in records)
         {
@@ -233,9 +236,7 @@ public static class ValidationAutoRepairEngine
                 var nearest = FindNearestId(value, idSet);
                 var suggestion = nearest != null
                     ? $"Replace with nearest valid id '{nearest}'."
-                    : options.MissingReferencePolicy == MissingReferenceRepairPolicy.ClearField
-                        ? "Clear this field."
-                        : "No nearest match found; clear field if optional.";
+                    : "No nearest match found; clear field if optional.";
 
                 report.AddIssue(new ValidationIssue(
                     code: "MISSING_REFERENCE",
@@ -243,27 +244,24 @@ public static class ValidationAutoRepairEngine
                     registry: record.Registry,
                     message: $"Missing reference id '{value}' in field '{iterator.name}'.",
                     assetPath: record.Path,
-                    assetId: record.Id,
+                    assetId: value,
                     field: iterator.propertyPath,
                     suggestedFix: suggestion));
 
-                if (options.MissingReferencePolicy != MissingReferenceRepairPolicy.ClearField)
-                    continue;
-
-                plannedChanges.Add(new PlannedChange
-                {
-                    Asset = record.Asset,
-                    Path = record.Path,
-                    PropertyPath = iterator.propertyPath,
-                    PreviousValue = value,
-                    NewValue = string.Empty,
-                    Reason = "clear-missing-reference"
-                });
+                report.AddIssue(new ValidationIssue(
+                    code: "SAFE_FIX_PLAN_CLEAR_MISSING_REFERENCE",
+                    severity: ValidationIssueSeverity.Info,
+                    registry: ValidationRegistryName,
+                    message: $"Planned safe fix: clear missing reference '{value}' at '{iterator.propertyPath}'.",
+                    assetPath: record.Path,
+                    assetId: value,
+                    field: iterator.propertyPath,
+                    suggestedFix: string.Empty));
             }
         }
     }
 
-    private static void ValidateOrphanedDefinitions(List<DefinitionAssetRecord> records, Dictionary<string, int> inboundReferences, DefinitionValidationReport report)
+    private static void AppendOrphanedDefinitionIssues(List<DefinitionAssetRecord> records, Dictionary<string, int> inboundReferences, DefinitionValidationReport report)
     {
         foreach (var record in records)
         {
@@ -280,6 +278,62 @@ public static class ValidationAutoRepairEngine
                 field: null,
                 suggestedFix: "Review for archive/delete list."));
         }
+    }
+
+    private static List<PlannedChange> BuildPlannedChangesFromIssues(DefinitionValidationReport report, ValidationAutoRepairOptions options)
+    {
+        var plannedChanges = new List<PlannedChange>();
+
+        foreach (var issue in report.Issues)
+        {
+            if (string.IsNullOrWhiteSpace(issue.AssetPath) || string.IsNullOrWhiteSpace(issue.Field))
+                continue;
+
+            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(issue.AssetPath);
+            if (asset == null)
+                continue;
+
+            switch (issue.Code)
+            {
+                case "SAFE_FIX_PLAN_NORMALIZE_ID":
+                    plannedChanges.Add(new PlannedChange
+                    {
+                        Asset = asset,
+                        Path = issue.AssetPath,
+                        PropertyPath = issue.Field,
+                        PreviousValue = issue.AssetId,
+                        NewValue = issue.SuggestedFix,
+                        Reason = "normalize-id"
+                    });
+                    break;
+
+                case "SAFE_FIX_PLAN_SYNC_FINALIZED_ID":
+                    plannedChanges.Add(new PlannedChange
+                    {
+                        Asset = asset,
+                        Path = issue.AssetPath,
+                        PropertyPath = issue.Field,
+                        PreviousValue = issue.AssetId,
+                        NewValue = issue.SuggestedFix,
+                        Reason = "sync-finalized-id"
+                    });
+                    break;
+
+                case "SAFE_FIX_PLAN_CLEAR_MISSING_REFERENCE" when options.MissingReferencePolicy == MissingReferenceRepairPolicy.ClearField:
+                    plannedChanges.Add(new PlannedChange
+                    {
+                        Asset = asset,
+                        Path = issue.AssetPath,
+                        PropertyPath = issue.Field,
+                        PreviousValue = issue.AssetId,
+                        NewValue = string.Empty,
+                        Reason = "clear-missing-reference"
+                    });
+                    break;
+            }
+        }
+
+        return plannedChanges;
     }
 
     private static void ApplyPlannedChanges(List<PlannedChange> plannedChanges, DefinitionValidationReport report)
@@ -333,7 +387,7 @@ public static class ValidationAutoRepairEngine
         report.AddIssue(new ValidationIssue(
             code: "SAFE_FIXES_APPLIED",
             severity: ValidationIssueSeverity.Info,
-            registry: "ValidationAutoRepairEngine",
+            registry: ValidationRegistryName,
             message: $"Applied {applied} safe fix edit(s).",
             suggestedFix: "Re-run validation to confirm a clean state."));
     }

@@ -1,80 +1,80 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 public static class DefinitionValidationMenu
 {
-
-    [MenuItem("Tools/Validation/Validate All Definitions (No Play Mode)")]
+    [MenuItem("Tools/Validation/Validate All Definitions")]
     public static void ValidateAllDefinitionsInEditor()
     {
-        var report = DefinitionValidationRunner.RunValidationAndLog();
+        var report = DefinitionValidationOrchestrator.RunValidationAndLog();
         var status = report.HasErrors
-            ? $"Validation failed with {report.ErrorCount} issue(s)."
-            : "Validation passed with 0 issues.";
+            ? $"Validation failed with {report.ErrorCount} error(s)."
+            : "Validation passed with 0 errors.";
         EditorUtility.DisplayDialog("Definition Validation", status, "OK");
     }
 
     [MenuItem("Tools/Validation/Validate Stat Modifier Links")]
     public static void ValidateStatModifierLinks()
     {
-        var stats = LoadById<StatDefinition>();
-        var statModifiers = LoadById<StatModifierDefinition>();
+        var report = new DefinitionValidationReport();
+        AppendStatModifierLinkIssues(report);
 
-        var errors = new List<string>();
-
-        StatModifierLinkValidator.ValidateStatModifierDefinitions(
-            statModifiers.Values,
-            statId => stats.ContainsKey(statId),
-            message => errors.Add(message));
-
-        ValidateHosts(
-            LoadAll<NeedDefinition>(),
-            statModifiers,
-            stats,
-            new HashSet<StatDomain> { StatDomain.Needs, StatDomain.Mood },
-            need => need.AllowAnyModifierDomain,
-            "Needs or Mood",
-            errors);
-
-        ValidateHosts(LoadAll<DiseaseDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
-        ValidateHosts(LoadAll<EffectDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
-        ValidateHosts(LoadAll<EventDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
-        ValidateHosts(LoadAll<TechDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
-
-        if (errors.Count == 0)
+        if (!report.HasErrors)
         {
             Debug.Log("[Validation] Stat modifier link validation passed.");
             EditorUtility.DisplayDialog("Validation", "Stat modifier link validation passed.", "OK");
             return;
         }
 
-        foreach (var error in errors)
-            Debug.LogError(error);
+        foreach (var issue in report.Issues)
+            Debug.LogError($"[Validation] ({issue.Code}) {issue.Message}");
 
-        Debug.LogError($"[Validation] Stat modifier link validation failed with {errors.Count} issue(s).");
-        EditorUtility.DisplayDialog("Validation", $"Validation found {errors.Count} issue(s). Check Console for details.", "OK");
+        Debug.LogError($"[Validation] Stat modifier link validation failed with {report.ErrorCount} issue(s).");
+        EditorUtility.DisplayDialog("Validation", $"Validation found {report.ErrorCount} issue(s). Check Console for details.", "OK");
     }
 
     // CI/batch-mode entry point for all editor validations.
     public static void ValidateAllForCI()
     {
-        StatIdValidationMenu.ValidateCanonicalStatIdsForCI();
-        ValidateStatModifierLinksForCI();
+        var report = DefinitionValidationOrchestrator.RunValidationAndLog();
+        if (report.HasErrors)
+            throw new Exception($"Definition validation failed with {report.ErrorCount} issue(s).");
     }
 
     public static void ValidateStatModifierLinksForCI()
     {
+        var report = new DefinitionValidationReport();
+        AppendStatModifierLinkIssues(report);
+
+        if (!report.HasErrors)
+        {
+            Debug.Log("[Validation] Stat modifier link CI validation passed.");
+            return;
+        }
+
+        foreach (var issue in report.Issues)
+            Debug.LogError($"[Validation] ({issue.Code}) {issue.Message}");
+
+        throw new Exception($"Stat modifier link validation failed with {report.ErrorCount} issue(s).");
+    }
+
+    public static void AppendStatModifierLinkIssues(DefinitionValidationReport report)
+    {
         var stats = LoadById<StatDefinition>();
         var statModifiers = LoadById<StatModifierDefinition>();
-
-        var errors = new List<string>();
 
         StatModifierLinkValidator.ValidateStatModifierDefinitions(
             statModifiers.Values,
             statId => stats.ContainsKey(statId),
-            message => errors.Add(message));
+            message => report.AddIssue(new ValidationIssue(
+                code: "STAT_MODIFIER_LINK_INVALID",
+                severity: ValidationIssueSeverity.Error,
+                registry: nameof(DefinitionValidationMenu),
+                message: message,
+                suggestedFix: "Update stat modifier/stat definitions so all links are valid.")));
 
         ValidateHosts(
             LoadAll<NeedDefinition>(),
@@ -83,23 +83,12 @@ public static class DefinitionValidationMenu
             new HashSet<StatDomain> { StatDomain.Needs, StatDomain.Mood },
             need => need.AllowAnyModifierDomain,
             "Needs or Mood",
-            errors);
+            report);
 
-        ValidateHosts(LoadAll<DiseaseDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
-        ValidateHosts(LoadAll<EffectDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
-        ValidateHosts(LoadAll<EventDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
-        ValidateHosts(LoadAll<TechDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
-
-        if (errors.Count == 0)
-        {
-            Debug.Log("[Validation] Stat modifier link CI validation passed.");
-            return;
-        }
-
-        foreach (var error in errors)
-            Debug.LogError(error);
-
-        throw new System.Exception($"Stat modifier link validation failed with {errors.Count} issue(s).");
+        ValidateHosts(LoadAll<DiseaseDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", report);
+        ValidateHosts(LoadAll<EffectDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", report);
+        ValidateHosts(LoadAll<EventDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", report);
+        ValidateHosts(LoadAll<TechDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", report);
     }
 
     private static void ValidateHosts<THost>(
@@ -107,9 +96,9 @@ public static class DefinitionValidationMenu
         Dictionary<string, StatModifierDefinition> statModifiers,
         Dictionary<string, StatDefinition> stats,
         HashSet<StatDomain> allowedDomains,
-        System.Func<THost, bool> allowAnyDomain,
+        Func<THost, bool> allowAnyDomain,
         string expectedDomainLabel,
-        List<string> errors)
+        DefinitionValidationReport report)
         where THost : ScriptableObject, IIdentifiable
     {
         StatModifierLinkValidator.ValidateHostStatModifierLinks(
@@ -124,7 +113,12 @@ public static class DefinitionValidationMenu
             statId => stats.TryGetValue(statId, out var stat) ? stat : null,
             allowedDomains,
             expectedDomainLabel,
-            message => errors.Add(message));
+            message => report.AddIssue(new ValidationIssue(
+                code: "STAT_MODIFIER_LINK_INVALID",
+                severity: ValidationIssueSeverity.Error,
+                registry: nameof(DefinitionValidationMenu),
+                message: message,
+                suggestedFix: "Update stat modifier IDs and stat domains to satisfy link rules.")));
     }
 
     private static IReadOnlyList<string> GetStatModifierIds<THost>(THost host)
