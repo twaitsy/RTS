@@ -1,20 +1,31 @@
 Scene Required Scripts
 ======================
 
-Last updated: Unified stat migration orchestration and single supported command
+Last updated: Strict canonical stat ID mode + migration-only compatibility mapping
 
 Validation / migration scripts relevant to stat migration:
 - Assets/Scripts/Editor/StatIdValidationMenu.cs
 - Assets/Scripts/Editor/StatFieldMigrationUtility.cs
+- Assets/Scripts/Editor/Validation/StatIdValidationSettings.cs
+- Assets/Scripts/Validation/StatIdCanonicalization.cs
 
 Single supported migration command:
 - `Tools/Validation/Migrate Legacy Stat IDs`
+
+Strict mode toggle:
+- `Tools/Validation/Strict Canonical Stat IDs`
+- Project-scoped editor setting used by validation code paths.
 
 Migration phase behavior:
 - Phase 1: legacy field lift into canonical stat entries/modifiers.
 - Phase 2: canonical statId rewrite for serialized statId/targetStatId fields.
 - Phase 3: cleanup/removals for empty stat references.
 - Console output includes per-phase counts (fields/removals and assets touched).
+
+Validation behavior notes:
+- In strict mode, legacy IDs are validation errors (not accepted runtime/validation references).
+- Validation errors include asset path + property path + required canonical ID.
+- Compatibility map lookups are used by migration rewrite only.
 
 Deprecated/removed command:
 - `Tools/DataDrivenRTS/Migrate Legacy Stats To Canonical Entries`

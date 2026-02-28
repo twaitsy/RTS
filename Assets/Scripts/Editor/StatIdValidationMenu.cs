@@ -8,6 +8,7 @@ using UnityEngine;
 public static class StatIdValidationMenu
 {
     private static readonly Regex ArrayElementRegex = new(@"^(.*)\.Array\.data\[(\d+)\]$", RegexOptions.Compiled);
+    private const string StrictModeMenuPath = "Tools/Validation/Strict Canonical Stat IDs";
 
     private readonly struct MigrationPhaseResult
     {
@@ -54,6 +55,21 @@ public static class StatIdValidationMenu
 
         Debug.LogError($"[Validation] Canonical stat ID validation failed with {errors.Count} issue(s).");
         EditorUtility.DisplayDialog("Validation", $"Validation found {errors.Count} issue(s). Check Console for details.", "OK");
+    }
+
+    [MenuItem(StrictModeMenuPath)]
+    private static void ToggleStrictCanonicalMode()
+    {
+        StatIdValidationSettings.StrictCanonicalStatIds = !StatIdValidationSettings.StrictCanonicalStatIds;
+        Menu.SetChecked(StrictModeMenuPath, StatIdValidationSettings.StrictCanonicalStatIds);
+        Debug.Log($"[Validation] Strict canonical stat ID mode {(StatIdValidationSettings.StrictCanonicalStatIds ? "enabled" : "disabled")}.");
+    }
+
+    [MenuItem(StrictModeMenuPath, true)]
+    private static bool ToggleStrictCanonicalModeValidate()
+    {
+        Menu.SetChecked(StrictModeMenuPath, StatIdValidationSettings.StrictCanonicalStatIds);
+        return true;
     }
 
     // CI/batch-mode entry point.
@@ -134,15 +150,17 @@ public static class StatIdValidationMenu
 
     private static void ValidateStatDefinition(StatDefinition definition, string path, List<string> errors)
     {
+        bool strictMode = StatIdValidationSettings.StrictCanonicalStatIds;
+
         if (string.IsNullOrWhiteSpace(definition.Id))
         {
             errors.Add($"[Validation] StatDefinition '{path}' has an empty id.");
             return;
         }
 
-        if (StatIdCanonicalization.TryGetCanonical(definition.Id, out var canonical) && !string.Equals(canonical, definition.Id, StringComparison.Ordinal))
+        if (strictMode && StatIdCompatibilityMap.LegacyToCanonical.TryGetValue(definition.Id, out var requiredCanonicalId))
         {
-            errors.Add($"[Validation] StatDefinition '{path}' uses legacy id '{definition.Id}'. Expected '{canonical}'.");
+            errors.Add($"[Validation] Asset '{path}' property 'id' uses legacy stat ID '{definition.Id}'. Required canonical ID: '{requiredCanonicalId}'. Run Tools/Validation/Migrate Legacy Stat IDs.");
         }
 
         if (!StatIdCanonicalization.IsCanonicalFormat(definition.Id))
@@ -154,6 +172,7 @@ public static class StatIdValidationMenu
 
     private static void ValidateSerializedStatIdFields(ScriptableObject asset, string path, HashSet<string> statDefinitionIds, List<string> errors)
     {
+        bool strictMode = StatIdValidationSettings.StrictCanonicalStatIds;
         var serializedObject = new SerializedObject(asset);
         var iterator = serializedObject.GetIterator();
 
@@ -175,9 +194,9 @@ public static class StatIdValidationMenu
                 continue;
             }
 
-            if (StatIdCanonicalization.TryGetCanonical(value, out var canonical) && !string.Equals(value, canonical, StringComparison.Ordinal))
+            if (strictMode && StatIdCompatibilityMap.LegacyToCanonical.TryGetValue(value, out var requiredCanonicalId))
             {
-                errors.Add($"[Validation] Asset '{path}' uses legacy {iterator.name} '{value}' at '{iterator.propertyPath}'. Expected '{canonical}'.");
+                errors.Add($"[Validation] Asset '{path}' property '{iterator.propertyPath}' uses legacy stat ID '{value}'. Required canonical ID: '{requiredCanonicalId}'. Run Tools/Validation/Migrate Legacy Stat IDs.");
             }
 
             if (!StatIdCanonicalization.IsCanonicalFormat(value))
@@ -259,7 +278,7 @@ public static class StatIdValidationMenu
             if (string.IsNullOrWhiteSpace(iterator.stringValue))
                 continue;
 
-            if (!StatIdCanonicalization.TryGetCanonical(iterator.stringValue, out var canonicalId))
+            if (!StatIdCanonicalization.TryGetCanonicalForMigration(iterator.stringValue, out var canonicalId))
                 continue;
 
             if (string.Equals(iterator.stringValue, canonicalId, StringComparison.Ordinal))

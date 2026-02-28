@@ -18,13 +18,23 @@ public static class StatIdCanonicalization
 
     public static bool TryGetCanonical(string statId, out string canonicalId)
     {
+        return TryGetCanonical(statId, out canonicalId, includeCompatibilityMapping: false);
+    }
+
+    public static bool TryGetCanonicalForMigration(string statId, out string canonicalId)
+    {
+        return TryGetCanonical(statId, out canonicalId, includeCompatibilityMapping: true);
+    }
+
+    public static bool TryGetCanonical(string statId, out string canonicalId, bool includeCompatibilityMapping)
+    {
         if (string.IsNullOrWhiteSpace(statId))
         {
             canonicalId = statId;
             return false;
         }
 
-        if (StatIdCompatibilityMap.LegacyToCanonical.TryGetValue(statId, out canonicalId))
+        if (includeCompatibilityMapping && StatIdCompatibilityMap.LegacyToCanonical.TryGetValue(statId, out canonicalId))
             return true;
 
         var normalized = SimplifyStatId(statId);
