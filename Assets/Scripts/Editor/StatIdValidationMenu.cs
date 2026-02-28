@@ -75,6 +75,9 @@ public static class StatIdValidationMenu
         var errors = new List<string>();
         var statDefinitions = LoadStatDefinitionIds();
 
+        ValidateCatalogParity(statDefinitions, errors);
+        ValidateGeneratedConstants(errors);
+
         foreach (var path in EnumerateScriptableObjectAssetPaths())
         {
             var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
@@ -102,6 +105,29 @@ public static class StatIdValidationMenu
         }
 
         return ids;
+    }
+
+    private static void ValidateCatalogParity(HashSet<string> statDefinitionIds, List<string> errors)
+    {
+        var catalogIds = new HashSet<string>(CanonicalStatIds.Catalog, StringComparer.Ordinal);
+
+        foreach (var catalogId in catalogIds)
+        {
+            if (!statDefinitionIds.Contains(catalogId))
+                errors.Add($"[Validation] CanonicalStatIds.Catalog includes '{catalogId}' but no StatDefinition asset exists at Assets/GameData/Stats.");
+        }
+
+        foreach (var statDefinitionId in statDefinitionIds)
+        {
+            if (!catalogIds.Contains(statDefinitionId))
+                errors.Add($"[Validation] StatDefinition id '{statDefinitionId}' is missing from CanonicalStatIds.Catalog.");
+        }
+    }
+
+    private static void ValidateGeneratedConstants(List<string> errors)
+    {
+        if (!CanonicalStatIdsGenerator.IsCanonicalStatIdsSourceCurrent(out var reason))
+            errors.Add($"[Validation] {reason}");
     }
 
     private static void ValidateStatDefinition(StatDefinition definition, string path, List<string> errors)

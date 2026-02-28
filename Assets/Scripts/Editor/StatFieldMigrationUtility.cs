@@ -35,16 +35,16 @@ public static class StatFieldMigrationUtility
             var modifiers = FindModifiersProperty(so);
 
             bool changed = false;
-            changed |= TryMigrateLegacyStat(so, stats, "maxHealth", CanonicalStatIds.MaxHealth);
-            changed |= TryMigrateLegacyStat(so, stats, "moveSpeed", CanonicalStatIds.MoveSpeed);
-            changed |= TryMigrateLegacyStat(so, stats, "turnSpeed", CanonicalStatIds.TurnSpeed);
-            changed |= TryMigrateLegacyStat(so, stats, "visionRange", CanonicalStatIds.VisionRange);
-            changed |= TryMigrateLegacyStat(so, stats, "workSpeed", CanonicalStatIds.WorkSpeed);
-            changed |= TryMigrateLegacyStat(so, stats, "carryCapacity", CanonicalStatIds.CarryCapacity);
+            changed |= TryMigrateLegacyStat(so, stats, "maxHealth", CanonicalStatIds.Core.MaxHealth);
+            changed |= TryMigrateLegacyStat(so, stats, "moveSpeed", CanonicalStatIds.Movement.MoveSpeed);
+            changed |= TryMigrateLegacyStat(so, stats, "turnSpeed", CanonicalStatIds.Movement.TurnSpeed);
+            changed |= TryMigrateLegacyStat(so, stats, "visionRange", CanonicalStatIds.Core.VisionRange);
+            changed |= TryMigrateLegacyStat(so, stats, "workSpeed", CanonicalStatIds.Production.WorkSpeed);
+            changed |= TryMigrateLegacyStat(so, stats, "carryCapacity", CanonicalStatIds.Production.CarryCapacity);
 
-            changed |= TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.BaseDamage);
-            changed |= TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.AttackSpeed);
-            changed |= TryMigrateLegacyOverride(so, modifiers, "attackRange", CanonicalStatIds.AttackRange);
+            changed |= TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.Combat.BaseDamage);
+            changed |= TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.Combat.AttackSpeed);
+            changed |= TryMigrateLegacyOverride(so, modifiers, "attackRange", CanonicalStatIds.Combat.AttackRange);
 
             if (!changed) continue;
 
@@ -70,8 +70,8 @@ public static class StatFieldMigrationUtility
             var stats = FindStatsEntriesProperty(so);
 
             bool changed = false;
-            changed |= TryMigrateLegacyStat(so, stats, "moveSpeed", CanonicalStatIds.MoveSpeed);
-            changed |= TryMigrateLegacyStat(so, stats, "workSpeed", CanonicalStatIds.WorkSpeed);
+            changed |= TryMigrateLegacyStat(so, stats, "moveSpeed", CanonicalStatIds.Movement.MoveSpeed);
+            changed |= TryMigrateLegacyStat(so, stats, "workSpeed", CanonicalStatIds.Production.WorkSpeed);
 
             if (!changed) continue;
 
@@ -97,8 +97,8 @@ public static class StatFieldMigrationUtility
             var modifiers = FindModifiersProperty(so);
 
             bool changed = false;
-            changed |= TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.BaseDamage);
-            changed |= TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.AttackSpeed);
+            changed |= TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.Combat.BaseDamage);
+            changed |= TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.Combat.AttackSpeed);
 
             if (!changed) continue;
 
@@ -124,8 +124,8 @@ public static class StatFieldMigrationUtility
             var modifiers = FindModifiersProperty(so);
 
             bool changed = false;
-            changed |= TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.BaseDamage);
-            changed |= TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.AttackSpeed);
+            changed |= TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.Combat.BaseDamage);
+            changed |= TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.Combat.AttackSpeed);
 
             if (!changed) continue;
 
