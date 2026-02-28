@@ -1,14 +1,18 @@
 Scene Required Scripts
 ======================
 
-Last updated: CanonicalStatIds alias compatibility update
+Last updated: Safe definition ID migration allowlist + dry-run preview
 
-Validation / migration scripts relevant to stat ID canonicalization:
-- Assets/Scripts/Validation/StatIdCanonicalization.cs
-- Assets/Scripts/Validation/StatIdCompatibilityMap.cs
-- Assets/Scripts/Editor/StatIdValidationMenu.cs
-- Assets/Scripts/Editor/CanonicalStatIdsGenerator.cs
-- Assets/Scripts/Definitions/CanonicalStatIds.cs (generated constants + compatibility aliases)
+Validation / migration scripts relevant to definition ID migration:
+- Assets/Scripts/Editor/DefinitionIdMigrationTool.cs
+- Assets/Scripts/Registries/Schema/RegistrySchema.cs
+- Assets/Scripts/Registries/UnitRegistry.cs
+- Assets/Scripts/Registries/BuildingRegistry.cs
+- Assets/Scripts/Registries/RecipeRegistry.cs
+- Assets/Scripts/Registries/TechRegistry.cs
+- Assets/Scripts/Registries/ProductionRegistry.cs
+- Assets/Scripts/Registries/ResourceNodeRegistry.cs
 
-Primary runtime usage updated/fixed by alias compatibility:
-- Assets/Scripts/Simulation/Derived/DerivedComputationModule.cs
+Behavior notes:
+- Migration edits are restricted to safe allowlisted reference paths.
+- Dry-run mode previews planned changes without writing assets.

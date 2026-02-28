@@ -20,7 +20,17 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         base.Awake();
     }
 
+    public static IReadOnlyCollection<string> GetReferenceFieldPaths()
+    {
+        return GetOrCreateSchema().GetReferenceFieldNames();
+    }
+
     protected override RegistrySchema<UnitDefinition> GetSchema()
+    {
+        return GetOrCreateSchema();
+    }
+
+    private static RegistrySchema<UnitDefinition> GetOrCreateSchema()
     {
         if (schema != null)
             return schema;

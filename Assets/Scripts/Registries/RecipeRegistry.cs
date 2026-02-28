@@ -20,7 +20,17 @@ public class RecipeRegistry : DefinitionRegistry<RecipeDefinition>
         base.Awake();
     }
 
+    public static IReadOnlyCollection<string> GetReferenceFieldPaths()
+    {
+        return GetOrCreateSchema().GetReferenceFieldNames();
+    }
+
     protected override RegistrySchema<RecipeDefinition> GetSchema()
+    {
+        return GetOrCreateSchema();
+    }
+
+    private static RegistrySchema<RecipeDefinition> GetOrCreateSchema()
     {
         if (schema != null)
             return schema;

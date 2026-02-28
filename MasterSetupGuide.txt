@@ -1,12 +1,12 @@
 Master Setup Guide
 ==================
 
-Last updated: CanonicalStatIds alias compatibility update
+Last updated: Safe definition ID migration allowlist + dry-run preview
 
-- Stat and definition IDs remain standardized to dot-separated notation in generated IDs.
-- Canonical example format: core.maxhealth, combat.basedamage, production.workspeed.
-- `CanonicalStatIds` now exposes compatibility aliases (for example `MaxHealth`, `BaseDamage`, `WorkSpeed`) that map to the generated lowercase-style constants.
-- This preserves compatibility for existing callers while keeping the generator output deterministic.
-- Legacy '-' and '_' IDs are still treated as migration inputs only.
-- Run validation from Unity menu: Tools/Validation/Validate Canonical Stat IDs.
-- Regenerate IDs from Unity menu: Tools/Validation/Regenerate CanonicalStatIds.
+- Definition ID migration is now allowlist-based, not suffix-based string matching.
+- The migration tool updates only:
+  - the selected asset's own `id` and `finalizedId`, and
+  - known reference-field paths sourced from registry schema metadata plus explicit custom mappings.
+- Guardrails skip Unity/internal engine fields and unrelated string IDs.
+- Use dry-run preview in the migration window to inspect planned edits before applying.
+- Open from Unity menu: Tools/Data/Definition ID Migration.
