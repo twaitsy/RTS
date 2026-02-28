@@ -14,6 +14,9 @@ public class FormationDefinition : ScriptableObject, IIdentifiable
     [SerializeField] private string id;
     public string Id => id;
 
+    [SerializeField, HideInInspector] private bool isIdFinalized;
+    [SerializeField, HideInInspector] private string finalizedId;
+
     [SerializeField] private FormationShape shape;
     public FormationShape Shape => shape;
 
@@ -23,8 +26,7 @@ public class FormationDefinition : ScriptableObject, IIdentifiable
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (string.IsNullOrWhiteSpace(id))
-            id = name;
+        DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
     }
 #endif
 }
