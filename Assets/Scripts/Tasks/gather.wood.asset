@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3639e4b390d90fb44adc2eee2b40b4fd, type: 3}
+  m_Name: gather.wood
+  m_EditorClassIdentifier: Assembly-CSharp::TaskDefinition
+  id: gather.wood
+  metadata:
+    category: 7
+    tags: []
+    version: 1.0.0
+    schemaHash: 
+    lastModifiedUtc: 2026-02-28T21:08:54.7636754Z
+    author: 
+  isIdFinalized: 1
+  finalizedId: gather.wood
+  jobId: 
+  workTime: 5
+  steps:
+  - {fileID: 11400000, guid: 7d8a0b07bc1fbf841b1b7b4db773d91c, type: 2}
+  - {fileID: 11400000, guid: 2a1ad9ce4f2ced84b884e56edc546d77, type: 2}
+  - {fileID: 11400000, guid: 9c951f99978cb0a4b801a56a5479ac68, type: 2}
+  - {fileID: 11400000, guid: 6b84d11318318f042b56e1ea32a9ba26, type: 2}
+  - {fileID: 11400000, guid: fff1d048c51003046bd81747fbb1645f, type: 2}

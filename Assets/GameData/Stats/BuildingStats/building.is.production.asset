@@ -10,15 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e657c4ae6d944da4b8eecf33189fe137, type: 3}
-  m_Name: combat.baseDamage
+  m_Name: building.is.production
   m_EditorClassIdentifier: Assembly-CSharp::StatDefinition
-  id: combat.baseDamage
-  displayName: Base Damage
-  domain: 0
+  id: building.is_production
+  isIdFinalized: 1
+  finalizedId: building.is_production
+  displayName: 
+  domain: 19
   valueType: 0
-  unit: damage
-  defaultValue: 10
-  useClamp: 1
+  unit: 
+  defaultValue: 0
+  useClamp: 0
   minValue: 0
-  maxValue: 99999
+  maxValue: 1
   stackingBehavior: 0

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/Task")]
@@ -17,6 +18,9 @@ public class TaskDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
 
     [SerializeField] private float workTime;
     public float WorkTime => workTime;
+
+    [SerializeField] private List<TaskStepDefinition> steps = new();
+    public IReadOnlyList<TaskStepDefinition> Steps => steps;
 
 #if UNITY_EDITOR
     private void OnValidate()

@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e657c4ae6d944da4b8eecf33189fe137, type: 3}
-  m_Name: combat.attackRange
+  m_Name: production.carrycapacity
   m_EditorClassIdentifier: Assembly-CSharp::StatDefinition
-  id: combat.attackRange
-  displayName: Attack Range
-  domain: 0
+  id: production.carryCapacity
+  displayName: Carry Capacity
+  domain: 2
   valueType: 0
-  unit: m
-  defaultValue: 1.5
+  unit: units
+  defaultValue: 25
   useClamp: 1
   minValue: 0
-  maxValue: 500
+  maxValue: 10000
   stackingBehavior: 0

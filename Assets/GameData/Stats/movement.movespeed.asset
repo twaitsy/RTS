@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e657c4ae6d944da4b8eecf33189fe137, type: 3}
-  m_Name: production.carryCapacity
+  m_Name: movement.movespeed
   m_EditorClassIdentifier: Assembly-CSharp::StatDefinition
-  id: production.carryCapacity
-  displayName: Carry Capacity
-  domain: 2
+  id: movement.moveSpeed
+  displayName: Move Speed
+  domain: 1
   valueType: 0
-  unit: units
-  defaultValue: 25
+  unit: m/s
+  defaultValue: 3.5
   useClamp: 1
   minValue: 0
-  maxValue: 10000
-  stackingBehavior: 0
+  maxValue: 100
+  stackingBehavior: 1

@@ -10,27 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4b9fb11cee1f7084bba16092360ffcdd, type: 3}
-  m_Name: House
+  m_Name: building.house
   m_EditorClassIdentifier: Assembly-CSharp::BuildingDefinition
-  id: House
+  id: building.house
+  metadata:
+    category: 2
+    tags: []
+    version: 1.0.0
+    schemaHash: 
+    lastModifiedUtc: 2026-02-28T19:11:32.8921293Z
+    author: 
   isIdFinalized: 1
-  finalizedId: House
-  displayName: 
+  finalizedId: building.house
+  displayName: House
   icon: {fileID: 0}
   buildCosts:
   - resourceId: resource.wood
     amount: 20
-  - resourceId: resource.stone
-    amount: 20
   stats:
-    entries:
-    - statId: building.hitPoints
-      value: 500
-    - statId: building.buildTime
-      value: 6
-    - statId: building.housingCapacity
-      value: 4
-    - statId: building.comfortBonus
-      value: 0.1
-    - statId: building.upgradeSlots
-      value: 4
+    entries: []
