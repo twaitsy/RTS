@@ -186,6 +186,11 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
         return lookup.TryGetValue(id, out definition);
     }
 
+    public IReadOnlyList<T> GetDefinitions()
+    {
+        return definitions;
+    }
+
 #if UNITY_EDITOR
     private void LogEditorRegistryDrift()
     {
