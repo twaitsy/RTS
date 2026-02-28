@@ -10,19 +10,19 @@ public class MoveToStep : TaskStepDefinition
         if (context == null)
         {
             Debug.LogError("MoveToStep: Context is null.");
-            return TaskStepResult.Terminate();
+            return TaskStepResult.FailTask();
         }
 
         if (context.Actor == null)
         {
             Debug.LogError("MoveToStep: Context.Actor is null.");
-            return TaskStepResult.Terminate();
+            return TaskStepResult.FailTask();
         }
 
         if (context.Target == null)
         {
             Debug.LogWarning($"MoveToStep: No target set for actor '{context.Actor.name}'.");
-            return TaskStepResult.Terminate();
+            return TaskStepResult.FailTask();
         }
 
         var comp = context.Target as Component;
@@ -32,7 +32,7 @@ public class MoveToStep : TaskStepDefinition
                 $"MoveToStep: Target is not a Component for actor '{context.Actor.name}'. " +
                 $"Target type = {context.Target.GetType().Name}"
             );
-            return TaskStepResult.Terminate();
+            return TaskStepResult.FailTask();
         }
 
         Vector3 targetPos = comp.transform.position;
@@ -40,9 +40,9 @@ public class MoveToStep : TaskStepDefinition
 
         float sqrDist = (targetPos - currentPos).sqrMagnitude;
         if (sqrDist < ARRIVAL_THRESHOLD * ARRIVAL_THRESHOLD)
-            return TaskStepResult.Advance();
+            return TaskStepResult.AdvanceStep();
 
         MovementSystem.MoveTo(context.Actor, targetPos);
-        return TaskStepResult.Stay();
+        return TaskStepResult.StayOnStep();
     }
 }

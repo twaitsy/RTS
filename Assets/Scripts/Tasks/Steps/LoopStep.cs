@@ -6,6 +6,6 @@ public class LoopStep : TaskStepDefinition
     public override TaskStepResult Execute(TaskContext context)
     {
         Debug.Log("LoopStep: Restarting task at step index 0.");
-        return TaskStepResult.JumpTo(0);
+        return TaskStepResult.Jump(0);
     }
 }

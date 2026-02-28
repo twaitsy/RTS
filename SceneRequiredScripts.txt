@@ -1,25 +1,25 @@
 Scene Required Scripts
 ======================
 
-Last updated: Task flow state model migrated to stay/advance/jump/terminate semantics
+Last updated: Task flow result constructors renamed to explicit action names
 
 Task runtime scripts (required):
 - Assets/Scripts/Tasks/Runtime/TaskStepResult.cs
-  - Defines explicit step flow enum/state for `Stay`, `Advance`, `Jump`, and `Terminate`.
+  - Defines explicit task flow actions via `StayOnStep()`, `AdvanceStep()`, `Jump(index)`, and `FailTask()`.
 - Assets/Scripts/Tasks/Runtime/TaskRunner.cs
-  - Executes flow handling and index validation in `Tick()`.
+  - Executes flow handling and index validation in `Tick()` using explicit `Flow` cases.
 
 Task step scripts (required and aligned):
 - Assets/Scripts/Tasks/Steps/QueryStep.cs
-  - `Advance` on found target, `Terminate` on missing target.
+  - `AdvanceStep()` on found target, `FailTask()` on missing target.
 - Assets/Scripts/Tasks/Steps/MoveToStep.cs
-  - `Stay` while moving, `Advance` on arrival.
+  - `StayOnStep()` while moving, `AdvanceStep()` on arrival.
 - Assets/Scripts/Tasks/Steps/WorkStep.cs
-  - `Stay` while timer > 0, `Advance` when work completes.
+  - `StayOnStep()` while timer > 0, `AdvanceStep()` when work completes.
 - Assets/Scripts/Tasks/Steps/DeliverStep.cs
-  - `Stay` while moving to drop-off range, `Advance` once delivery happens in range.
+  - `StayOnStep()` while moving to drop-off range, `AdvanceStep()` once delivery happens in range.
 - Assets/Scripts/Tasks/Steps/LoopStep.cs
-  - `JumpTo(0)` to restart task loop.
+  - `Jump(0)` to restart task loop.
 
 Validation stack scripts (still required for project definition checks):
 - Assets/Scripts/Validation/DefinitionValidationReport.cs
