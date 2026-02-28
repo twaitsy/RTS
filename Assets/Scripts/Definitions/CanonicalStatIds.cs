@@ -8,25 +8,26 @@ public static class CanonicalStatIds
 {
     public static class Building
     {
-        public const string BuildTime = "building.buildTime";
-        public const string ComfortBonus = "building.comfortBonus";
-        public const string ConstructionTime = "building.constructionTime";
-        public const string HitPoints = "building.hitPoints";
-        public const string HousingCapacity = "building.housingCapacity";
-        public const string UpgradeSlots = "building.upgradeSlots";
+        public const string Buildtime = "building.buildtime";
+        public const string Comfortbonus = "building.comfortbonus";
+        public const string Constructiontime = "building.constructiontime";
+        public const string Hitpoints = "building.hitpoints";
+        public const string Housingcapacity = "building.housingcapacity";
+        public const string IsProduction = "building.is.production";
+        public const string Upgradeslots = "building.upgradeslots";
     }
 
     public static class Combat
     {
-        public const string AttackRange = "combat.attackRange";
-        public const string AttackSpeed = "combat.attackSpeed";
-        public const string BaseDamage = "combat.baseDamage";
+        public const string Attackrange = "combat.attackrange";
+        public const string Attackspeed = "combat.attackspeed";
+        public const string Basedamage = "combat.basedamage";
     }
 
     public static class Core
     {
-        public const string MaxHealth = "core.maxHealth";
-        public const string VisionRange = "core.visionRange";
+        public const string Maxhealth = "core.maxhealth";
+        public const string Visionrange = "core.visionrange";
     }
 
     public static class Item
@@ -36,37 +37,38 @@ public static class CanonicalStatIds
 
     public static class Movement
     {
-        public const string MoveSpeed = "movement.moveSpeed";
-        public const string TurnSpeed = "movement.turnSpeed";
+        public const string Movespeed = "movement.movespeed";
+        public const string Turnspeed = "movement.turnspeed";
     }
 
     public static class Production
     {
-        public const string CarryCapacity = "production.carryCapacity";
-        public const string StorageCapacity = "production.storageCapacity";
-        public const string WorkSpeed = "production.workSpeed";
+        public const string Carrycapacity = "production.carrycapacity";
+        public const string Storagecapacity = "production.storagecapacity";
+        public const string Workspeed = "production.workspeed";
     }
 
     public static IReadOnlyList<string> Catalog => _catalog;
 
     private static readonly string[] _catalog =
     {
-        "building.buildTime",
-        "building.comfortBonus",
-        "building.constructionTime",
-        "building.hitPoints",
-        "building.housingCapacity",
-        "building.upgradeSlots",
-        "combat.attackRange",
-        "combat.attackSpeed",
-        "combat.baseDamage",
-        "core.maxHealth",
-        "core.visionRange",
+        "building.buildtime",
+        "building.comfortbonus",
+        "building.constructiontime",
+        "building.hitpoints",
+        "building.housingcapacity",
+        "building.is.production",
+        "building.upgradeslots",
+        "combat.attackrange",
+        "combat.attackspeed",
+        "combat.basedamage",
+        "core.maxhealth",
+        "core.visionrange",
         "item.weight",
-        "movement.moveSpeed",
-        "movement.turnSpeed",
-        "production.carryCapacity",
-        "production.storageCapacity",
-        "production.workSpeed",
+        "movement.movespeed",
+        "movement.turnspeed",
+        "production.carrycapacity",
+        "production.storagecapacity",
+        "production.workspeed",
     };
 }

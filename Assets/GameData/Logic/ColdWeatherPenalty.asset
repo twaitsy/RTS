@@ -12,7 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17feb836820b67f468306d973603a5c7, type: 3}
   m_Name: ColdWeatherPenalty
   m_EditorClassIdentifier: Assembly-CSharp::ModifierGroupDefinition
-  id: ColdWeatherPenalty
+  id: coldweatherpenalty
+  metadata:
+    category: 14
+    tags: []
+    version: 1.0.0
+    schemaHash: 
+    lastModifiedUtc: 2026-02-28T17:53:58.8604396Z
+    author: 
   displayName: 
   icon: {fileID: 0}
   modifiers:

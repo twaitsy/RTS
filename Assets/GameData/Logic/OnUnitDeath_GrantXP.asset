@@ -12,7 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f5c52001bd902446836339fd823f04b, type: 3}
   m_Name: OnUnitDeath_GrantXP
   m_EditorClassIdentifier: Assembly-CSharp::TriggerDefinition
-  id: OnUnitDeath_GrantXP
+  id: onunitdeath.grantXP
+  metadata:
+    category: 14
+    tags: []
+    version: 1.0.0
+    schemaHash: 
+    lastModifiedUtc: 2026-02-28T17:53:58.8604396Z
+    author: 
   displayName: 
   icon: {fileID: 0}
   eventType: 24
