@@ -55,7 +55,19 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
         if (report.HasErrorsForRegistry(RegistryName))
             return;
 
+        RegistrySchemaValidator.Validate(
+            definitions,
+            GetSchema(),
+            definition => definition.name,
+            definition => definition.Id,
+            message => report.AddError(RegistryName, message));
+
         ValidateDefinitions(definitions, message => report.AddError(RegistryName, message));
+    }
+
+    protected virtual RegistrySchema<T> GetSchema()
+    {
+        return null;
     }
 
     protected virtual IEnumerable<string> GetValidationDependencyErrors()

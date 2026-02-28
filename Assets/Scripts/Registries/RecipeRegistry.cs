@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class RecipeRegistry : DefinitionRegistry<RecipeDefinition>
 {
+    private static RegistrySchema<RecipeDefinition> schema;
+
     public static RecipeRegistry Instance { get; private set; }
 
     protected override void Awake()
@@ -18,45 +20,29 @@ public class RecipeRegistry : DefinitionRegistry<RecipeDefinition>
         base.Awake();
     }
 
+    protected override RegistrySchema<RecipeDefinition> GetSchema()
+    {
+        if (schema != null)
+            return schema;
+
+        schema = new RegistrySchema<RecipeDefinition>()
+            .RequireField(nameof(RecipeDefinition.Id), definition => definition.Id)
+            .RequireField(nameof(RecipeDefinition.DisplayName), definition => definition.DisplayName)
+            .RequireField(nameof(RecipeDefinition.Inputs), definition => definition.Inputs)
+            .RequireField(nameof(RecipeDefinition.Outputs), definition => definition.Outputs)
+            .OptionalField(nameof(RecipeDefinition.BuildingId), definition => definition.BuildingId)
+            .OptionalField(nameof(RecipeDefinition.JobId), definition => definition.JobId)
+            .AddReference(nameof(RecipeDefinition.BuildingId), definition => RegistrySchema<RecipeDefinition>.SingleReference(definition.BuildingId), false, new ReferenceTargetRule(nameof(BuildingRegistry), targetId => BuildingRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(RecipeDefinition.JobId), definition => RegistrySchema<RecipeDefinition>.SingleReference(definition.JobId), false, new ReferenceTargetRule(nameof(JobRegistry), targetId => JobRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(RecipeDefinition.Inputs), definition => RegistrySchema<RecipeDefinition>.ReferenceCollection(definition.Inputs, amount => amount.itemId), true, new ReferenceTargetRule(nameof(ItemRegistry), targetId => ItemRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(RecipeDefinition.Outputs), definition => RegistrySchema<RecipeDefinition>.ReferenceCollection(definition.Outputs, amount => amount.itemId), true, new ReferenceTargetRule(nameof(ItemRegistry), targetId => ItemRegistry.Instance.TryGet(targetId, out _)));
+
+        return schema;
+    }
+
     protected override void ValidateDefinitions(List<RecipeDefinition> defs, System.Action<string> reportError)
     {
-        DefinitionReferenceValidator.ValidateSingleReference(
-            defs,
-            definition => definition.name,
-            definition => definition.Id,
-            definition => definition.BuildingId,
-            nameof(RecipeDefinition.BuildingId),
-            targetId => BuildingRegistry.Instance.TryGet(targetId, out _),
-            reportError);
-
-        DefinitionReferenceValidator.ValidateSingleReference(
-            defs,
-            definition => definition.name,
-            definition => definition.Id,
-            definition => definition.JobId,
-            nameof(RecipeDefinition.JobId),
-            targetId => JobRegistry.Instance.TryGet(targetId, out _),
-            reportError);
-
-        DefinitionReferenceValidator.ValidateReferenceCollection(
-            defs,
-            definition => definition.name,
-            definition => definition.Id,
-            definition => definition.Inputs,
-            amount => amount.itemId,
-            nameof(RecipeDefinition.Inputs),
-            targetId => ItemRegistry.Instance.TryGet(targetId, out _),
-            reportError);
-
-        DefinitionReferenceValidator.ValidateReferenceCollection(
-            defs,
-            definition => definition.name,
-            definition => definition.Id,
-            definition => definition.Outputs,
-            amount => amount.itemId,
-            nameof(RecipeDefinition.Outputs),
-            targetId => ItemRegistry.Instance.TryGet(targetId, out _),
-            reportError);
+        // Intentionally reserved for bespoke Recipe validation rules.
     }
 
     protected override IEnumerable<string> GetValidationDependencyErrors()
