@@ -18,14 +18,8 @@ public class BuildingRegistry : DefinitionRegistry<BuildingDefinition>
         base.Awake();
     }
 
-    protected override void ValidateDefinitions(List<BuildingDefinition> defs)
+    protected override void ValidateDefinitions(List<BuildingDefinition> defs, System.Action<string> reportError)
     {
-        if (StatRegistry.Instance == null || ResourceRegistry.Instance == null)
-        {
-            Debug.LogError("BuildingRegistry validation skipped: one or more dependent registries are null (StatRegistry, ResourceRegistry).");
-            return;
-        }
-
         DefinitionReferenceValidator.ValidateReferenceCollection(
             defs,
             definition => definition.name,
@@ -34,7 +28,7 @@ public class BuildingRegistry : DefinitionRegistry<BuildingDefinition>
             stat => stat.StatId,
             $"{nameof(BuildingDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
             targetId => StatRegistry.Instance.TryGet(targetId, out _),
-            Debug.LogError);
+            reportError);
 
         DefinitionReferenceValidator.ValidateReferenceCollection(
             defs,
@@ -44,6 +38,14 @@ public class BuildingRegistry : DefinitionRegistry<BuildingDefinition>
             amount => amount.ResourceId,
             nameof(BuildingDefinition.BuildCosts),
             targetId => ResourceRegistry.Instance.TryGet(targetId, out _),
-            Debug.LogError);
+            reportError);
+    }
+
+    protected override IEnumerable<string> GetValidationDependencyErrors()
+    {
+        if (StatRegistry.Instance == null)
+            yield return "Missing dependency: StatRegistry.Instance is null.";
+        if (ResourceRegistry.Instance == null)
+            yield return "Missing dependency: ResourceRegistry.Instance is null.";
     }
 }

@@ -18,14 +18,8 @@ public class ResourceNodeRegistry : DefinitionRegistry<ResourceNodeDefinition>
         base.Awake();
     }
 
-    protected override void ValidateDefinitions(List<ResourceNodeDefinition> defs)
+    protected override void ValidateDefinitions(List<ResourceNodeDefinition> defs, System.Action<string> reportError)
     {
-        if (ResourceRegistry.Instance == null)
-        {
-            Debug.LogError("ResourceNodeRegistry validation skipped: ResourceRegistry.Instance is null.");
-            return;
-        }
-
         DefinitionReferenceValidator.ValidateSingleReference(
             defs,
             definition => definition.name,
@@ -33,6 +27,12 @@ public class ResourceNodeRegistry : DefinitionRegistry<ResourceNodeDefinition>
             definition => definition.ResourceId,
             nameof(ResourceNodeDefinition.ResourceId),
             targetId => ResourceRegistry.Instance.TryGet(targetId, out _),
-            Debug.LogError);
+            reportError);
+    }
+
+    protected override IEnumerable<string> GetValidationDependencyErrors()
+    {
+        if (ResourceRegistry.Instance == null)
+            yield return "Missing dependency: ResourceRegistry.Instance is null.";
     }
 }

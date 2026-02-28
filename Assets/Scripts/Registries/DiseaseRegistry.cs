@@ -20,14 +20,8 @@ public class DiseaseRegistry : DefinitionRegistry<DiseaseDefinition>
         base.Awake();
     }
 
-    protected override void ValidateDefinitions(List<DiseaseDefinition> defs)
+    protected override void ValidateDefinitions(List<DiseaseDefinition> defs, System.Action<string> reportError)
     {
-        if (StatModifierRegistry.Instance == null || StatRegistry.Instance == null)
-        {
-            Debug.LogError("DiseaseRegistry validation skipped: StatModifierRegistry or StatRegistry instance is null.");
-            return;
-        }
-
         StatModifierLinkValidator.ValidateHostStatModifierLinks(
             defs,
             definition => definition.Id,
@@ -40,6 +34,14 @@ public class DiseaseRegistry : DefinitionRegistry<DiseaseDefinition>
             statId => StatRegistry.Instance.Get(statId),
             AnyDomain,
             "any domain",
-            Debug.LogError);
+            reportError);
+    }
+
+    protected override IEnumerable<string> GetValidationDependencyErrors()
+    {
+        if (StatModifierRegistry.Instance == null)
+            yield return "Missing dependency: StatModifierRegistry.Instance is null.";
+        if (StatRegistry.Instance == null)
+            yield return "Missing dependency: StatRegistry.Instance is null.";
     }
 }

@@ -18,17 +18,17 @@ public class StatModifierRegistry : DefinitionRegistry<StatModifierDefinition>
         base.Awake();
     }
 
-    protected override void ValidateDefinitions(List<StatModifierDefinition> defs)
+    protected override void ValidateDefinitions(List<StatModifierDefinition> defs, System.Action<string> reportError)
     {
-        if (StatRegistry.Instance == null)
-        {
-            Debug.LogError("StatModifierRegistry validation skipped: StatRegistry.Instance is null.");
-            return;
-        }
-
         StatModifierLinkValidator.ValidateStatModifierDefinitions(
             defs,
             statId => StatRegistry.Instance.TryGet(statId, out _),
-            Debug.LogError);
+            reportError);
+    }
+
+    protected override IEnumerable<string> GetValidationDependencyErrors()
+    {
+        if (StatRegistry.Instance == null)
+            yield return "Missing dependency: StatRegistry.Instance is null.";
     }
 }

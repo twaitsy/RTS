@@ -18,17 +18,17 @@ public class TriggerRegistry : DefinitionRegistry<TriggerDefinition>
         base.Awake();
     }
 
-    protected override void ValidateDefinitions(List<TriggerDefinition> defs)
+    protected override void ValidateDefinitions(List<TriggerDefinition> defs, System.Action<string> reportError)
     {
         var ids = new HashSet<string>();
 
         foreach (var def in defs)
         {
             if (string.IsNullOrWhiteSpace(def.Id))
-                Debug.LogError($"{def.name} has empty ID.");
+                reportError($"{def.name} has empty ID.");
 
             if (!ids.Add(def.Id))
-                Debug.LogError($"Duplicate ID detected: {def.Id}");
+                reportError($"Duplicate ID detected: {def.Id}");
         }
     }
 }

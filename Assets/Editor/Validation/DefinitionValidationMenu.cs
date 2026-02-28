@@ -5,6 +5,17 @@ using UnityEngine;
 
 public static class DefinitionValidationMenu
 {
+
+    [MenuItem("Tools/Validation/Validate All Definitions (No Play Mode)")]
+    public static void ValidateAllDefinitionsInEditor()
+    {
+        var report = DefinitionValidationRunner.RunValidationAndLog();
+        var status = report.HasErrors
+            ? $"Validation failed with {report.ErrorCount} issue(s)."
+            : "Validation passed with 0 issues.";
+        EditorUtility.DisplayDialog("Definition Validation", status, "OK");
+    }
+
     [MenuItem("Tools/Validation/Validate Stat Modifier Links")]
     public static void ValidateStatModifierLinks()
     {
