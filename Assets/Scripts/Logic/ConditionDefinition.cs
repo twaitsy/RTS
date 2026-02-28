@@ -113,6 +113,18 @@ public class ConditionDefinition : ScriptableObject, IIdentifiable
 
     public bool Evaluate(IConditionContext context)
     {
+        if (context == null)
+        {
+            Debug.LogWarning($"Condition '{Id}' evaluated with null context.");
+            return false;
+        }
+
+        if (root == null)
+        {
+            Debug.LogWarning($"Condition '{Id}' has no root node.");
+            return false;
+        }
+
         return Evaluate(context, new HashSet<ConditionDefinition>(), 0);
     }
 
@@ -147,18 +159,24 @@ public class ConditionDefinition : ScriptableObject, IIdentifiable
 
             case ConditionOperator.And:
                 foreach (var child in node.children)
+                {
+                    if (child == null) continue;
                     if (!EvaluateNode(child, context, visited, depth))
                         return false;
+                }
                 return true;
 
             case ConditionOperator.Or:
                 foreach (var child in node.children)
+                {
+                    if (child == null) continue;
                     if (EvaluateNode(child, context, visited, depth))
                         return true;
+                }
                 return false;
 
             case ConditionOperator.Not:
-                if (node.children.Count == 0)
+                if (node.children.Count == 0 || node.children[0] == null)
                     return true;
                 return !EvaluateNode(node.children[0], context, visited, depth);
 

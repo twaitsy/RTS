@@ -132,6 +132,12 @@ public class RequirementDefinition : ScriptableObject, IIdentifiable
 
     public bool IsSatisfied(IRequirementContext context)
     {
+        if (context == null)
+        {
+            Debug.LogWarning($"Requirement '{Id}' evaluated with null context.");
+            return false;
+        }
+
         if (root == null)
         {
             Debug.LogWarning($"Requirement '{Id}' has no root node.");
@@ -171,14 +177,20 @@ public class RequirementDefinition : ScriptableObject, IIdentifiable
 
             case RequirementOperator.And:
                 foreach (var child in node.children)
+                {
+                    if (child == null) continue;
                     if (!EvaluateNode(child, context, visited, depth))
                         return false;
+                }
                 return true;
 
             case RequirementOperator.Or:
                 foreach (var child in node.children)
+                {
+                    if (child == null) continue;
                     if (EvaluateNode(child, context, visited, depth))
                         return true;
+                }
                 return false;
 
             default:
