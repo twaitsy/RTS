@@ -18,14 +18,8 @@ public class WeaponRegistry : DefinitionRegistry<WeaponDefinition>
         base.Awake();
     }
 
-    protected override void ValidateDefinitions(List<WeaponDefinition> defs)
+    protected override void ValidateDefinitions(List<WeaponDefinition> defs, System.Action<string> reportError)
     {
-        if (StatRegistry.Instance == null)
-        {
-            Debug.LogError("WeaponRegistry validation skipped: StatRegistry.Instance is null.");
-            return;
-        }
-
         foreach (var definition in defs)
         {
             if (definition == null)
@@ -34,14 +28,20 @@ public class WeaponRegistry : DefinitionRegistry<WeaponDefinition>
             foreach (var stat in definition.Stats.Entries)
             {
                 if (!StatRegistry.Instance.TryGet(stat.StatId, out _))
-                    Debug.LogError($"{definition.Id} references unknown base stat '{stat.StatId}'.");
+                    reportError($"{definition.Id} references unknown base stat '{stat.StatId}'.");
             }
 
             foreach (var modifier in definition.StatModifiers)
             {
                 if (!StatRegistry.Instance.TryGet(modifier.targetStatId, out _))
-                    Debug.LogError($"{definition.Id} references unknown targetStatId '{modifier.targetStatId}'.");
+                    reportError($"{definition.Id} references unknown targetStatId '{modifier.targetStatId}'.");
             }
         }
+    }
+
+    protected override IEnumerable<string> GetValidationDependencyErrors()
+    {
+        if (StatRegistry.Instance == null)
+            yield return "Missing dependency: StatRegistry.Instance is null.";
     }
 }

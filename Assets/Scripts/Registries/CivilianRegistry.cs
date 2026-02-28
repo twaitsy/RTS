@@ -18,14 +18,8 @@ public class CivilianRegistry : DefinitionRegistry<CivilianDefinition>
         base.Awake();
     }
 
-    protected override void ValidateDefinitions(List<CivilianDefinition> defs)
+    protected override void ValidateDefinitions(List<CivilianDefinition> defs, System.Action<string> reportError)
     {
-        if (StatRegistry.Instance == null)
-        {
-            Debug.LogError("CivilianRegistry validation skipped: StatRegistry.Instance is null.");
-            return;
-        }
-
         foreach (var definition in defs)
         {
             if (definition == null)
@@ -34,8 +28,14 @@ public class CivilianRegistry : DefinitionRegistry<CivilianDefinition>
             foreach (var stat in definition.Stats.Entries)
             {
                 if (!StatRegistry.Instance.TryGet(stat.StatId, out _))
-                    Debug.LogError($"{definition.Id} references unknown base stat '{stat.StatId}'.");
+                    reportError($"{definition.Id} references unknown base stat '{stat.StatId}'.");
             }
         }
+    }
+
+    protected override IEnumerable<string> GetValidationDependencyErrors()
+    {
+        if (StatRegistry.Instance == null)
+            yield return "Missing dependency: StatRegistry.Instance is null.";
     }
 }

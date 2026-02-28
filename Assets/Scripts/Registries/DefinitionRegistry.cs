@@ -1,17 +1,25 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class DefinitionRegistry<T> : MonoBehaviour
+public interface IDefinitionRegistryValidator
+{
+    string RegistryName { get; }
+    void ValidateAll(DefinitionValidationReport report);
+}
+
+public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistryValidator
     where T : ScriptableObject, IIdentifiable
 {
     [SerializeField] protected List<T> definitions = new();
 
     protected Dictionary<string, T> lookup = new();
 
+    public string RegistryName => GetType().Name;
+
     protected virtual void Awake()
     {
         BuildLookup();
-        ValidateDefinitions(definitions);
     }
 
     private void BuildLookup()
@@ -39,6 +47,27 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour
         }
     }
 
+    public void ValidateAll(DefinitionValidationReport report)
+    {
+        foreach (var dependencyError in GetValidationDependencyErrors())
+            report.AddError(RegistryName, dependencyError);
+
+        if (report.HasErrorsForRegistry(RegistryName))
+            return;
+
+        ValidateDefinitions(definitions, message => report.AddError(RegistryName, message));
+    }
+
+    protected virtual IEnumerable<string> GetValidationDependencyErrors()
+    {
+        yield break;
+    }
+
+    protected virtual void ValidateDefinitions(List<T> defs, Action<string> reportError)
+    {
+        // Overridden in child registries
+    }
+
     public T Get(string id)
     {
         if (lookup.TryGetValue(id, out var result))
@@ -57,10 +86,5 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour
         }
 
         return lookup.TryGetValue(id, out definition);
-    }
-
-    protected virtual void ValidateDefinitions(List<T> defs)
-    {
-        // Overridden in child registries
     }
 }

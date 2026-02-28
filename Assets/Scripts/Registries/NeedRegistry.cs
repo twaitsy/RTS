@@ -24,14 +24,8 @@ public class NeedRegistry : DefinitionRegistry<NeedDefinition>
         base.Awake();
     }
 
-    protected override void ValidateDefinitions(List<NeedDefinition> defs)
+    protected override void ValidateDefinitions(List<NeedDefinition> defs, System.Action<string> reportError)
     {
-        if (StatModifierRegistry.Instance == null || StatRegistry.Instance == null)
-        {
-            Debug.LogError("NeedRegistry validation skipped: StatModifierRegistry or StatRegistry instance is null.");
-            return;
-        }
-
         StatModifierLinkValidator.ValidateHostStatModifierLinks(
             defs,
             definition => definition.Id,
@@ -44,6 +38,14 @@ public class NeedRegistry : DefinitionRegistry<NeedDefinition>
             statId => StatRegistry.Instance.Get(statId),
             AllowedNeedDomains,
             "Needs or Mood",
-            Debug.LogError);
+            reportError);
+    }
+
+    protected override IEnumerable<string> GetValidationDependencyErrors()
+    {
+        if (StatModifierRegistry.Instance == null)
+            yield return "Missing dependency: StatModifierRegistry.Instance is null.";
+        if (StatRegistry.Instance == null)
+            yield return "Missing dependency: StatRegistry.Instance is null.";
     }
 }

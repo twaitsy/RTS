@@ -18,14 +18,8 @@ public class ProductionRegistry : DefinitionRegistry<ProductionDefinition>
         base.Awake();
     }
 
-    protected override void ValidateDefinitions(List<ProductionDefinition> defs)
+    protected override void ValidateDefinitions(List<ProductionDefinition> defs, System.Action<string> reportError)
     {
-        if (BuildingRegistry.Instance == null || UnitRegistry.Instance == null || ResourceRegistry.Instance == null || StatRegistry.Instance == null)
-        {
-            Debug.LogError("ProductionRegistry validation skipped: one or more dependent registries are null (BuildingRegistry, UnitRegistry, ResourceRegistry, StatRegistry).");
-            return;
-        }
-
         DefinitionReferenceValidator.ValidateSingleReference(
             defs,
             definition => definition.name,
@@ -33,7 +27,7 @@ public class ProductionRegistry : DefinitionRegistry<ProductionDefinition>
             definition => definition.BuildingId,
             nameof(ProductionDefinition.BuildingId),
             targetId => BuildingRegistry.Instance.TryGet(targetId, out _),
-            Debug.LogError);
+            reportError);
 
         DefinitionReferenceValidator.ValidateSingleReference(
             defs,
@@ -42,7 +36,7 @@ public class ProductionRegistry : DefinitionRegistry<ProductionDefinition>
             definition => definition.UnitId,
             nameof(ProductionDefinition.UnitId),
             targetId => UnitRegistry.Instance.TryGet(targetId, out _),
-            Debug.LogError);
+            reportError);
 
         DefinitionReferenceValidator.ValidateReferenceCollection(
             defs,
@@ -52,7 +46,7 @@ public class ProductionRegistry : DefinitionRegistry<ProductionDefinition>
             amount => amount.ResourceId,
             nameof(ProductionDefinition.Costs),
             targetId => ResourceRegistry.Instance.TryGet(targetId, out _),
-            Debug.LogError);
+            reportError);
 
         DefinitionReferenceValidator.ValidateReferenceCollection(
             defs,
@@ -62,6 +56,18 @@ public class ProductionRegistry : DefinitionRegistry<ProductionDefinition>
             stat => stat.StatId,
             $"{nameof(ProductionDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
             targetId => StatRegistry.Instance.TryGet(targetId, out _),
-            Debug.LogError);
+            reportError);
+    }
+
+    protected override IEnumerable<string> GetValidationDependencyErrors()
+    {
+        if (BuildingRegistry.Instance == null)
+            yield return "Missing dependency: BuildingRegistry.Instance is null.";
+        if (UnitRegistry.Instance == null)
+            yield return "Missing dependency: UnitRegistry.Instance is null.";
+        if (ResourceRegistry.Instance == null)
+            yield return "Missing dependency: ResourceRegistry.Instance is null.";
+        if (StatRegistry.Instance == null)
+            yield return "Missing dependency: StatRegistry.Instance is null.";
     }
 }

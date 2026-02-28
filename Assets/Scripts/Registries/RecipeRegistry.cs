@@ -18,14 +18,8 @@ public class RecipeRegistry : DefinitionRegistry<RecipeDefinition>
         base.Awake();
     }
 
-    protected override void ValidateDefinitions(List<RecipeDefinition> defs)
+    protected override void ValidateDefinitions(List<RecipeDefinition> defs, System.Action<string> reportError)
     {
-        if (BuildingRegistry.Instance == null || JobRegistry.Instance == null || ItemRegistry.Instance == null)
-        {
-            Debug.LogError("RecipeRegistry validation skipped: one or more dependent registries are null (BuildingRegistry, JobRegistry, ItemRegistry).");
-            return;
-        }
-
         DefinitionReferenceValidator.ValidateSingleReference(
             defs,
             definition => definition.name,
@@ -33,7 +27,7 @@ public class RecipeRegistry : DefinitionRegistry<RecipeDefinition>
             definition => definition.BuildingId,
             nameof(RecipeDefinition.BuildingId),
             targetId => BuildingRegistry.Instance.TryGet(targetId, out _),
-            Debug.LogError);
+            reportError);
 
         DefinitionReferenceValidator.ValidateSingleReference(
             defs,
@@ -42,7 +36,7 @@ public class RecipeRegistry : DefinitionRegistry<RecipeDefinition>
             definition => definition.JobId,
             nameof(RecipeDefinition.JobId),
             targetId => JobRegistry.Instance.TryGet(targetId, out _),
-            Debug.LogError);
+            reportError);
 
         DefinitionReferenceValidator.ValidateReferenceCollection(
             defs,
@@ -52,7 +46,7 @@ public class RecipeRegistry : DefinitionRegistry<RecipeDefinition>
             amount => amount.itemId,
             nameof(RecipeDefinition.Inputs),
             targetId => ItemRegistry.Instance.TryGet(targetId, out _),
-            Debug.LogError);
+            reportError);
 
         DefinitionReferenceValidator.ValidateReferenceCollection(
             defs,
@@ -62,6 +56,16 @@ public class RecipeRegistry : DefinitionRegistry<RecipeDefinition>
             amount => amount.itemId,
             nameof(RecipeDefinition.Outputs),
             targetId => ItemRegistry.Instance.TryGet(targetId, out _),
-            Debug.LogError);
+            reportError);
+    }
+
+    protected override IEnumerable<string> GetValidationDependencyErrors()
+    {
+        if (BuildingRegistry.Instance == null)
+            yield return "Missing dependency: BuildingRegistry.Instance is null.";
+        if (JobRegistry.Instance == null)
+            yield return "Missing dependency: JobRegistry.Instance is null.";
+        if (ItemRegistry.Instance == null)
+            yield return "Missing dependency: ItemRegistry.Instance is null.";
     }
 }
