@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: RequiresFarmingOrWorkshop
   m_EditorClassIdentifier: Assembly-CSharp::RequirementDefinition
   id: RequiresFarmingOrWorkshop
+  isIdFinalized: 1
+  finalizedId: RequiresFarmingOrWorkshop
   displayName: 
   icon: {fileID: 0}
   root:
@@ -24,10 +26,34 @@ MonoBehaviour:
       type: {class: RequirementNode, ns: , asm: Assembly-CSharp}
       data:
         op: 1
-        children: []
+        children:
+        - rid: 4222756411427782725
+        - rid: 4222756411427782726
         leafType: 0
         leafData:
           targetId: 
           value: 0
           comparison: 5
         referencedRequirement: {fileID: 0}
+    - rid: 4222756411427782725
+      type: {class: RequirementNode, ns: , asm: Assembly-CSharp}
+      data:
+        op: 0
+        children: []
+        leafType: 0
+        leafData:
+          targetId: 
+          value: 0
+          comparison: 5
+        referencedRequirement: {fileID: 11400000, guid: c9d375c378daf1e4b9318314859474b6, type: 2}
+    - rid: 4222756411427782726
+      type: {class: RequirementNode, ns: , asm: Assembly-CSharp}
+      data:
+        op: 0
+        children: []
+        leafType: 0
+        leafData:
+          targetId: 
+          value: 0
+          comparison: 5
+        referencedRequirement: {fileID: 11400000, guid: 58c2f6288ed622a4187af73c306ca330, type: 2}
