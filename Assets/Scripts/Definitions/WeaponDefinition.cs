@@ -8,6 +8,9 @@ public class WeaponDefinition : ScriptableObject, IIdentifiable
     [SerializeField] private string id;
     public string Id => id;
 
+    [SerializeField, HideInInspector] private bool isIdFinalized;
+    [SerializeField, HideInInspector] private string finalizedId;
+
     [SerializeField] private string displayName;
     public string DisplayName => displayName;
 
@@ -26,8 +29,7 @@ public class WeaponDefinition : ScriptableObject, IIdentifiable
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (string.IsNullOrWhiteSpace(id))
-            id = name;
+        DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
 
         stats ??= new();
         statModifiers ??= new();
