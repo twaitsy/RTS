@@ -59,6 +59,40 @@ public class ProductionRegistry : DefinitionRegistry<ProductionDefinition>
             reportError);
     }
 
+
+    protected override void CollectCustomReferences(List<ProductionDefinition> defs, DefinitionReferenceMap map)
+    {
+        foreach (var definition in defs)
+        {
+            if (definition == null || string.IsNullOrWhiteSpace(definition.Id))
+                continue;
+
+            if (!string.IsNullOrWhiteSpace(definition.BuildingId))
+                map.AddReference(RegistryName, definition.Id, nameof(ProductionDefinition.BuildingId), nameof(BuildingRegistry), definition.BuildingId);
+
+            if (!string.IsNullOrWhiteSpace(definition.UnitId))
+                map.AddReference(RegistryName, definition.Id, nameof(ProductionDefinition.UnitId), nameof(UnitRegistry), definition.UnitId);
+
+            if (definition.Costs != null)
+            {
+                foreach (var cost in definition.Costs)
+                {
+                    if (!string.IsNullOrWhiteSpace(cost.ResourceId))
+                        map.AddReference(RegistryName, definition.Id, nameof(ProductionDefinition.Costs), nameof(ResourceRegistry), cost.ResourceId);
+                }
+            }
+
+            if (definition.Stats?.Entries == null)
+                continue;
+
+            foreach (var stat in definition.Stats.Entries)
+            {
+                if (!string.IsNullOrWhiteSpace(stat.StatId))
+                    map.AddReference(RegistryName, definition.Id, $"{nameof(ProductionDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}", nameof(StatRegistry), stat.StatId);
+            }
+        }
+    }
+
     protected override IEnumerable<string> GetValidationDependencyErrors()
     {
         if (BuildingRegistry.Instance == null)

@@ -31,12 +31,17 @@ public class DefinitionValidationRunner : MonoBehaviour
     public static DefinitionValidationReport RunValidation()
     {
         var report = new DefinitionValidationReport();
+        var referenceMap = new DefinitionReferenceMap();
+        report.ReferenceMap = referenceMap;
         var registries = Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
         foreach (var registry in registries)
         {
-            if (registry is IDefinitionRegistryValidator validator)
-                validator.ValidateAll(report);
+            if (registry is not IDefinitionRegistryValidator validator)
+                continue;
+
+            validator.CollectReferenceMap(referenceMap);
+            validator.ValidateAll(report);
         }
 
         return report;
