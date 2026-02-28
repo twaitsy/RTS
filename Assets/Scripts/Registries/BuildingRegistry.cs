@@ -20,7 +20,17 @@ public class BuildingRegistry : DefinitionRegistry<BuildingDefinition>
         base.Awake();
     }
 
+    public static IReadOnlyCollection<string> GetReferenceFieldPaths()
+    {
+        return GetOrCreateSchema().GetReferenceFieldNames();
+    }
+
     protected override RegistrySchema<BuildingDefinition> GetSchema()
+    {
+        return GetOrCreateSchema();
+    }
+
+    private static RegistrySchema<BuildingDefinition> GetOrCreateSchema()
     {
         if (schema != null)
             return schema;

@@ -18,6 +18,18 @@ public class RegistrySchema<TDefinition> : IRegistrySchema<TDefinition>
     public IReadOnlyList<ReferenceRule<TDefinition>> ReferenceRules => referenceRules;
     public IReadOnlyList<ConstraintRule<TDefinition>> ConstraintRules => constraintRules;
 
+    public IReadOnlyCollection<string> GetReferenceFieldNames()
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var rule in referenceRules)
+        {
+            if (!string.IsNullOrWhiteSpace(rule.FieldName))
+                names.Add(rule.FieldName);
+        }
+
+        return names;
+    }
+
     public RegistrySchema<TDefinition> RequireField(string fieldName, Func<TDefinition, object> selector)
     {
         fieldRules.Add(new FieldRule<TDefinition>(fieldName, selector, true));

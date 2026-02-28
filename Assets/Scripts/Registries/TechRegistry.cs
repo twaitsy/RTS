@@ -21,7 +21,17 @@ public class TechRegistry : DefinitionRegistry<TechDefinition>
         base.Awake();
     }
 
+    public static IReadOnlyCollection<string> GetReferenceFieldPaths()
+    {
+        return GetOrCreateSchema().GetReferenceFieldNames();
+    }
+
     protected override RegistrySchema<TechDefinition> GetSchema()
+    {
+        return GetOrCreateSchema();
+    }
+
+    private static RegistrySchema<TechDefinition> GetOrCreateSchema()
     {
         if (schema != null)
             return schema;
