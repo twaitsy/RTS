@@ -10,7 +10,7 @@ public class DeliverStep : TaskStepDefinition
         if (context == null || context.Actor == null)
         {
             Debug.LogError("DeliverStep: Context or Actor is null.");
-            return TaskStepResult.Terminate();
+            return TaskStepResult.FailTask();
         }
 
         // Find nearest drop-off point
@@ -19,7 +19,7 @@ public class DeliverStep : TaskStepDefinition
         if (dropoff == null)
         {
             Debug.LogWarning($"{context.Actor.name} could not find a drop-off point.");
-            return TaskStepResult.Terminate();
+            return TaskStepResult.FailTask();
         }
 
         Vector3 actorPos = context.Actor.transform.position;
@@ -29,13 +29,13 @@ public class DeliverStep : TaskStepDefinition
         if (sqrDist > ARRIVAL_THRESHOLD * ARRIVAL_THRESHOLD)
         {
             MovementSystem.MoveTo(context.Actor, dropoffPos);
-            return TaskStepResult.Stay();
+            return TaskStepResult.StayOnStep();
         }
 
         // Transfer items once in range
         dropoff.Receive(context.InventoryCount);
         context.InventoryCount = 0;
 
-        return TaskStepResult.Advance();
+        return TaskStepResult.AdvanceStep();
     }
 }

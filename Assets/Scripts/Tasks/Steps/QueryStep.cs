@@ -11,13 +11,13 @@ public class QueryStep : TaskStepDefinition
         if (context == null)
         {
             Debug.LogError("QueryStep: Context is null.");
-            return TaskStepResult.Terminate();
+            return TaskStepResult.FailTask();
         }
 
         if (context.Actor == null)
         {
             Debug.LogError("QueryStep: Context.Actor is null.");
-            return TaskStepResult.Terminate();
+            return TaskStepResult.FailTask();
         }
 
         var target = ResourceLocator.FindNearest(resourceType, context.Actor.transform.position);
@@ -27,10 +27,10 @@ public class QueryStep : TaskStepDefinition
             Debug.LogWarning(
                 $"QueryStep: No target found for '{resourceType}' for actor '{context.Actor.name}'."
             );
-            return TaskStepResult.Terminate();
+            return TaskStepResult.FailTask();
         }
 
         context.Target = target;
-        return TaskStepResult.Advance();
+        return TaskStepResult.AdvanceStep();
     }
 }

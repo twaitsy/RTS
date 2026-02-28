@@ -1,34 +1,34 @@
 Master Setup Guide
 ==================
 
-Last updated: Task step flow semantics clarified (stay/advance/jump/terminate) and task steps aligned
+Last updated: Task step result API renamed to explicit runner actions (StayOnStep/AdvanceStep/Jump/FailTask)
 
 Task runner flow semantics (authoritative):
-- `TaskStepResult` now uses explicit flow states:
-  - `Stay`: keep executing current step next tick (movement/work-in-progress).
-  - `Advance`: move to the next step index.
-  - `JumpTo(index)`: jump to an explicit step index.
-  - `Terminate`: end the whole task immediately.
-- `TaskRunner.Tick()` switches on `TaskStepResult.Flow` instead of using `IsComplete` + `NextStepIndex` overloading.
-- `TaskRunner` now validates current and jump step indices and terminates safely on invalid values.
+- `TaskStepResult` uses explicit action/result constructors:
+  - `StayOnStep()`: keep executing the current step on the next tick.
+  - `AdvanceStep()`: move to the next step index.
+  - `Jump(index)`: jump to an explicit step index.
+  - `FailTask()`: end the whole task immediately.
+- `TaskRunner.Tick()` switches on explicit `TaskStepResult.Flow` values (`StayOnStep`, `AdvanceStep`, `JumpToStep`, `FailTask`).
+- `TaskRunner` validates current and jump step indices and terminates safely on invalid values.
 
 Task step behavior mapping:
 - `QueryStep`
   - Advances when a target is found and stored.
-  - Terminates when no target exists (task fail/stop).
+  - Fails task when no target exists.
 - `MoveToStep`
   - Stays while actor is moving toward target.
   - Advances once actor is within arrival threshold.
-  - Terminates for invalid context/actor/target wiring.
+  - Fails task for invalid context/actor/target wiring.
 - `WorkStep`
   - Stays while work timer remains above zero.
   - Advances after work completion and inventory increment.
 - `DeliverStep`
   - Stays while actor is moving into drop-off range.
   - Advances only after in-range transfer is performed.
-  - Terminates when drop-off cannot be found or context is invalid.
+  - Fails task when drop-off cannot be found or context is invalid.
 - `LoopStep`
-  - Uses explicit jump semantics via `JumpTo(0)`.
+  - Uses explicit jump semantics via `Jump(0)`.
 
 Legacy validation architecture notes:
 - Unity menu: `Tools/Validation/Validate All Definitions`

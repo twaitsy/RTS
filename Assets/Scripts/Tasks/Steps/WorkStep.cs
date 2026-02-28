@@ -16,12 +16,12 @@ public class WorkStep : TaskStepDefinition
 
         // Still working
         if (context.WorkTimer > 0f)
-            return TaskStepResult.Stay();
+            return TaskStepResult.StayOnStep();
 
         // Work finished
         context.WorkTimer = 0f;
         context.InventoryCount++;
 
-        return TaskStepResult.Advance();
+        return TaskStepResult.AdvanceStep();
     }
 }

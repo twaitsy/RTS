@@ -33,16 +33,16 @@ public class TaskRunner
 
         switch (result.StepFlow)
         {
-            case TaskStepResult.Flow.Stay:
+            case TaskStepResult.Flow.StayOnStep:
                 return;
 
-            case TaskStepResult.Flow.Advance:
+            case TaskStepResult.Flow.AdvanceStep:
                 stepIndex++;
                 if (stepIndex >= task.Steps.Count)
                     IsComplete = true;
                 return;
 
-            case TaskStepResult.Flow.Jump:
+            case TaskStepResult.Flow.JumpToStep:
                 if (result.NextStepIndex < 0 || result.NextStepIndex >= task.Steps.Count)
                 {
                     Debug.LogWarning($"TaskRunner: Jump target {result.NextStepIndex} is out of range for task '{task.name}'. Terminating task.");
@@ -53,7 +53,7 @@ public class TaskRunner
                 stepIndex = result.NextStepIndex;
                 return;
 
-            case TaskStepResult.Flow.Terminate:
+            case TaskStepResult.Flow.FailTask:
             default:
                 IsComplete = true;
                 return;
