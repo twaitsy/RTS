@@ -7,26 +7,6 @@ public static class StatIdCanonicalization
         @"^[a-z][a-z0-9]*(?:\.[a-z][a-zA-Z0-9]*)+$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    // Maintained migration table for known legacy and unscoped stat ids.
-    private static readonly Dictionary<string, string> LegacyToCanonical = new(System.StringComparer.Ordinal)
-    {
-        ["combat.maxHealth"] = CanonicalStatIds.Core.MaxHealth,
-        ["locomotion.moveSpeed"] = CanonicalStatIds.Movement.MoveSpeed,
-        ["locomotion.turnSpeed"] = CanonicalStatIds.Movement.TurnSpeed,
-        ["ai.visionRange"] = CanonicalStatIds.Core.VisionRange,
-        ["economy.workSpeed"] = CanonicalStatIds.Production.WorkSpeed,
-        ["economy.carryCapacity"] = CanonicalStatIds.Production.CarryCapacity,
-
-        ["MaxHitPoints"] = CanonicalStatIds.Building.HitPoints,
-        ["BuildTime"] = CanonicalStatIds.Building.BuildTime,
-        ["ConstructionTime"] = CanonicalStatIds.Building.BuildTime,
-        ["HousingCapacity"] = CanonicalStatIds.Building.HousingCapacity,
-        ["ComfortBonus"] = CanonicalStatIds.Building.ComfortBonus,
-        ["StorageCapacity"] = CanonicalStatIds.Production.StorageCapacity,
-        ["UpgradeSlots"] = CanonicalStatIds.Building.UpgradeSlots,
-        ["Weight"] = CanonicalStatIds.Item.Weight
-    };
-
     private static readonly HashSet<string> CanonicalCatalog = new(CanonicalStatIds.Catalog, System.StringComparer.Ordinal);
 
     public static bool IsCanonicalFormat(string statId)
@@ -42,7 +22,7 @@ public static class StatIdCanonicalization
             return false;
         }
 
-        if (LegacyToCanonical.TryGetValue(statId, out canonicalId))
+        if (StatIdCompatibilityMap.LegacyToCanonical.TryGetValue(statId, out canonicalId))
             return true;
 
         canonicalId = statId;
