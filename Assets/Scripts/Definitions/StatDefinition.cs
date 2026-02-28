@@ -45,10 +45,13 @@ public enum StatStackingBehavior
 }
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/Stat")]
-public class StatDefinition : ScriptableObject, IIdentifiable
+public class StatDefinition : ScriptableObject, IIdentifiable, IDefinitionMetadataProvider
 {
     [SerializeField] private string id;
     public string Id => id;
+
+    [SerializeField] private DefinitionMetadata metadata = DefinitionMetadata.Create(DefinitionCategory.Stat);
+    public DefinitionMetadata Metadata => metadata;
 
     [SerializeField, HideInInspector] private bool isIdFinalized;
     [SerializeField, HideInInspector] private string finalizedId;
@@ -84,6 +87,7 @@ public class StatDefinition : ScriptableObject, IIdentifiable
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        DefinitionMetadataUtility.EnsureMetadata(ref metadata, DefinitionCategory.Stat);
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
 
         if (useClamp && maxValue < minValue)

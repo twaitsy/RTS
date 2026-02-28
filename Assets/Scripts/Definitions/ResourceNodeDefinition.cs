@@ -1,10 +1,13 @@
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/ResourceNode")]
-public class ResourceNodeDefinition : ScriptableObject, IIdentifiable
+public class ResourceNodeDefinition : ScriptableObject, IIdentifiable, IDefinitionMetadataProvider
 {
     [SerializeField] private string id;
     public string Id => id;
+
+    [SerializeField] private DefinitionMetadata metadata = DefinitionMetadata.Create(DefinitionCategory.Resource);
+    public DefinitionMetadata Metadata => metadata;
 
     [SerializeField, HideInInspector] private bool isIdFinalized;
     [SerializeField, HideInInspector] private string finalizedId;
@@ -24,6 +27,7 @@ public class ResourceNodeDefinition : ScriptableObject, IIdentifiable
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        DefinitionMetadataUtility.EnsureMetadata(ref metadata, DefinitionCategory.Resource);
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
     }
 #endif
