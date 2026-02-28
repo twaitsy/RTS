@@ -2,9 +2,48 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+public enum ValidationIssueSeverity
+{
+    Info,
+    Warning,
+    Error
+}
+
+public sealed class ValidationIssue
+{
+    public ValidationIssue(
+        string code,
+        ValidationIssueSeverity severity,
+        string registry,
+        string message,
+        string assetPath = null,
+        string assetId = null,
+        string field = null,
+        string suggestedFix = null)
+    {
+        Code = code;
+        Severity = severity;
+        Registry = registry;
+        Message = message;
+        AssetPath = assetPath;
+        AssetId = assetId;
+        Field = field;
+        SuggestedFix = suggestedFix;
+    }
+
+    public string Code { get; }
+    public ValidationIssueSeverity Severity { get; }
+    public string Registry { get; }
+    public string Message { get; }
+    public string AssetPath { get; }
+    public string AssetId { get; }
+    public string Field { get; }
+    public string SuggestedFix { get; }
+}
+
 public class DefinitionValidationReport
 {
-    private readonly Dictionary<string, List<string>> errorsByRegistry = new();
+    private readonly Dictionary<string, List<ValidationIssue>> issuesByRegistry = new();
     private const int HighImpactLimit = 5;
 
     public DefinitionReferenceMap ReferenceMap { get; set; }
@@ -13,36 +52,61 @@ public class DefinitionValidationReport
 
     public bool HasErrors => ErrorCount > 0;
 
+    public IReadOnlyList<ValidationIssue> Issues => issuesByRegistry.Values.SelectMany(x => x).ToList();
+
     public void AddError(string registryName, string message)
     {
-        if (!errorsByRegistry.TryGetValue(registryName, out var errors))
+        AddIssue(new ValidationIssue(
+            code: "VALIDATION_ERROR",
+            severity: ValidationIssueSeverity.Error,
+            registry: registryName,
+            message: message));
+    }
+
+    public void AddIssue(ValidationIssue issue)
+    {
+        var registryName = string.IsNullOrWhiteSpace(issue.Registry) ? "UnknownRegistry" : issue.Registry;
+
+        if (!issuesByRegistry.TryGetValue(registryName, out var issues))
         {
-            errors = new List<string>();
-            errorsByRegistry.Add(registryName, errors);
+            issues = new List<ValidationIssue>();
+            issuesByRegistry.Add(registryName, issues);
         }
 
-        errors.Add(message);
-        ErrorCount++;
+        issues.Add(issue);
+
+        if (issue.Severity == ValidationIssueSeverity.Error)
+            ErrorCount++;
     }
 
     public bool HasErrorsForRegistry(string registryName)
     {
-        return errorsByRegistry.TryGetValue(registryName, out var errors) && errors.Count > 0;
+        return issuesByRegistry.TryGetValue(registryName, out var issues) && issues.Any(issue => issue.Severity == ValidationIssueSeverity.Error);
     }
 
     public string BuildSummary()
     {
-        if (!HasErrors)
+        if (!Issues.Any())
             return "[Validation] Full definition validation passed with 0 issues.";
 
         var builder = new StringBuilder();
-        builder.AppendLine($"[Validation] Full definition validation failed with {ErrorCount} issue(s) across {errorsByRegistry.Count} registries.");
+        builder.AppendLine($"[Validation] Full definition validation found {Issues.Count} issue(s) ({ErrorCount} error(s)) across {issuesByRegistry.Count} registries.");
 
-        foreach (var pair in errorsByRegistry)
+        foreach (var pair in issuesByRegistry.OrderBy(entry => entry.Key))
         {
             builder.AppendLine($"- {pair.Key}: {pair.Value.Count} issue(s)");
-            foreach (var error in pair.Value)
-                builder.AppendLine($"  • {error}");
+            foreach (var issue in pair.Value)
+            {
+                builder.AppendLine($"  • [{issue.Severity}] ({issue.Code}) {issue.Message}");
+
+                if (!string.IsNullOrWhiteSpace(issue.AssetPath) || !string.IsNullOrWhiteSpace(issue.AssetId) || !string.IsNullOrWhiteSpace(issue.Field))
+                {
+                    builder.AppendLine($"    asset: {issue.AssetPath ?? "n/a"}, id: {issue.AssetId ?? "n/a"}, field: {issue.Field ?? "n/a"}");
+                }
+
+                if (!string.IsNullOrWhiteSpace(issue.SuggestedFix))
+                    builder.AppendLine($"    suggested fix: {issue.SuggestedFix}");
+            }
         }
 
         AppendReferenceInsights(builder);
