@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class UnitRegistry : DefinitionRegistry<UnitDefinition>
 {
+    private static RegistrySchema<UnitDefinition> schema;
+
     public static UnitRegistry Instance { get; private set; }
 
     protected override void Awake()
@@ -18,49 +20,50 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         base.Awake();
     }
 
+    protected override RegistrySchema<UnitDefinition> GetSchema()
+    {
+        if (schema != null)
+            return schema;
+
+        schema = new RegistrySchema<UnitDefinition>()
+            .RequireField(nameof(UnitDefinition.Id), definition => definition.Id)
+            .RequireField(nameof(UnitDefinition.DisplayName), definition => definition.DisplayName)
+            .RequireField(nameof(UnitDefinition.Stats), definition => definition.Stats)
+            .OptionalField(nameof(UnitDefinition.WeaponTypeId), definition => definition.WeaponTypeId)
+            .OptionalField(nameof(UnitDefinition.ArmorTypeId), definition => definition.ArmorTypeId)
+            .OptionalField(nameof(UnitDefinition.RoleId), definition => definition.RoleId)
+            .AddReference(
+                $"{nameof(UnitDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
+                definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.Stats.Entries, stat => stat.StatId),
+                false,
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(UnitDefinition.StatModifiers),
+                definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.StatModifiers, modifier => modifier.targetStatId),
+                false,
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.WeaponTypeId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.WeaponTypeId), false, new ReferenceTargetRule(nameof(WeaponTypeRegistry), targetId => WeaponTypeRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.ArmorTypeId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.ArmorTypeId), false, new ReferenceTargetRule(nameof(ArmorTypeRegistry), targetId => ArmorTypeRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.RoleId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.RoleId), false, new ReferenceTargetRule(nameof(RoleRegistry), targetId => RoleRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.TraitIds), definition => definition.TraitIds, false, new ReferenceTargetRule(nameof(TraitRegistry), targetId => TraitRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.StartingSkillIds), definition => definition.StartingSkillIds, false, new ReferenceTargetRule(nameof(SkillRegistry), targetId => SkillRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.NeedsProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.NeedsProfileId), false, new ReferenceTargetRule(nameof(CivilianNeedsProfileRegistry), targetId => CivilianNeedsProfileRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.MoodModifierIds), definition => definition.MoodModifierIds, false, new ReferenceTargetRule(nameof(MoodRegistry), targetId => MoodRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.StartingItemIds), definition => definition.StartingItemIds, false, new ReferenceTargetRule(nameof(ItemRegistry), targetId => ItemRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.JobIds), definition => definition.JobIds, false, new ReferenceTargetRule(nameof(JobRegistry), targetId => JobRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.AIGoalIds), definition => definition.AIGoalIds, false, new ReferenceTargetRule(nameof(AIGoalRegistry), targetId => AIGoalRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.AIPriorityId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.AIPriorityId), false, new ReferenceTargetRule(nameof(AIPriorityRegistry), targetId => AIPriorityRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.PerceptionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.PerceptionProfileId), false, new ReferenceTargetRule(nameof(AIPerceptionRegistry), targetId => AIPerceptionRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.DefaultFactionId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.DefaultFactionId), false, new ReferenceTargetRule(nameof(FactionRegistry), targetId => FactionRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.Costs), definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.Costs, amount => amount.ResourceId), false, new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.UpkeepCosts), definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.UpkeepCosts, amount => amount.ResourceId), false, new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance.TryGet(targetId, out _)));
+
+        return schema;
+    }
+
     protected override void ValidateDefinitions(List<UnitDefinition> defs, System.Action<string> reportError)
     {
-        DefinitionReferenceValidator.ValidateReferenceCollection(
-            defs,
-            definition => definition.name,
-            definition => definition.Id,
-            definition => definition.Stats.Entries,
-            stat => stat.StatId,
-            $"{nameof(UnitDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
-            targetId => StatRegistry.Instance.TryGet(targetId, out _),
-            reportError);
-
-        foreach (var definition in defs)
-        {
-            if (definition == null)
-                continue;
-
-            foreach (var modifier in definition.StatModifiers)
-            {
-                if (string.IsNullOrWhiteSpace(modifier.targetStatId))
-                    continue;
-
-                if (!StatRegistry.Instance.TryGet(modifier.targetStatId, out _))
-                    reportError($"[Validation] Asset '{definition.name}' (id: '{definition.Id}') field '{nameof(UnitDefinition.StatModifiers)}' references missing target id '{modifier.targetStatId}'.");
-            }
-        }
-
-        DefinitionReferenceValidator.ValidateSingleReference(defs, definition => definition.name, definition => definition.Id, definition => definition.WeaponTypeId, nameof(UnitDefinition.WeaponTypeId), targetId => WeaponTypeRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateSingleReference(defs, definition => definition.name, definition => definition.Id, definition => definition.ArmorTypeId, nameof(UnitDefinition.ArmorTypeId), targetId => ArmorTypeRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateSingleReference(defs, definition => definition.name, definition => definition.Id, definition => definition.RoleId, nameof(UnitDefinition.RoleId), targetId => RoleRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateReferenceList(defs, definition => definition.name, definition => definition.Id, definition => definition.TraitIds, nameof(UnitDefinition.TraitIds), targetId => TraitRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateReferenceList(defs, definition => definition.name, definition => definition.Id, definition => definition.StartingSkillIds, nameof(UnitDefinition.StartingSkillIds), targetId => SkillRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateSingleReference(defs, definition => definition.name, definition => definition.Id, definition => definition.NeedsProfileId, nameof(UnitDefinition.NeedsProfileId), targetId => CivilianNeedsProfileRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateReferenceList(defs, definition => definition.name, definition => definition.Id, definition => definition.MoodModifierIds, nameof(UnitDefinition.MoodModifierIds), targetId => MoodRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateReferenceList(defs, definition => definition.name, definition => definition.Id, definition => definition.StartingItemIds, nameof(UnitDefinition.StartingItemIds), targetId => ItemRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateReferenceList(defs, definition => definition.name, definition => definition.Id, definition => definition.JobIds, nameof(UnitDefinition.JobIds), targetId => JobRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateReferenceList(defs, definition => definition.name, definition => definition.Id, definition => definition.AIGoalIds, nameof(UnitDefinition.AIGoalIds), targetId => AIGoalRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateSingleReference(defs, definition => definition.name, definition => definition.Id, definition => definition.AIPriorityId, nameof(UnitDefinition.AIPriorityId), targetId => AIPriorityRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateSingleReference(defs, definition => definition.name, definition => definition.Id, definition => definition.PerceptionProfileId, nameof(UnitDefinition.PerceptionProfileId), targetId => AIPerceptionRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateSingleReference(defs, definition => definition.name, definition => definition.Id, definition => definition.DefaultFactionId, nameof(UnitDefinition.DefaultFactionId), targetId => FactionRegistry.Instance.TryGet(targetId, out _), reportError);
-
-        DefinitionReferenceValidator.ValidateReferenceCollection(defs, definition => definition.name, definition => definition.Id, definition => definition.Costs, amount => amount.ResourceId, nameof(UnitDefinition.Costs), targetId => ResourceRegistry.Instance.TryGet(targetId, out _), reportError);
-        DefinitionReferenceValidator.ValidateReferenceCollection(defs, definition => definition.name, definition => definition.Id, definition => definition.UpkeepCosts, amount => amount.ResourceId, nameof(UnitDefinition.UpkeepCosts), targetId => ResourceRegistry.Instance.TryGet(targetId, out _), reportError);
+        // Intentionally reserved for bespoke Unit validation rules.
     }
 
     protected override IEnumerable<string> GetValidationDependencyErrors()

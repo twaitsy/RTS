@@ -4,6 +4,7 @@ using UnityEngine;
 public class TechRegistry : DefinitionRegistry<TechDefinition>
 {
     private static readonly HashSet<StatDomain> AnyDomain = new();
+    private static RegistrySchema<TechDefinition> schema;
 
     public static TechRegistry Instance { get; private set; }
 
@@ -18,6 +19,46 @@ public class TechRegistry : DefinitionRegistry<TechDefinition>
 
         Instance = this;
         base.Awake();
+    }
+
+    protected override RegistrySchema<TechDefinition> GetSchema()
+    {
+        if (schema != null)
+            return schema;
+
+        schema = new RegistrySchema<TechDefinition>()
+            .RequireField(nameof(TechDefinition.Id), definition => definition.Id)
+            .RequireField(nameof(TechDefinition.Stats), definition => definition.Stats)
+            .OptionalField(nameof(TechDefinition.StatModifiers), definition => definition.StatModifiers)
+            .OptionalField(nameof(TechDefinition.RequiredTechIds), definition => definition.RequiredTechIds)
+            .OptionalField(nameof(TechDefinition.Costs), definition => definition.Costs)
+            .AddReference(
+                $"{nameof(TechDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
+                definition => RegistrySchema<TechDefinition>.ReferenceCollection(definition.Stats.Entries, stat => stat.StatId),
+                false,
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(TechDefinition.StatModifiers),
+                definition => RegistrySchema<TechDefinition>.ReferenceCollection(definition.StatModifiers, modifier => modifier.targetStatId),
+                false,
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(TechDefinition.RequiredTechIds),
+                definition => definition.RequiredTechIds,
+                false,
+                new ReferenceTargetRule(nameof(TechRegistry), targetId => TechRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(TechDefinition.Costs),
+                definition => RegistrySchema<TechDefinition>.ReferenceCollection(definition.Costs, amount => amount.ResourceId),
+                false,
+                new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(TechDefinition.StatModifierIds),
+                definition => definition.StatModifierIds,
+                false,
+                new ReferenceTargetRule(nameof(StatModifierRegistry), targetId => StatModifierRegistry.Instance.TryGet(targetId, out _)));
+
+        return schema;
     }
 
     protected override void ValidateDefinitions(List<TechDefinition> defs, System.Action<string> reportError)
@@ -43,5 +84,7 @@ public class TechRegistry : DefinitionRegistry<TechDefinition>
             yield return "Missing dependency: StatModifierRegistry.Instance is null.";
         if (StatRegistry.Instance == null)
             yield return "Missing dependency: StatRegistry.Instance is null.";
+        if (ResourceRegistry.Instance == null)
+            yield return "Missing dependency: ResourceRegistry.Instance is null.";
     }
 }

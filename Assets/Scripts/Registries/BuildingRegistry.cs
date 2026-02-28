@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class BuildingRegistry : DefinitionRegistry<BuildingDefinition>
 {
+    private static RegistrySchema<BuildingDefinition> schema;
+
     public static BuildingRegistry Instance { get; private set; }
 
     protected override void Awake()
@@ -18,27 +20,33 @@ public class BuildingRegistry : DefinitionRegistry<BuildingDefinition>
         base.Awake();
     }
 
+    protected override RegistrySchema<BuildingDefinition> GetSchema()
+    {
+        if (schema != null)
+            return schema;
+
+        schema = new RegistrySchema<BuildingDefinition>()
+            .RequireField(nameof(BuildingDefinition.Id), definition => definition.Id)
+            .RequireField(nameof(BuildingDefinition.DisplayName), definition => definition.DisplayName)
+            .RequireField(nameof(BuildingDefinition.Stats), definition => definition.Stats)
+            .OptionalField(nameof(BuildingDefinition.BuildCosts), definition => definition.BuildCosts)
+            .AddReference(
+                $"{nameof(BuildingDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
+                definition => RegistrySchema<BuildingDefinition>.ReferenceCollection(definition.Stats.Entries, stat => stat.StatId),
+                false,
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(BuildingDefinition.BuildCosts),
+                definition => RegistrySchema<BuildingDefinition>.ReferenceCollection(definition.BuildCosts, amount => amount.ResourceId),
+                false,
+                new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance.TryGet(targetId, out _)));
+
+        return schema;
+    }
+
     protected override void ValidateDefinitions(List<BuildingDefinition> defs, System.Action<string> reportError)
     {
-        DefinitionReferenceValidator.ValidateReferenceCollection(
-            defs,
-            definition => definition.name,
-            definition => definition.Id,
-            definition => definition.Stats.Entries,
-            stat => stat.StatId,
-            $"{nameof(BuildingDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
-            targetId => StatRegistry.Instance.TryGet(targetId, out _),
-            reportError);
-
-        DefinitionReferenceValidator.ValidateReferenceCollection(
-            defs,
-            definition => definition.name,
-            definition => definition.Id,
-            definition => definition.BuildCosts,
-            amount => amount.ResourceId,
-            nameof(BuildingDefinition.BuildCosts),
-            targetId => ResourceRegistry.Instance.TryGet(targetId, out _),
-            reportError);
+        // Intentionally reserved for bespoke Building validation rules.
     }
 
     protected override IEnumerable<string> GetValidationDependencyErrors()
