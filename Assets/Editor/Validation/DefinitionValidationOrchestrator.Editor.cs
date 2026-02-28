@@ -1,11 +1,12 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 
-public static partial class DefinitionValidationOrchestrator
+public static class DefinitionValidationEditorBridge
 {
-    static partial void ExecuteEditorValidators(DefinitionValidationReport report)
+    public static void Run(DefinitionValidationReport report)
     {
-        var orderedEditorValidators = new List<System.Action<DefinitionValidationReport>>
+        var orderedEditorValidators = new List<Action<DefinitionValidationReport>>
         {
             StatIdValidationMenu.AppendCanonicalStatIdIssues,
             DefinitionValidationMenu.AppendStatModifierLinkIssues,

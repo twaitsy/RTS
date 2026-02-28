@@ -35,3 +35,8 @@ Rollout steps:
 3) Enable `Tools/Validation/Strict Canonical Stat IDs`.
 4) Re-run `Tools/Validation/Validate All Definitions` and resolve reported issues by asset path/property path/code.
 5) Use `DefinitionValidationMenu.ValidateAllForCI` in CI so batch mode matches runtime/editor validation behavior.
+
+Assembly-safe editor validation bridge:
+- Runtime orchestrator no longer uses a cross-assembly partial method implementation for editor validators.
+- `DefinitionValidationOrchestrator` now calls `DefinitionValidationEditorBridge.Run(...)` through reflection inside `#if UNITY_EDITOR`, preventing CS0759 when editor/runtime scripts compile in separate assemblies.
+- Keep `Assets/Editor/Validation/DefinitionValidationOrchestrator.Editor.cs` present so editor-only validators remain active from `Tools/Validation/Validate All Definitions`.
