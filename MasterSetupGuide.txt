@@ -1,7 +1,21 @@
 Master Setup Guide
 ==================
 
-Last updated: Unified stat migration orchestration and single supported command
+Last updated: Strict canonical stat ID mode + migration-only compatibility mapping
+
+Strict canonical stat ID mode (project-scoped editor setting):
+- Toggle via Unity menu: `Tools/Validation/Strict Canonical Stat IDs`.
+- Setting is stored per project/editor via `EditorPrefs`.
+- Default is OFF for rollout safety.
+
+Strict mode behavior:
+- Validation no longer treats legacy compatibility IDs as acceptable references.
+- Validation errors now include:
+  - asset path,
+  - serialized property path,
+  - required canonical stat ID,
+  - migration command to run.
+- Compatibility mapping is reserved for migration command flows only.
 
 Stat migration workflow (single supported command):
 - Run Unity menu command: `Tools/Validation/Migrate Legacy Stat IDs`.
@@ -10,6 +24,13 @@ Stat migration workflow (single supported command):
   2) canonical statId rewrite,
   3) cleanup/removals.
 - Migration output now logs per-phase counts so teams can verify parity and impact.
+
+Rollout steps:
+1) Run `Tools/Validation/Migrate Legacy Stat IDs` and commit migrated assets.
+2) Run `Tools/Validation/Validate Canonical Stat IDs` with strict mode OFF to baseline remaining issues.
+3) Enable `Tools/Validation/Strict Canonical Stat IDs`.
+4) Re-run validation and fix remaining references exactly as reported (asset path + property path + required canonical ID).
+5) Keep strict mode enabled in team workflow/CI once project is clean.
 
 Deprecation note:
 - The old `Tools/DataDrivenRTS/Migrate Legacy Stats To Canonical Entries` menu path is deprecated and removed after parity confirmation.
