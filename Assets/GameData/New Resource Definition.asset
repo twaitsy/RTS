@@ -16,13 +16,5 @@ MonoBehaviour:
   displayName: 
   icon: {fileID: 0}
   stats:
-    entries:
-    - statId: 
-      value: 0
-  statModifiers:
-  - targetStatId: 
-    value: 0
-    operation: 0
-  - targetStatId: 
-    value: 0
-    operation: 0
+    entries: []
+  statModifiers: []

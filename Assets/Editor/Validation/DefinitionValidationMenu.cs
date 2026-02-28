@@ -46,6 +46,51 @@ public static class DefinitionValidationMenu
         EditorUtility.DisplayDialog("Validation", $"Validation found {errors.Count} issue(s). Check Console for details.", "OK");
     }
 
+    // CI/batch-mode entry point for all editor validations.
+    public static void ValidateAllForCI()
+    {
+        StatIdValidationMenu.ValidateCanonicalStatIdsForCI();
+        ValidateStatModifierLinksForCI();
+    }
+
+    public static void ValidateStatModifierLinksForCI()
+    {
+        var stats = LoadById<StatDefinition>();
+        var statModifiers = LoadById<StatModifierDefinition>();
+
+        var errors = new List<string>();
+
+        StatModifierLinkValidator.ValidateStatModifierDefinitions(
+            statModifiers.Values,
+            statId => stats.ContainsKey(statId),
+            message => errors.Add(message));
+
+        ValidateHosts(
+            LoadAll<NeedDefinition>(),
+            statModifiers,
+            stats,
+            new HashSet<StatDomain> { StatDomain.Needs, StatDomain.Mood },
+            need => need.AllowAnyModifierDomain,
+            "Needs or Mood",
+            errors);
+
+        ValidateHosts(LoadAll<DiseaseDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
+        ValidateHosts(LoadAll<EffectDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
+        ValidateHosts(LoadAll<EventDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
+        ValidateHosts(LoadAll<TechDefinition>(), statModifiers, stats, new HashSet<StatDomain>(), _ => true, "any domain", errors);
+
+        if (errors.Count == 0)
+        {
+            Debug.Log("[Validation] Stat modifier link CI validation passed.");
+            return;
+        }
+
+        foreach (var error in errors)
+            Debug.LogError(error);
+
+        throw new System.Exception($"Stat modifier link validation failed with {errors.Count} issue(s).");
+    }
+
     private static void ValidateHosts<THost>(
         List<THost> hosts,
         Dictionary<string, StatModifierDefinition> statModifiers,

@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e657c4ae6d944da4b8eecf33189fe137, type: 3}
-  m_Name: economy.carryCapacity
+  m_Name: production.carryCapacity
   m_EditorClassIdentifier: Assembly-CSharp::StatDefinition
-  id: economy.carryCapacity
+  id: production.carryCapacity
   displayName: Carry Capacity
   domain: 2
   valueType: 0

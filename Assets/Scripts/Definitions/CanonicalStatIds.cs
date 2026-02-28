@@ -2,13 +2,13 @@ using System.Collections.Generic;
 
 public static class CanonicalStatIds
 {
-    // Legacy ids kept for compatibility with existing assets.
-    public const string MaxHealth = "combat.maxHealth";
-    public const string MoveSpeed = "locomotion.moveSpeed";
-    public const string TurnSpeed = "locomotion.turnSpeed";
-    public const string VisionRange = "ai.visionRange";
-    public const string WorkSpeed = "economy.workSpeed";
-    public const string CarryCapacity = "economy.carryCapacity";
+    // Canonical IDs used by migration helpers and legacy field conversion.
+    public const string MaxHealth = Core.MaxHealth;
+    public const string MoveSpeed = Movement.MoveSpeed;
+    public const string TurnSpeed = Movement.TurnSpeed;
+    public const string VisionRange = Core.VisionRange;
+    public const string WorkSpeed = Production.WorkSpeed;
+    public const string CarryCapacity = Production.CarryCapacity;
     public const string BaseDamage = "combat.baseDamage";
     public const string AttackSpeed = "combat.attackSpeed";
     public const string AttackRange = "combat.attackRange";
@@ -198,11 +198,14 @@ public static class CanonicalStatIds
     public static class Building
     {
         public const string BuildTime = "building.buildTime";
+        public const string ConstructionTime = "building.constructionTime";
         public const string HitPoints = "building.hitPoints";
+        public const string ComfortBonus = "building.comfortBonus";
         public const string FireResistance = "building.fireResistance";
         public const string EnergyConsumption = "building.energyConsumption";
         public const string EnergyProduction = "building.energyProduction";
         public const string HousingCapacity = "building.housingCapacity";
+        public const string UpgradeSlots = "building.upgradeSlots";
         public const string WorkerSlots = "building.workerSlots";
         public const string ProductionSlots = "building.productionSlots";
         public const string PollutionOutput = "building.pollutionOutput";
@@ -323,7 +326,7 @@ public static class CanonicalStatIds
         Skills.XPGainRate, Skills.SkillEfficiency,
         AI.PerceptionRadiusEnemy, AI.ReactionTime, AI.DecisionFrequency,
         Social.FriendshipGainRate, Social.SocialInfluence,
-        Building.BuildTime, Building.HitPoints,
+        Building.BuildTime, Building.ConstructionTime, Building.HitPoints, Building.ComfortBonus, Building.HousingCapacity, Building.UpgradeSlots,
         Weather.TemperatureDay, Weather.Humidity, Weather.WindSpeedBreeze,
         Biome.WildlifeDensity, Biome.FertilityForest,
         Item.Durability, Item.WeaponDamage,
