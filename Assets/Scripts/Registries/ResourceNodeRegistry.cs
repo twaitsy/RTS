@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ResourceNodeRegistry : DefinitionRegistry<ResourceNodeDefinition>
@@ -15,5 +16,23 @@ public class ResourceNodeRegistry : DefinitionRegistry<ResourceNodeDefinition>
 
         Instance = this;
         base.Awake();
+    }
+
+    protected override void ValidateDefinitions(List<ResourceNodeDefinition> defs)
+    {
+        if (ResourceRegistry.Instance == null)
+        {
+            Debug.LogError("ResourceNodeRegistry validation skipped: ResourceRegistry.Instance is null.");
+            return;
+        }
+
+        DefinitionReferenceValidator.ValidateSingleReference(
+            defs,
+            definition => definition.name,
+            definition => definition.Id,
+            definition => definition.ResourceId,
+            nameof(ResourceNodeDefinition.ResourceId),
+            targetId => ResourceRegistry.Instance.TryGet(targetId, out _),
+            Debug.LogError);
     }
 }
