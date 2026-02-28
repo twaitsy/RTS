@@ -1,0 +1,9 @@
+Master Setup Guide
+==================
+
+Last updated: ID canonicalization pass
+
+- Stat and definition IDs are standardized to dot-separated notation.
+- Canonical example format: core.maxHealth, combat.baseDamage, production.workSpeed.
+- Legacy '-' and '_' IDs are treated as migration inputs only.
+- Run validation from Unity menu: Tools/Validation/Validate Canonical Stat IDs.

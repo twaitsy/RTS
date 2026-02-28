@@ -77,7 +77,7 @@ public sealed class DefinitionIdMigrationTool : EditorWindow
 
         if (!DefinitionIdLifecycle.IsValidIdFormat(newId))
         {
-            EditorUtility.DisplayDialog("Definition ID Migration", "Invalid ID format after normalization. Allowed pattern: lowercase alphanumeric segments separated by '.', '_' or '-'.", "OK");
+            EditorUtility.DisplayDialog("Definition ID Migration", "Invalid ID format after normalization. Allowed pattern: lowercase domain + dot-separated alphanumeric segments (example: 'core.maxHealth').", "OK");
             return;
         }
 
