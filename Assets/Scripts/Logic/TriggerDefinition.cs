@@ -132,8 +132,11 @@ public class TriggerDefinition : ScriptableObject, IIdentifiable
                 return false;
         }
 
-        if (requiredTags.Count > 0 && target is ITagHolder tagHolder)
+        if (requiredTags.Count > 0)
         {
+            if (target is not ITagHolder tagHolder)
+                return false;
+
             bool matches = false;
             foreach (var tag in requiredTags)
             {
