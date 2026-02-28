@@ -21,24 +21,42 @@ public class TaskRunner
         if (IsComplete || task.Steps.Count == 0)
             return;
 
-        var step = task.Steps[stepIndex];
-        var result = step.Execute(context);
-
-        if (result.IsComplete)
+        if (stepIndex < 0 || stepIndex >= task.Steps.Count)
         {
+            Debug.LogWarning($"TaskRunner: Invalid step index {stepIndex}. Terminating task '{task.name}'.");
             IsComplete = true;
             return;
         }
 
-        if (result.NextStepIndex >= 0)
+        var step = task.Steps[stepIndex];
+        var result = step.Execute(context);
+
+        switch (result.StepFlow)
         {
-            stepIndex = result.NextStepIndex;
-        }
-        else
-        {
-            stepIndex++;
-            if (stepIndex >= task.Steps.Count)
+            case TaskStepResult.Flow.Stay:
+                return;
+
+            case TaskStepResult.Flow.Advance:
+                stepIndex++;
+                if (stepIndex >= task.Steps.Count)
+                    IsComplete = true;
+                return;
+
+            case TaskStepResult.Flow.Jump:
+                if (result.NextStepIndex < 0 || result.NextStepIndex >= task.Steps.Count)
+                {
+                    Debug.LogWarning($"TaskRunner: Jump target {result.NextStepIndex} is out of range for task '{task.name}'. Terminating task.");
+                    IsComplete = true;
+                    return;
+                }
+
+                stepIndex = result.NextStepIndex;
+                return;
+
+            case TaskStepResult.Flow.Terminate:
+            default:
                 IsComplete = true;
+                return;
         }
     }
 }

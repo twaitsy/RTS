@@ -1,9 +1,18 @@
 public struct TaskStepResult
 {
-    public bool IsComplete;
-    public int NextStepIndex; // -1 = go to next step automatically
+    public enum Flow
+    {
+        Stay,
+        Advance,
+        Jump,
+        Terminate
+    }
 
-    public static TaskStepResult Continue() => new TaskStepResult { IsComplete = false, NextStepIndex = -1 };
-    public static TaskStepResult Jump(int index) => new TaskStepResult { IsComplete = false, NextStepIndex = index };
-    public static TaskStepResult Complete() => new TaskStepResult { IsComplete = true };
+    public Flow StepFlow;
+    public int NextStepIndex;
+
+    public static TaskStepResult Stay() => new TaskStepResult { StepFlow = Flow.Stay, NextStepIndex = -1 };
+    public static TaskStepResult Advance() => new TaskStepResult { StepFlow = Flow.Advance, NextStepIndex = -1 };
+    public static TaskStepResult JumpTo(int index) => new TaskStepResult { StepFlow = Flow.Jump, NextStepIndex = index };
+    public static TaskStepResult Terminate() => new TaskStepResult { StepFlow = Flow.Terminate, NextStepIndex = -1 };
 }
