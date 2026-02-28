@@ -10,7 +10,7 @@ using UnityEditor;
 public static class DefinitionIdLifecycle
 {
 #if UNITY_EDITOR
-    private static readonly Regex IdFormatRegex = new("^[a-z0-9]+([._-][a-z0-9]+)*$", RegexOptions.Compiled);
+    private static readonly Regex IdFormatRegex = new("^[a-z0-9]+(?:\\.[a-zA-Z0-9]+)*$", RegexOptions.Compiled);
 
     public static bool IsValidIdFormat(string id)
     {
@@ -22,29 +22,49 @@ public static class DefinitionIdLifecycle
         if (string.IsNullOrWhiteSpace(raw))
             return string.Empty;
 
-        var input = raw.Trim().ToLowerInvariant();
+        var input = raw.Trim();
         var builder = new StringBuilder(input.Length);
-        var pendingSeparator = false;
+        var segment = new StringBuilder();
+        var hasSegment = false;
+
+        void FlushSegment(bool isFirstSegment)
+        {
+            if (segment.Length == 0)
+                return;
+
+            if (builder.Length > 0)
+                builder.Append('.');
+
+            if (isFirstSegment)
+            {
+                builder.Append(segment.ToString().ToLowerInvariant());
+            }
+            else
+            {
+                builder.Append(char.ToLowerInvariant(segment[0]));
+                if (segment.Length > 1)
+                    builder.Append(segment.ToString(1, segment.Length - 1));
+            }
+
+            segment.Clear();
+        }
 
         foreach (char c in input)
         {
             if (char.IsLetterOrDigit(c))
             {
-                if (pendingSeparator && builder.Length > 0)
-                    builder.Append('-');
-
-                builder.Append(c);
-                pendingSeparator = false;
+                segment.Append(c);
                 continue;
             }
 
             if (c is '.' or '_' or '-' || char.IsWhiteSpace(c))
             {
-                if (builder.Length > 0)
-                    pendingSeparator = true;
+                FlushSegment(!hasSegment);
+                hasSegment |= builder.Length > 0;
             }
         }
 
+        FlushSegment(!hasSegment);
         return builder.ToString();
     }
 
@@ -76,7 +96,7 @@ public static class DefinitionIdLifecycle
 
             if (!IsValidIdFormat(candidate))
             {
-                Debug.LogWarning($"[Definition IDs] '{asset.name}' produced invalid ID '{candidate}' after normalization. Allowed pattern: lowercase alphanumeric segments separated by '.', '_' or '-'.", asset);
+                Debug.LogWarning($"[Definition IDs] '{asset.name}' produced invalid ID '{candidate}' after normalization. Allowed pattern: lowercase domain + dot-separated alphanumeric segments (example: 'core.maxHealth').", asset);
                 return;
             }
 

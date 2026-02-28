@@ -14,7 +14,7 @@ Definition IDs are now treated as stable keys once they are created.
 
 1. Open **Tools → Data → Definition ID Migration**.
 2. Select the target definition asset.
-3. Enter the new ID (must match: lowercase alphanumeric segments separated by `.`, `_`, or `-`).
+3. Enter the new ID (must match canonical format: lowercase domain + dot-separated alphanumeric segments, e.g. `core.maxHealth`).
 4. Run **Validate + Migrate**.
 
 The tool blocks migration when:
@@ -24,3 +24,10 @@ The tool blocks migration when:
 - The new ID is already used by another definition.
 
 When migration succeeds, the tool updates the target definition ID and all matching serialized `*id` string references across ScriptableObject assets in one operation.
+
+
+## Stat ID Canonical Format
+
+- Canonical stat IDs use dot-separated segments (example: `combat.baseDamage`).
+- Legacy separators (`-` and `_`) are treated as migration inputs and are normalized to canonical dot notation.
+- Validation and migration tooling now resolve historical lowercase/legacy variants to the canonical catalog IDs.

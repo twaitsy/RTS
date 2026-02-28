@@ -1,0 +1,10 @@
+Scene Required Scripts
+======================
+
+Last updated: ID canonicalization pass
+
+Validation / migration scripts relevant to stat ID canonicalization:
+- Assets/Scripts/Validation/StatIdCanonicalization.cs
+- Assets/Scripts/Validation/StatIdCompatibilityMap.cs
+- Assets/Scripts/Editor/StatIdValidationMenu.cs
+- Assets/Scripts/Editor/CanonicalStatIdsGenerator.cs
