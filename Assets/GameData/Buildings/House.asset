@@ -22,11 +22,11 @@ MonoBehaviour:
     amount: 20
   stats:
     entries:
-    - statId: MaxHitPoints
+    - statId: building.hitPoints
       value: 500
-    - statId: BuildTime
+    - statId: building.buildTime
       value: 6
-    - statId: HousingCapacity
+    - statId: building.housingCapacity
       value: 4
-    - statId: ComfortBonus
+    - statId: building.comfortBonus
       value: 0.1
