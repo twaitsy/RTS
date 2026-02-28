@@ -13,12 +13,14 @@ MonoBehaviour:
   m_Name: House
   m_EditorClassIdentifier: Assembly-CSharp::BuildingDefinition
   id: House
+  isIdFinalized: 1
+  finalizedId: House
   displayName: 
   icon: {fileID: 0}
   buildCosts:
-  - resourceId: Wood
+  - resourceId: resource.wood
     amount: 20
-  - resourceId: Stone
+  - resourceId: resource.stone
     amount: 20
   stats:
     entries:
@@ -30,3 +32,5 @@ MonoBehaviour:
       value: 4
     - statId: building.comfortBonus
       value: 0.1
+    - statId: building.upgradeSlots
+      value: 4

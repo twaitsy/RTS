@@ -735,7 +735,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54dff7fec54b0c74c80084c7f94f0be1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResourceRegistry
-  definitions: []
+  definitions:
+  - {fileID: 11400000, guid: 6985a3e77f4791849a35380839a5d50a, type: 2}
+  - {fileID: 11400000, guid: 90d38f5da39eb9b4cb3e5905cd9fdfaf, type: 2}
 --- !u!114 &709939154
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -852,7 +854,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6dcf121f38d299b41b55bcde3d60fa01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CommandRegistry
-  definitions: []
+  definitions:
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &709939163
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -891,7 +895,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c513797600fa3ce4b811b249246efaa9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuildingRegistry
-  definitions: []
+  definitions:
+  - {fileID: 11400000, guid: 4cc08655b6d4e0b4a8c129bdf79cb273, type: 2}
 --- !u!114 &709939166
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1489,7 +1494,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 438e648cfcbe46579b9c9e2fa707cba4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatRegistry
-  definitions: []
+  definitions:
+  - {fileID: 11400000, guid: 2845267d1ac10a64f875aef8cefed753, type: 2}
+  - {fileID: 11400000, guid: 03d88ef11f353b045a18d3e0c3678d9c, type: 2}
+  - {fileID: 11400000, guid: 9f141b83de0370443bc40832ad20d607, type: 2}
+  - {fileID: 11400000, guid: 0875fe7a49886cc468e230b94f04a12a, type: 2}
+  - {fileID: 11400000, guid: 192d655abf43fbe4aa9053a2741f0bcb, type: 2}
 --- !u!1 &821720337
 GameObject:
   m_ObjectHideFlags: 0

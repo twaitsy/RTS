@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: building.buildTime
   m_EditorClassIdentifier: Assembly-CSharp::StatDefinition
   id: building.buildTime
+  isIdFinalized: 1
+  finalizedId: building.buildTime
   displayName: 
   domain: 12
   valueType: 0
