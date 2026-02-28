@@ -47,6 +47,36 @@ public readonly struct MissingReference
     public string TargetId { get; }
 }
 
+public readonly struct DefinitionNode
+{
+    public DefinitionNode(string definitionType, string definitionId)
+    {
+        DefinitionType = definitionType;
+        DefinitionId = definitionId;
+    }
+
+    public string DefinitionType { get; }
+    public string DefinitionId { get; }
+}
+
+public readonly struct DefinitionReferenceEdge
+{
+    public DefinitionReferenceEdge(string sourceType, string sourceId, string field, string targetType, string targetId)
+    {
+        SourceType = sourceType;
+        SourceId = sourceId;
+        Field = field;
+        TargetType = targetType;
+        TargetId = targetId;
+    }
+
+    public string SourceType { get; }
+    public string SourceId { get; }
+    public string Field { get; }
+    public string TargetType { get; }
+    public string TargetId { get; }
+}
+
 public sealed class DefinitionReferenceMap
 {
     private readonly struct DefinitionNodeKey : IEquatable<DefinitionNodeKey>
@@ -185,5 +215,34 @@ public sealed class DefinitionReferenceMap
         }
 
         return !string.IsNullOrWhiteSpace(chain);
+    }
+
+    public IReadOnlyList<DefinitionNode> GetAllDefinitions()
+    {
+        var nodes = new List<DefinitionNode>(knownDefinitions.Count);
+        foreach (var knownDefinition in knownDefinitions)
+            nodes.Add(new DefinitionNode(knownDefinition.Type, knownDefinition.Id));
+
+        return nodes;
+    }
+
+    public IReadOnlyList<DefinitionReferenceEdge> GetAllEdges()
+    {
+        var edges = new List<DefinitionReferenceEdge>();
+
+        foreach (var pair in outgoing)
+        {
+            foreach (var reference in pair.Value)
+            {
+                edges.Add(new DefinitionReferenceEdge(
+                    sourceType: pair.Key.Type,
+                    sourceId: pair.Key.Id,
+                    field: reference.Field,
+                    targetType: reference.TargetType,
+                    targetId: reference.TargetId));
+            }
+        }
+
+        return edges;
     }
 }
