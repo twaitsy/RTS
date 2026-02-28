@@ -1,42 +1,36 @@
 Master Setup Guide
 ==================
 
-Last updated: Unified validation orchestration across runtime/editor/CI + repair planning from validator output
+Last updated: Task step flow semantics clarified (stay/advance/jump/terminate) and task steps aligned
 
-Authoritative validation command:
+Task runner flow semantics (authoritative):
+- `TaskStepResult` now uses explicit flow states:
+  - `Stay`: keep executing current step next tick (movement/work-in-progress).
+  - `Advance`: move to the next step index.
+  - `JumpTo(index)`: jump to an explicit step index.
+  - `Terminate`: end the whole task immediately.
+- `TaskRunner.Tick()` switches on `TaskStepResult.Flow` instead of using `IsComplete` + `NextStepIndex` overloading.
+- `TaskRunner` now validates current and jump step indices and terminates safely on invalid values.
+
+Task step behavior mapping:
+- `QueryStep`
+  - Advances when a target is found and stored.
+  - Terminates when no target exists (task fail/stop).
+- `MoveToStep`
+  - Stays while actor is moving toward target.
+  - Advances once actor is within arrival threshold.
+  - Terminates for invalid context/actor/target wiring.
+- `WorkStep`
+  - Stays while work timer remains above zero.
+  - Advances after work completion and inventory increment.
+- `DeliverStep`
+  - Stays while actor is moving into drop-off range.
+  - Advances only after in-range transfer is performed.
+  - Terminates when drop-off cannot be found or context is invalid.
+- `LoopStep`
+  - Uses explicit jump semantics via `JumpTo(0)`.
+
+Legacy validation architecture notes:
 - Unity menu: `Tools/Validation/Validate All Definitions`
-- This command now runs one shared orchestrator that executes validators in deterministic order and returns a single `DefinitionValidationReport`.
-- Runtime bootstrap, editor menu validation, and CI now use the same orchestration core.
-
-CI entry point:
-- Run Unity batch mode with execute method: `DefinitionValidationMenu.ValidateAllForCI`
-- This CI entry point invokes the same `DefinitionValidationOrchestrator` used by runtime/editor command paths.
-
-Validation architecture:
-- Registry validators (`IDefinitionRegistryValidator`) are executed in deterministic registry-name order.
-- Editor validators (canonical stat IDs, stat modifier links, auto-repair candidate discovery) append issues into the same report.
-- Report code + severity pairs are standardized and consumed uniformly by all callers.
-
-Repair workflow (separated from validation):
-- Repair commands:
-  - `Tools/Validation/Definitions/Validate only`
-  - `Tools/Validation/Definitions/Validate + apply safe fixes`
-  - `Tools/Validation/Definitions/Validate + preview fix script`
-- Repair tools no longer rediscover fields independently; they consume planned safe-fix issues emitted during validation and then apply/preview those planned edits.
-
-Canonical stat migration and strict mode:
-- Migration command remains: `Tools/Validation/Migrate Legacy Stat IDs`
-- Strict mode toggle remains: `Tools/Validation/Strict Canonical Stat IDs`
-- Strict mode keeps legacy IDs as validation errors (migration-only compatibility mapping).
-
-Rollout steps:
-1) Run `Tools/Validation/Migrate Legacy Stat IDs` and commit migrated assets.
-2) Run `Tools/Validation/Validate All Definitions` to get the single authoritative cross-validator report.
-3) Enable `Tools/Validation/Strict Canonical Stat IDs`.
-4) Re-run `Tools/Validation/Validate All Definitions` and resolve reported issues by asset path/property path/code.
-5) Use `DefinitionValidationMenu.ValidateAllForCI` in CI so batch mode matches runtime/editor validation behavior.
-
-Assembly-safe editor validation bridge:
-- Runtime orchestrator no longer uses a cross-assembly partial method implementation for editor validators.
-- `DefinitionValidationOrchestrator` now calls `DefinitionValidationEditorBridge.Run(...)` through reflection inside `#if UNITY_EDITOR`, preventing CS0759 when editor/runtime scripts compile in separate assemblies.
-- Keep `Assets/Editor/Validation/DefinitionValidationOrchestrator.Editor.cs` present so editor-only validators remain active from `Tools/Validation/Validate All Definitions`.
+- Runtime bootstrap, editor menu validation, and CI use the same validation orchestration core.
+- CI execute method: `DefinitionValidationMenu.ValidateAllForCI`.

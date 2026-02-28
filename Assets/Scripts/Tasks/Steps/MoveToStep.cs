@@ -10,60 +10,39 @@ public class MoveToStep : TaskStepDefinition
         if (context == null)
         {
             Debug.LogError("MoveToStep: Context is null.");
-            return TaskStepResult.Complete();
+            return TaskStepResult.Terminate();
         }
 
         if (context.Actor == null)
         {
             Debug.LogError("MoveToStep: Context.Actor is null.");
-            return TaskStepResult.Complete();
+            return TaskStepResult.Terminate();
         }
-
-        Debug.Log($"MoveToStep: START for actor '{context.Actor.name}'.");
 
         if (context.Target == null)
         {
-            Debug.LogWarning(
-                $"MoveToStep: NO TARGET set for actor '{context.Actor.name}'."
-            );
-            return TaskStepResult.Complete();
+            Debug.LogWarning($"MoveToStep: No target set for actor '{context.Actor.name}'.");
+            return TaskStepResult.Terminate();
         }
 
         var comp = context.Target as Component;
         if (comp == null)
         {
             Debug.LogWarning(
-                $"MoveToStep: TARGET is not a Component for actor '{context.Actor.name}'. " +
+                $"MoveToStep: Target is not a Component for actor '{context.Actor.name}'. " +
                 $"Target type = {context.Target.GetType().Name}"
             );
-            return TaskStepResult.Complete();
+            return TaskStepResult.Terminate();
         }
 
         Vector3 targetPos = comp.transform.position;
         Vector3 currentPos = context.Actor.transform.position;
 
         float sqrDist = (targetPos - currentPos).sqrMagnitude;
-        Debug.Log(
-            $"MoveToStep: actor '{context.Actor.name}' at {currentPos}, " +
-            $"target at {targetPos}, sqrDist={sqrDist}."
-        );
-
         if (sqrDist < ARRIVAL_THRESHOLD * ARRIVAL_THRESHOLD)
-        {
-            Debug.Log(
-                $"MoveToStep: ARRIVED for actor '{context.Actor.name}'. " +
-                "Completing step."
-            );
-            return TaskStepResult.Complete();
-        }
+            return TaskStepResult.Advance();
 
         MovementSystem.MoveTo(context.Actor, targetPos);
-
-        Debug.Log(
-            $"MoveToStep: MOVING actor '{context.Actor.name}' towards {targetPos}. " +
-            "Continuing step."
-        );
-
-        return TaskStepResult.Continue();
+        return TaskStepResult.Stay();
     }
 }
