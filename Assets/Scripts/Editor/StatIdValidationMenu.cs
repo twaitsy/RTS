@@ -9,31 +9,33 @@ public static class StatIdValidationMenu
 {
     private static readonly Regex ArrayElementRegex = new(@"^(.*)\.Array\.data\[(\d+)\]$", RegexOptions.Compiled);
 
+    private readonly struct MigrationPhaseResult
+    {
+        public MigrationPhaseResult(int updatedAssets, int updatedFields)
+        {
+            UpdatedAssets = updatedAssets;
+            UpdatedFields = updatedFields;
+        }
+
+        public int UpdatedAssets { get; }
+        public int UpdatedFields { get; }
+    }
+
     [MenuItem("Tools/Validation/Migrate Legacy Stat IDs")]
     public static void MigrateLegacyStatIds()
     {
-        int updatedAssets = 0;
-        foreach (var path in EnumerateScriptableObjectAssetPaths())
-        {
-            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-            if (asset == null)
-                continue;
-
-            var serializedObject = new SerializedObject(asset);
-            if (!TryMigrateSerializedStatIds(serializedObject, path, out bool changed, out _))
-                continue;
-
-            if (!changed)
-                continue;
-
-            serializedObject.ApplyModifiedProperties();
-            EditorUtility.SetDirty(asset);
-            updatedAssets++;
-        }
+        var legacyFieldLift = StatFieldMigrationUtility.RunLegacyFieldLiftPhase();
+        var canonicalRewrite = RewriteCanonicalStatIdsPhase();
+        var cleanup = CleanupEmptyStatReferencesPhase();
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log($"[Validation] Legacy stat ID migration complete. Updated {updatedAssets} asset(s).");
+
+        Debug.Log(
+            "[Validation] Legacy stat migration complete. " +
+            $"Phase legacy field lift: {legacyFieldLift.LiftedFields} field(s) across {legacyFieldLift.UpdatedAssets} asset(s). " +
+            $"Phase canonical statId rewrite: {canonicalRewrite.UpdatedFields} field(s) across {canonicalRewrite.UpdatedAssets} asset(s). " +
+            $"Phase cleanup/removals: {cleanup.UpdatedFields} removal(s) across {cleanup.UpdatedAssets} asset(s).");
     }
 
     [MenuItem("Tools/Validation/Validate Canonical Stat IDs")]
@@ -188,15 +190,63 @@ public static class StatIdValidationMenu
         } while (iterator.NextVisible(false));
     }
 
-    private static bool TryMigrateSerializedStatIds(SerializedObject serializedObject, string path, out bool changed, out int removed)
+    private static MigrationPhaseResult RewriteCanonicalStatIdsPhase()
     {
-        changed = false;
-        removed = 0;
+        int updatedAssets = 0;
+        int rewrittenFields = 0;
 
-        var removals = new List<(string arrayPath, int index)>();
+        foreach (var path in EnumerateScriptableObjectAssetPaths())
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
+            if (asset == null)
+                continue;
+
+            var serializedObject = new SerializedObject(asset);
+            var result = RewriteCanonicalStatIds(serializedObject);
+            if (result.UpdatedFields == 0)
+                continue;
+
+            serializedObject.ApplyModifiedProperties();
+            EditorUtility.SetDirty(asset);
+            updatedAssets++;
+            rewrittenFields += result.UpdatedFields;
+        }
+
+        return new MigrationPhaseResult(updatedAssets, rewrittenFields);
+    }
+
+    private static MigrationPhaseResult CleanupEmptyStatReferencesPhase()
+    {
+        int updatedAssets = 0;
+        int removals = 0;
+
+        foreach (var path in EnumerateScriptableObjectAssetPaths())
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
+            if (asset == null)
+                continue;
+
+            var serializedObject = new SerializedObject(asset);
+            int removed = RemoveEmptyStatReferences(serializedObject, path);
+            if (removed == 0)
+                continue;
+
+            serializedObject.ApplyModifiedProperties();
+            EditorUtility.SetDirty(asset);
+            updatedAssets++;
+            removals += removed;
+        }
+
+        return new MigrationPhaseResult(updatedAssets, removals);
+    }
+
+    private static MigrationPhaseResult RewriteCanonicalStatIds(SerializedObject serializedObject)
+    {
+        int rewrittenFields = 0;
+
         var iterator = serializedObject.GetIterator();
         if (!iterator.NextVisible(true))
-            return false;
+            return new MigrationPhaseResult(0, 0);
 
         do
         {
@@ -207,13 +257,7 @@ public static class StatIdValidationMenu
                 continue;
 
             if (string.IsNullOrWhiteSpace(iterator.stringValue))
-            {
-                if (TryGetArrayElementInfo(iterator.propertyPath, out var arrayPath, out var index))
-                    removals.Add((arrayPath, index));
-
-                Debug.LogWarning($"[Validation] Removing empty {iterator.name} from '{path}' at '{iterator.propertyPath}'.");
                 continue;
-            }
 
             if (!StatIdCanonicalization.TryGetCanonical(iterator.stringValue, out var canonicalId))
                 continue;
@@ -222,30 +266,57 @@ public static class StatIdValidationMenu
                 continue;
 
             iterator.stringValue = canonicalId;
-            changed = true;
+            rewrittenFields++;
         } while (iterator.NextVisible(false));
 
-        if (removals.Count > 0)
+        return new MigrationPhaseResult(rewrittenFields > 0 ? 1 : 0, rewrittenFields);
+    }
+
+    private static int RemoveEmptyStatReferences(SerializedObject serializedObject, string path)
+    {
+        var removals = new List<(string arrayPath, int index)>();
+        var iterator = serializedObject.GetIterator();
+        if (!iterator.NextVisible(true))
+            return 0;
+
+        do
         {
-            removals.Sort((a, b) =>
-            {
-                int compare = string.CompareOrdinal(a.arrayPath, b.arrayPath);
-                return compare != 0 ? compare : b.index.CompareTo(a.index);
-            });
+            if (iterator.propertyType != SerializedPropertyType.String)
+                continue;
 
-            foreach (var (arrayPath, index) in removals)
-            {
-                var array = serializedObject.FindProperty(arrayPath);
-                if (array == null || !array.isArray || index < 0 || index >= array.arraySize)
-                    continue;
+            if (iterator.name != "statId" && iterator.name != "targetStatId")
+                continue;
 
-                array.DeleteArrayElementAtIndex(index);
-                changed = true;
-                removed++;
-            }
+            if (!string.IsNullOrWhiteSpace(iterator.stringValue))
+                continue;
+
+            if (TryGetArrayElementInfo(iterator.propertyPath, out var arrayPath, out var index))
+                removals.Add((arrayPath, index));
+
+            Debug.LogWarning($"[Validation] Removing empty {iterator.name} from '{path}' at '{iterator.propertyPath}'.");
+        } while (iterator.NextVisible(false));
+
+        if (removals.Count == 0)
+            return 0;
+
+        removals.Sort((a, b) =>
+        {
+            int compare = string.CompareOrdinal(a.arrayPath, b.arrayPath);
+            return compare != 0 ? compare : b.index.CompareTo(a.index);
+        });
+
+        int removed = 0;
+        foreach (var (arrayPath, index) in removals)
+        {
+            var array = serializedObject.FindProperty(arrayPath);
+            if (array == null || !array.isArray || index < 0 || index >= array.arraySize)
+                continue;
+
+            array.DeleteArrayElementAtIndex(index);
+            removed++;
         }
 
-        return true;
+        return removed;
     }
 
     private static bool TryGetArrayElementInfo(string propertyPath, out string arrayPath, out int index)

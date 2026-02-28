@@ -4,25 +4,45 @@ using UnityEngine;
 
 public static class StatFieldMigrationUtility
 {
-    [MenuItem("Tools/DataDrivenRTS/Migrate Legacy Stats To Canonical Entries")]
-    public static void Migrate()
+    public readonly struct LegacyFieldLiftResult
     {
-        int migratedAssets = 0;
+        public LegacyFieldLiftResult(int updatedAssets, int liftedFields)
+        {
+            UpdatedAssets = updatedAssets;
+            LiftedFields = liftedFields;
+        }
 
-        migratedAssets += MigrateUnits();
-        migratedAssets += MigrateCivilians();
-        migratedAssets += MigrateWeaponTypes();
-        migratedAssets += MigrateWeapons();
+        public int UpdatedAssets { get; }
+        public int LiftedFields { get; }
 
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-
-        Debug.Log($"Legacy stat migration complete. Updated {migratedAssets} assets.");
+        public static LegacyFieldLiftResult operator +(LegacyFieldLiftResult left, LegacyFieldLiftResult right)
+        {
+            return new LegacyFieldLiftResult(left.UpdatedAssets + right.UpdatedAssets, left.LiftedFields + right.LiftedFields);
+        }
     }
 
-    private static int MigrateUnits()
+    public static LegacyFieldLiftResult RunLegacyFieldLiftPhase()
+    {
+        LegacyFieldLiftResult result = default;
+
+        result += MigrateUnits();
+        result += MigrateCivilians();
+        result += MigrateWeaponTypes();
+        result += MigrateWeapons();
+
+        return result;
+    }
+
+    [System.Obsolete("Deprecated menu path removed. Use Tools/Validation/Migrate Legacy Stat IDs.")]
+    public static LegacyFieldLiftResult MigrateLegacyStatsToCanonicalEntriesDeprecated()
+    {
+        return RunLegacyFieldLiftPhase();
+    }
+
+    private static LegacyFieldLiftResult MigrateUnits()
     {
         int updates = 0;
+        int liftedFields = 0;
         string[] guids = AssetDatabase.FindAssets("t:UnitDefinition");
         foreach (string guid in guids)
         {
@@ -34,31 +54,33 @@ public static class StatFieldMigrationUtility
             var stats = FindStatsEntriesProperty(so);
             var modifiers = FindModifiersProperty(so);
 
-            bool changed = false;
-            changed |= TryMigrateLegacyStat(so, stats, "maxHealth", CanonicalStatIds.Core.MaxHealth);
-            changed |= TryMigrateLegacyStat(so, stats, "moveSpeed", CanonicalStatIds.Movement.MoveSpeed);
-            changed |= TryMigrateLegacyStat(so, stats, "turnSpeed", CanonicalStatIds.Movement.TurnSpeed);
-            changed |= TryMigrateLegacyStat(so, stats, "visionRange", CanonicalStatIds.Core.VisionRange);
-            changed |= TryMigrateLegacyStat(so, stats, "workSpeed", CanonicalStatIds.Production.WorkSpeed);
-            changed |= TryMigrateLegacyStat(so, stats, "carryCapacity", CanonicalStatIds.Production.CarryCapacity);
+            int changes = 0;
+            changes += TryMigrateLegacyStat(so, stats, "maxHealth", CanonicalStatIds.Core.MaxHealth);
+            changes += TryMigrateLegacyStat(so, stats, "moveSpeed", CanonicalStatIds.Movement.MoveSpeed);
+            changes += TryMigrateLegacyStat(so, stats, "turnSpeed", CanonicalStatIds.Movement.TurnSpeed);
+            changes += TryMigrateLegacyStat(so, stats, "visionRange", CanonicalStatIds.Core.VisionRange);
+            changes += TryMigrateLegacyStat(so, stats, "workSpeed", CanonicalStatIds.Production.WorkSpeed);
+            changes += TryMigrateLegacyStat(so, stats, "carryCapacity", CanonicalStatIds.Production.CarryCapacity);
 
-            changed |= TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.Combat.BaseDamage);
-            changed |= TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.Combat.AttackSpeed);
-            changed |= TryMigrateLegacyOverride(so, modifiers, "attackRange", CanonicalStatIds.Combat.AttackRange);
+            changes += TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.Combat.BaseDamage);
+            changes += TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.Combat.AttackSpeed);
+            changes += TryMigrateLegacyOverride(so, modifiers, "attackRange", CanonicalStatIds.Combat.AttackRange);
 
-            if (!changed) continue;
+            if (changes == 0) continue;
 
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(obj);
             updates++;
+            liftedFields += changes;
         }
 
-        return updates;
+        return new LegacyFieldLiftResult(updates, liftedFields);
     }
 
-    private static int MigrateCivilians()
+    private static LegacyFieldLiftResult MigrateCivilians()
     {
         int updates = 0;
+        int liftedFields = 0;
         string[] guids = AssetDatabase.FindAssets("t:CivilianDefinition");
         foreach (string guid in guids)
         {
@@ -69,23 +91,25 @@ public static class StatFieldMigrationUtility
             var so = new SerializedObject(obj);
             var stats = FindStatsEntriesProperty(so);
 
-            bool changed = false;
-            changed |= TryMigrateLegacyStat(so, stats, "moveSpeed", CanonicalStatIds.Movement.MoveSpeed);
-            changed |= TryMigrateLegacyStat(so, stats, "workSpeed", CanonicalStatIds.Production.WorkSpeed);
+            int changes = 0;
+            changes += TryMigrateLegacyStat(so, stats, "moveSpeed", CanonicalStatIds.Movement.MoveSpeed);
+            changes += TryMigrateLegacyStat(so, stats, "workSpeed", CanonicalStatIds.Production.WorkSpeed);
 
-            if (!changed) continue;
+            if (changes == 0) continue;
 
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(obj);
             updates++;
+            liftedFields += changes;
         }
 
-        return updates;
+        return new LegacyFieldLiftResult(updates, liftedFields);
     }
 
-    private static int MigrateWeaponTypes()
+    private static LegacyFieldLiftResult MigrateWeaponTypes()
     {
         int updates = 0;
+        int liftedFields = 0;
         string[] guids = AssetDatabase.FindAssets("t:WeaponTypeDefinition");
         foreach (string guid in guids)
         {
@@ -96,23 +120,25 @@ public static class StatFieldMigrationUtility
             var so = new SerializedObject(obj);
             var modifiers = FindModifiersProperty(so);
 
-            bool changed = false;
-            changed |= TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.Combat.BaseDamage);
-            changed |= TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.Combat.AttackSpeed);
+            int changes = 0;
+            changes += TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.Combat.BaseDamage);
+            changes += TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.Combat.AttackSpeed);
 
-            if (!changed) continue;
+            if (changes == 0) continue;
 
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(obj);
             updates++;
+            liftedFields += changes;
         }
 
-        return updates;
+        return new LegacyFieldLiftResult(updates, liftedFields);
     }
 
-    private static int MigrateWeapons()
+    private static LegacyFieldLiftResult MigrateWeapons()
     {
         int updates = 0;
+        int liftedFields = 0;
         string[] guids = AssetDatabase.FindAssets("t:WeaponDefinition");
         foreach (string guid in guids)
         {
@@ -123,18 +149,19 @@ public static class StatFieldMigrationUtility
             var so = new SerializedObject(obj);
             var modifiers = FindModifiersProperty(so);
 
-            bool changed = false;
-            changed |= TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.Combat.BaseDamage);
-            changed |= TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.Combat.AttackSpeed);
+            int changes = 0;
+            changes += TryMigrateLegacyOverride(so, modifiers, "baseDamage", CanonicalStatIds.Combat.BaseDamage);
+            changes += TryMigrateLegacyOverride(so, modifiers, "attackSpeed", CanonicalStatIds.Combat.AttackSpeed);
 
-            if (!changed) continue;
+            if (changes == 0) continue;
 
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(obj);
             updates++;
+            liftedFields += changes;
         }
 
-        return updates;
+        return new LegacyFieldLiftResult(updates, liftedFields);
     }
 
     private static SerializedProperty FindStatsEntriesProperty(SerializedObject serializedObject)
@@ -156,22 +183,22 @@ public static class StatFieldMigrationUtility
             ?? serializedObject.FindProperty("equipmentStatModifiers");
     }
 
-    private static bool TryMigrateLegacyStat(SerializedObject source, SerializedProperty targetEntries, string legacyFieldName, string statId)
+    private static int TryMigrateLegacyStat(SerializedObject source, SerializedProperty targetEntries, string legacyFieldName, string statId)
     {
         var legacyProperty = source.FindProperty(legacyFieldName);
         if (legacyProperty == null || targetEntries == null)
-            return false;
+            return 0;
 
-        return AddStatEntryIfMissing(targetEntries, statId, legacyProperty.floatValue);
+        return AddStatEntryIfMissing(targetEntries, statId, legacyProperty.floatValue) ? 1 : 0;
     }
 
-    private static bool TryMigrateLegacyOverride(SerializedObject source, SerializedProperty modifiers, string legacyFieldName, string statId)
+    private static int TryMigrateLegacyOverride(SerializedObject source, SerializedProperty modifiers, string legacyFieldName, string statId)
     {
         var legacyProperty = source.FindProperty(legacyFieldName);
         if (legacyProperty == null || modifiers == null)
-            return false;
+            return 0;
 
-        return AddOverrideModifierIfMissing(modifiers, statId, legacyProperty.floatValue);
+        return AddOverrideModifierIfMissing(modifiers, statId, legacyProperty.floatValue) ? 1 : 0;
     }
 
     private static bool AddStatEntryIfMissing(SerializedProperty arrayProp, string statId, float value)

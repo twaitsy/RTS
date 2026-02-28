@@ -1,12 +1,15 @@
 Master Setup Guide
 ==================
 
-Last updated: Safe definition ID migration allowlist + dry-run preview
+Last updated: Unified stat migration orchestration and single supported command
 
-- Definition ID migration is now allowlist-based, not suffix-based string matching.
-- The migration tool updates only:
-  - the selected asset's own `id` and `finalizedId`, and
-  - known reference-field paths sourced from registry schema metadata plus explicit custom mappings.
-- Guardrails skip Unity/internal engine fields and unrelated string IDs.
-- Use dry-run preview in the migration window to inspect planned edits before applying.
-- Open from Unity menu: Tools/Data/Definition ID Migration.
+Stat migration workflow (single supported command):
+- Run Unity menu command: `Tools/Validation/Migrate Legacy Stat IDs`.
+- This is the canonical migration entry point and executes all phases in order:
+  1) legacy field lift,
+  2) canonical statId rewrite,
+  3) cleanup/removals.
+- Migration output now logs per-phase counts so teams can verify parity and impact.
+
+Deprecation note:
+- The old `Tools/DataDrivenRTS/Migrate Legacy Stats To Canonical Entries` menu path is deprecated and removed after parity confirmation.

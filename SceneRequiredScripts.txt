@@ -1,18 +1,20 @@
 Scene Required Scripts
 ======================
 
-Last updated: Safe definition ID migration allowlist + dry-run preview
+Last updated: Unified stat migration orchestration and single supported command
 
-Validation / migration scripts relevant to definition ID migration:
-- Assets/Scripts/Editor/DefinitionIdMigrationTool.cs
-- Assets/Scripts/Registries/Schema/RegistrySchema.cs
-- Assets/Scripts/Registries/UnitRegistry.cs
-- Assets/Scripts/Registries/BuildingRegistry.cs
-- Assets/Scripts/Registries/RecipeRegistry.cs
-- Assets/Scripts/Registries/TechRegistry.cs
-- Assets/Scripts/Registries/ProductionRegistry.cs
-- Assets/Scripts/Registries/ResourceNodeRegistry.cs
+Validation / migration scripts relevant to stat migration:
+- Assets/Scripts/Editor/StatIdValidationMenu.cs
+- Assets/Scripts/Editor/StatFieldMigrationUtility.cs
 
-Behavior notes:
-- Migration edits are restricted to safe allowlisted reference paths.
-- Dry-run mode previews planned changes without writing assets.
+Single supported migration command:
+- `Tools/Validation/Migrate Legacy Stat IDs`
+
+Migration phase behavior:
+- Phase 1: legacy field lift into canonical stat entries/modifiers.
+- Phase 2: canonical statId rewrite for serialized statId/targetStatId fields.
+- Phase 3: cleanup/removals for empty stat references.
+- Console output includes per-phase counts (fields/removals and assets touched).
+
+Deprecated/removed command:
+- `Tools/DataDrivenRTS/Migrate Legacy Stats To Canonical Entries`
