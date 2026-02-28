@@ -9,25 +9,36 @@ public static class CanonicalStatIds
     public static class Building
     {
         public const string Buildtime = "building.buildtime";
+        public const string BuildTime = Buildtime;
         public const string Comfortbonus = "building.comfortbonus";
+        public const string ComfortBonus = Comfortbonus;
         public const string Constructiontime = "building.constructiontime";
+        public const string ConstructionTime = Constructiontime;
         public const string Hitpoints = "building.hitpoints";
+        public const string HitPoints = Hitpoints;
         public const string Housingcapacity = "building.housingcapacity";
+        public const string HousingCapacity = Housingcapacity;
         public const string IsProduction = "building.is.production";
         public const string Upgradeslots = "building.upgradeslots";
+        public const string UpgradeSlots = Upgradeslots;
     }
 
     public static class Combat
     {
         public const string Attackrange = "combat.attackrange";
+        public const string AttackRange = Attackrange;
         public const string Attackspeed = "combat.attackspeed";
+        public const string AttackSpeed = Attackspeed;
         public const string Basedamage = "combat.basedamage";
+        public const string BaseDamage = Basedamage;
     }
 
     public static class Core
     {
         public const string Maxhealth = "core.maxhealth";
+        public const string MaxHealth = Maxhealth;
         public const string Visionrange = "core.visionrange";
+        public const string VisionRange = Visionrange;
     }
 
     public static class Item
@@ -38,14 +49,19 @@ public static class CanonicalStatIds
     public static class Movement
     {
         public const string Movespeed = "movement.movespeed";
+        public const string MoveSpeed = Movespeed;
         public const string Turnspeed = "movement.turnspeed";
+        public const string TurnSpeed = Turnspeed;
     }
 
     public static class Production
     {
         public const string Carrycapacity = "production.carrycapacity";
+        public const string CarryCapacity = Carrycapacity;
         public const string Storagecapacity = "production.storagecapacity";
+        public const string StorageCapacity = Storagecapacity;
         public const string Workspeed = "production.workspeed";
+        public const string WorkSpeed = Workspeed;
     }
 
     public static IReadOnlyList<string> Catalog => _catalog;

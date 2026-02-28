@@ -1,10 +1,14 @@
 Scene Required Scripts
 ======================
 
-Last updated: ID canonicalization pass
+Last updated: CanonicalStatIds alias compatibility update
 
 Validation / migration scripts relevant to stat ID canonicalization:
 - Assets/Scripts/Validation/StatIdCanonicalization.cs
 - Assets/Scripts/Validation/StatIdCompatibilityMap.cs
 - Assets/Scripts/Editor/StatIdValidationMenu.cs
 - Assets/Scripts/Editor/CanonicalStatIdsGenerator.cs
+- Assets/Scripts/Definitions/CanonicalStatIds.cs (generated constants + compatibility aliases)
+
+Primary runtime usage updated/fixed by alias compatibility:
+- Assets/Scripts/Simulation/Derived/DerivedComputationModule.cs
