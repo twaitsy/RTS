@@ -32,7 +32,10 @@ public static partial class DefinitionValidationOrchestrator
     private static void ExecuteRegistryValidators(DefinitionValidationReport report, DefinitionReferenceMap referenceMap)
     {
         var validators = new List<IDefinitionRegistryValidator>();
-        var registries = Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var registries = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
 
         foreach (var registry in registries)
         {
