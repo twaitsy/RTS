@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -83,10 +83,13 @@ public enum TriggerEventType
 }
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Logic/Trigger")]
-public class TriggerDefinition : ScriptableObject, IIdentifiable
+public class TriggerDefinition : ScriptableObject, IIdentifiable, IDefinitionMetadataProvider
 {
     [SerializeField] private string id;
     public string Id => id;
+
+    [SerializeField] private DefinitionMetadata metadata = DefinitionMetadata.Create(DefinitionCategory.Logic);
+    public DefinitionMetadata Metadata => metadata;
 
     [SerializeField] private string displayName;
     public string DisplayName => displayName;
@@ -172,4 +175,11 @@ public class TriggerDefinition : ScriptableObject, IIdentifiable
         oneShotFired.Clear();
         lastFiredTime.Clear();
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        DefinitionMetadataUtility.EnsureMetadata(ref metadata, DefinitionCategory.Logic);
+    }
+#endif
 }

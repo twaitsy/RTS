@@ -4,10 +4,13 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/Unit")]
-public class UnitDefinition : ScriptableObject, IIdentifiable
+public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetadataProvider
 {
     [SerializeField] private string id;
     public string Id => id;
+
+    [SerializeField] private DefinitionMetadata metadata = DefinitionMetadata.Create(DefinitionCategory.Unit);
+    public DefinitionMetadata Metadata => metadata;
 
     [SerializeField, HideInInspector] private bool isIdFinalized;
     [SerializeField, HideInInspector] private string finalizedId;
@@ -144,6 +147,7 @@ public class UnitDefinition : ScriptableObject, IIdentifiable
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        DefinitionMetadataUtility.EnsureMetadata(ref metadata, DefinitionCategory.Unit);
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
 
         stats ??= new();
