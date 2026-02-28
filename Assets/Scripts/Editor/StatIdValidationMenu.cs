@@ -42,19 +42,20 @@ public static class StatIdValidationMenu
     [MenuItem("Tools/Validation/Validate Canonical Stat IDs")]
     public static void ValidateCanonicalStatIdsMenu()
     {
-        var errors = ValidateCanonicalStatIdsInternal();
-        if (errors.Count == 0)
+        var report = new DefinitionValidationReport();
+        AppendCanonicalStatIdIssues(report);
+        if (!report.HasErrors)
         {
             Debug.Log("[Validation] Canonical stat ID validation passed.");
             EditorUtility.DisplayDialog("Validation", "Canonical stat ID validation passed.", "OK");
             return;
         }
 
-        foreach (var error in errors)
-            Debug.LogError(error);
+        foreach (var issue in report.Issues)
+            Debug.LogError($"[Validation] ({issue.Code}) {issue.Message}");
 
-        Debug.LogError($"[Validation] Canonical stat ID validation failed with {errors.Count} issue(s).");
-        EditorUtility.DisplayDialog("Validation", $"Validation found {errors.Count} issue(s). Check Console for details.", "OK");
+        Debug.LogError($"[Validation] Canonical stat ID validation failed with {report.ErrorCount} issue(s).");
+        EditorUtility.DisplayDialog("Validation", $"Validation found {report.ErrorCount} issue(s). Check Console for details.", "OK");
     }
 
     [MenuItem(StrictModeMenuPath)]
@@ -75,26 +76,26 @@ public static class StatIdValidationMenu
     // CI/batch-mode entry point.
     public static void ValidateCanonicalStatIdsForCI()
     {
-        var errors = ValidateCanonicalStatIdsInternal();
-        if (errors.Count == 0)
+        var report = new DefinitionValidationReport();
+        AppendCanonicalStatIdIssues(report);
+        if (!report.HasErrors)
         {
             Debug.Log("[Validation] Canonical stat ID CI validation passed.");
             return;
         }
 
-        foreach (var error in errors)
-            Debug.LogError(error);
+        foreach (var issue in report.Issues)
+            Debug.LogError($"[Validation] ({issue.Code}) {issue.Message}");
 
-        throw new Exception($"Canonical stat ID validation failed with {errors.Count} issue(s).");
+        throw new Exception($"Canonical stat ID validation failed with {report.ErrorCount} issue(s).");
     }
 
-    private static List<string> ValidateCanonicalStatIdsInternal()
+    public static void AppendCanonicalStatIdIssues(DefinitionValidationReport report)
     {
-        var errors = new List<string>();
         var statDefinitions = LoadStatDefinitionIds();
 
-        ValidateCatalogParity(statDefinitions, errors);
-        ValidateGeneratedConstants(errors);
+        ValidateCatalogParity(statDefinitions, report);
+        ValidateGeneratedConstants(report);
 
         foreach (var path in EnumerateScriptableObjectAssetPaths())
         {
@@ -103,12 +104,10 @@ public static class StatIdValidationMenu
                 continue;
 
             if (asset is StatDefinition statDefinition)
-                ValidateStatDefinition(statDefinition, path, errors);
+                ValidateStatDefinition(statDefinition, path, report);
 
-            ValidateSerializedStatIdFields(asset, path, statDefinitions, errors);
+            ValidateSerializedStatIdFields(asset, path, statDefinitions, report);
         }
-
-        return errors;
     }
 
     private static HashSet<string> LoadStatDefinitionIds()
@@ -125,52 +124,52 @@ public static class StatIdValidationMenu
         return ids;
     }
 
-    private static void ValidateCatalogParity(HashSet<string> statDefinitionIds, List<string> errors)
+    private static void ValidateCatalogParity(HashSet<string> statDefinitionIds, DefinitionValidationReport report)
     {
         var catalogIds = new HashSet<string>(CanonicalStatIds.Catalog, StringComparer.Ordinal);
 
         foreach (var catalogId in catalogIds)
         {
             if (!statDefinitionIds.Contains(catalogId))
-                errors.Add($"[Validation] CanonicalStatIds.Catalog includes '{catalogId}' but no StatDefinition asset exists at Assets/GameData/Stats.");
+                report.AddIssue(new ValidationIssue("STAT_CATALOG_PARITY_MISSING_DEFINITION", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"CanonicalStatIds.Catalog includes '{catalogId}' but no StatDefinition asset exists at Assets/GameData/Stats.", suggestedFix: "Create missing StatDefinition asset or remove ID from catalog."));
         }
 
         foreach (var statDefinitionId in statDefinitionIds)
         {
             if (!catalogIds.Contains(statDefinitionId))
-                errors.Add($"[Validation] StatDefinition id '{statDefinitionId}' is missing from CanonicalStatIds.Catalog.");
+                report.AddIssue(new ValidationIssue("STAT_CATALOG_PARITY_MISSING_CATALOG_ENTRY", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"StatDefinition id '{statDefinitionId}' is missing from CanonicalStatIds.Catalog.", assetId: statDefinitionId, field: "id", suggestedFix: "Add ID to CanonicalStatIds.Catalog via generator flow."));
         }
     }
 
-    private static void ValidateGeneratedConstants(List<string> errors)
+    private static void ValidateGeneratedConstants(DefinitionValidationReport report)
     {
         if (!CanonicalStatIdsGenerator.IsCanonicalStatIdsSourceCurrent(out var reason))
-            errors.Add($"[Validation] {reason}");
+            report.AddIssue(new ValidationIssue("STAT_CANONICAL_CONSTANTS_OUTDATED", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), reason, suggestedFix: "Regenerate CanonicalStatIds constants."));
     }
 
-    private static void ValidateStatDefinition(StatDefinition definition, string path, List<string> errors)
+    private static void ValidateStatDefinition(StatDefinition definition, string path, DefinitionValidationReport report)
     {
         bool strictMode = StatIdValidationSettings.StrictCanonicalStatIds;
 
         if (string.IsNullOrWhiteSpace(definition.Id))
         {
-            errors.Add($"[Validation] StatDefinition '{path}' has an empty id.");
+            report.AddIssue(new ValidationIssue("STAT_DEFINITION_EMPTY_ID", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"StatDefinition '{path}' has an empty id.", assetPath: path, field: "id", suggestedFix: "Set a canonical stat ID."));
             return;
         }
 
         if (strictMode && StatIdCompatibilityMap.LegacyToCanonical.TryGetValue(definition.Id, out var requiredCanonicalId))
         {
-            errors.Add($"[Validation] Asset '{path}' property 'id' uses legacy stat ID '{definition.Id}'. Required canonical ID: '{requiredCanonicalId}'. Run Tools/Validation/Migrate Legacy Stat IDs.");
+            report.AddIssue(new ValidationIssue("STAT_LEGACY_ID_IN_STRICT_MODE", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"Asset '{path}' property 'id' uses legacy stat ID '{definition.Id}'. Required canonical ID: '{requiredCanonicalId}'.", assetPath: path, assetId: definition.Id, field: "id", suggestedFix: "Run Tools/Validation/Migrate Legacy Stat IDs."));
         }
 
         if (!StatIdCanonicalization.IsCanonicalFormat(definition.Id))
-            errors.Add($"[Validation] StatDefinition '{path}' has non-canonical id format '{definition.Id}'.");
+            report.AddIssue(new ValidationIssue("STAT_NON_CANONICAL_FORMAT", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"StatDefinition '{path}' has non-canonical id format '{definition.Id}'.", assetPath: path, assetId: definition.Id, field: "id", suggestedFix: "Rename ID to canonical kebab-case format."));
 
         if (!StatIdCanonicalization.ExistsInCanonicalCatalog(definition.Id))
-            errors.Add($"[Validation] StatDefinition '{path}' id '{definition.Id}' is not present in CanonicalStatIds.Catalog.");
+            report.AddIssue(new ValidationIssue("STAT_ID_NOT_IN_CATALOG", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"StatDefinition '{path}' id '{definition.Id}' is not present in CanonicalStatIds.Catalog.", assetPath: path, assetId: definition.Id, field: "id", suggestedFix: "Add ID to catalog or fix stat ID."));
     }
 
-    private static void ValidateSerializedStatIdFields(ScriptableObject asset, string path, HashSet<string> statDefinitionIds, List<string> errors)
+    private static void ValidateSerializedStatIdFields(ScriptableObject asset, string path, HashSet<string> statDefinitionIds, DefinitionValidationReport report)
     {
         bool strictMode = StatIdValidationSettings.StrictCanonicalStatIds;
         var serializedObject = new SerializedObject(asset);
@@ -190,21 +189,21 @@ public static class StatIdValidationMenu
             var value = iterator.stringValue;
             if (string.IsNullOrWhiteSpace(value))
             {
-                errors.Add($"[Validation] Asset '{path}' has empty {iterator.name} at '{iterator.propertyPath}'.");
+                report.AddIssue(new ValidationIssue("STAT_REFERENCE_EMPTY", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"Asset '{path}' has empty {iterator.name} at '{iterator.propertyPath}'.", assetPath: path, field: iterator.propertyPath, suggestedFix: "Populate the stat reference with a canonical stat ID."));
                 continue;
             }
 
             if (strictMode && StatIdCompatibilityMap.LegacyToCanonical.TryGetValue(value, out var requiredCanonicalId))
             {
-                errors.Add($"[Validation] Asset '{path}' property '{iterator.propertyPath}' uses legacy stat ID '{value}'. Required canonical ID: '{requiredCanonicalId}'. Run Tools/Validation/Migrate Legacy Stat IDs.");
+                report.AddIssue(new ValidationIssue("STAT_LEGACY_REFERENCE_IN_STRICT_MODE", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"Asset '{path}' property '{iterator.propertyPath}' uses legacy stat ID '{value}'. Required canonical ID: '{requiredCanonicalId}'.", assetPath: path, assetId: value, field: iterator.propertyPath, suggestedFix: "Run Tools/Validation/Migrate Legacy Stat IDs."));
             }
 
             if (!StatIdCanonicalization.IsCanonicalFormat(value))
-                errors.Add($"[Validation] Asset '{path}' has non-canonical {iterator.name} '{value}' at '{iterator.propertyPath}'.");
+                report.AddIssue(new ValidationIssue("STAT_REFERENCE_NON_CANONICAL_FORMAT", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"Asset '{path}' has non-canonical {iterator.name} '{value}' at '{iterator.propertyPath}'.", assetPath: path, assetId: value, field: iterator.propertyPath, suggestedFix: "Rewrite to canonical stat ID format."));
 
             bool resolvable = statDefinitionIds.Contains(value) || StatIdCanonicalization.ExistsInCanonicalCatalog(value);
             if (!resolvable)
-                errors.Add($"[Validation] Asset '{path}' references unresolved {iterator.name} '{value}' at '{iterator.propertyPath}'.");
+                report.AddIssue(new ValidationIssue("STAT_REFERENCE_UNRESOLVED", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"Asset '{path}' references unresolved {iterator.name} '{value}' at '{iterator.propertyPath}'.", assetPath: path, assetId: value, field: iterator.propertyPath, suggestedFix: "Point to an existing canonical StatDefinition."));
 
         } while (iterator.NextVisible(false));
     }

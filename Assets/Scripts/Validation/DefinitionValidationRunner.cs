@@ -30,33 +30,11 @@ public class DefinitionValidationRunner : MonoBehaviour
 
     public static DefinitionValidationReport RunValidation()
     {
-        var report = new DefinitionValidationReport();
-        var referenceMap = new DefinitionReferenceMap();
-        report.ReferenceMap = referenceMap;
-        var registries = Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-
-        foreach (var registry in registries)
-        {
-            if (registry is not IDefinitionRegistryValidator validator)
-                continue;
-
-            validator.CollectReferenceMap(referenceMap);
-            validator.ValidateAll(report);
-        }
-
-        return report;
+        return DefinitionValidationOrchestrator.RunValidation();
     }
 
     public static DefinitionValidationReport RunValidationAndLog()
     {
-        var report = RunValidation();
-        var summary = report.BuildSummary();
-
-        if (report.HasErrors)
-            Debug.LogError(summary);
-        else
-            Debug.Log(summary);
-
-        return report;
+        return DefinitionValidationOrchestrator.RunValidationAndLog();
     }
 }
