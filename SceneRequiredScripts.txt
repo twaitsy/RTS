@@ -36,3 +36,10 @@ Stat migration/strict mode scripts (still required):
 Migration and strict mode commands:
 - `Tools/Validation/Migrate Legacy Stat IDs`
 - `Tools/Validation/Strict Canonical Stat IDs`
+
+Assembly-safe bridge requirement:
+- `Assets/Scripts/Validation/DefinitionValidationOrchestrator.cs`
+  - Must invoke editor-only validators through reflected call to `DefinitionValidationEditorBridge` in `Assembly-CSharp-Editor` (guarded by `#if UNITY_EDITOR`).
+- `Assets/Editor/Validation/DefinitionValidationOrchestrator.Editor.cs`
+  - Defines `DefinitionValidationEditorBridge.Run(DefinitionValidationReport)` and owns editor-only validator list/order.
+- This avoids partial-method cross-assembly compile errors (`CS0759`) while preserving unified validation output.

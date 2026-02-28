@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
-public static partial class DefinitionValidationOrchestrator
+public static class DefinitionValidationOrchestrator
 {
     public static DefinitionValidationReport RunValidation()
     {
@@ -53,5 +54,12 @@ public static partial class DefinitionValidationOrchestrator
 
     }
 
-    static partial void ExecuteEditorValidators(DefinitionValidationReport report);
+    private static void ExecuteEditorValidators(DefinitionValidationReport report)
+    {
+#if UNITY_EDITOR
+        var bridgeType = Type.GetType("DefinitionValidationEditorBridge, Assembly-CSharp-Editor");
+        var runMethod = bridgeType?.GetMethod("Run", BindingFlags.Public | BindingFlags.Static);
+        runMethod?.Invoke(null, new object[] { report });
+#endif
+    }
 }
