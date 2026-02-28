@@ -20,22 +20,30 @@ public class BuildingRegistry : DefinitionRegistry<BuildingDefinition>
 
     protected override void ValidateDefinitions(List<BuildingDefinition> defs)
     {
-        if (StatRegistry.Instance == null)
+        if (StatRegistry.Instance == null || ResourceRegistry.Instance == null)
         {
-            Debug.LogError("BuildingRegistry validation skipped: StatRegistry.Instance is null.");
+            Debug.LogError("BuildingRegistry validation skipped: one or more dependent registries are null (StatRegistry, ResourceRegistry).");
             return;
         }
 
-        foreach (var definition in defs)
-        {
-            if (definition == null)
-                continue;
+        DefinitionReferenceValidator.ValidateReferenceCollection(
+            defs,
+            definition => definition.name,
+            definition => definition.Id,
+            definition => definition.Stats.Entries,
+            stat => stat.StatId,
+            $"{nameof(BuildingDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
+            targetId => StatRegistry.Instance.TryGet(targetId, out _),
+            Debug.LogError);
 
-            foreach (var stat in definition.Stats.Entries)
-            {
-                if (!StatRegistry.Instance.TryGet(stat.StatId, out _))
-                    Debug.LogError($"{definition.Id} references unknown base stat '{stat.StatId}'.");
-            }
-        }
+        DefinitionReferenceValidator.ValidateReferenceCollection(
+            defs,
+            definition => definition.name,
+            definition => definition.Id,
+            definition => definition.BuildCosts,
+            amount => amount.ResourceId,
+            nameof(BuildingDefinition.BuildCosts),
+            targetId => ResourceRegistry.Instance.TryGet(targetId, out _),
+            Debug.LogError);
     }
 }
