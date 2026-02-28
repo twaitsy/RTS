@@ -1,9 +1,12 @@
 Master Setup Guide
 ==================
 
-Last updated: ID canonicalization pass
+Last updated: CanonicalStatIds alias compatibility update
 
-- Stat and definition IDs are standardized to dot-separated notation.
-- Canonical example format: core.maxHealth, combat.baseDamage, production.workSpeed.
-- Legacy '-' and '_' IDs are treated as migration inputs only.
+- Stat and definition IDs remain standardized to dot-separated notation in generated IDs.
+- Canonical example format: core.maxhealth, combat.basedamage, production.workspeed.
+- `CanonicalStatIds` now exposes compatibility aliases (for example `MaxHealth`, `BaseDamage`, `WorkSpeed`) that map to the generated lowercase-style constants.
+- This preserves compatibility for existing callers while keeping the generator output deterministic.
+- Legacy '-' and '_' IDs are still treated as migration inputs only.
 - Run validation from Unity menu: Tools/Validation/Validate Canonical Stat IDs.
+- Regenerate IDs from Unity menu: Tools/Validation/Regenerate CanonicalStatIds.

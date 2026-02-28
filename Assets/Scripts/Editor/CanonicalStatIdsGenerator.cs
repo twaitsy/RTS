@@ -11,6 +11,30 @@ using UnityEngine;
 public static class CanonicalStatIdsGenerator
 {
     private const string OutputPath = "Assets/Scripts/Definitions/CanonicalStatIds.cs";
+    private static readonly IReadOnlyDictionary<string, string[]> LegacyFriendlyAliasesById =
+        new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            ["building.buildtime"] = new[] { "BuildTime" },
+            ["building.comfortbonus"] = new[] { "ComfortBonus" },
+            ["building.constructiontime"] = new[] { "ConstructionTime" },
+            ["building.hitpoints"] = new[] { "HitPoints" },
+            ["building.housingcapacity"] = new[] { "HousingCapacity" },
+            ["building.upgradeslots"] = new[] { "UpgradeSlots" },
+
+            ["combat.attackrange"] = new[] { "AttackRange" },
+            ["combat.attackspeed"] = new[] { "AttackSpeed" },
+            ["combat.basedamage"] = new[] { "BaseDamage" },
+
+            ["core.maxhealth"] = new[] { "MaxHealth" },
+            ["core.visionrange"] = new[] { "VisionRange" },
+
+            ["movement.movespeed"] = new[] { "MoveSpeed" },
+            ["movement.turnspeed"] = new[] { "TurnSpeed" },
+
+            ["production.carrycapacity"] = new[] { "CarryCapacity" },
+            ["production.storagecapacity"] = new[] { "StorageCapacity" },
+            ["production.workspeed"] = new[] { "WorkSpeed" }
+        };
 
     [MenuItem("Tools/Validation/Regenerate CanonicalStatIds")]
     public static void RegenerateCanonicalStatIds()
@@ -97,7 +121,21 @@ public static class CanonicalStatIdsGenerator
             sb.AppendLine($"    public static class {ToPascalIdentifier(new[] { domain })}");
             sb.AppendLine("    {");
             foreach (var (name, id) in values)
+            {
                 sb.AppendLine($"        public const string {name} = \"{id}\";");
+
+                if (!LegacyFriendlyAliasesById.TryGetValue(id, out var aliases))
+                    continue;
+
+                foreach (var alias in aliases)
+                {
+                    if (string.Equals(alias, name, StringComparison.Ordinal))
+                        continue;
+
+                    sb.AppendLine($"        public const string {alias} = {name};");
+                }
+            }
+
             sb.AppendLine("    }");
             sb.AppendLine();
         }
