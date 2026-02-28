@@ -6,6 +6,7 @@ public interface IDefinitionRegistryValidator
 {
     string RegistryName { get; }
     void ValidateAll(DefinitionValidationReport report);
+    void CollectReferenceMap(DefinitionReferenceMap map);
 }
 
 public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistryValidator
@@ -65,9 +66,73 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
         ValidateDefinitions(definitions, message => report.AddError(RegistryName, message));
     }
 
+    public void CollectReferenceMap(DefinitionReferenceMap map)
+    {
+        if (map == null)
+            return;
+
+        foreach (var definition in definitions)
+        {
+            if (definition == null || string.IsNullOrWhiteSpace(definition.Id))
+                continue;
+
+            map.AddDefinition(RegistryName, definition.Id);
+        }
+
+        var schema = GetSchema();
+        if (schema != null)
+            CollectSchemaReferences(definitions, schema, map);
+
+        CollectCustomReferences(definitions, map);
+    }
+
     protected virtual RegistrySchema<T> GetSchema()
     {
         return null;
+    }
+
+    protected virtual void CollectCustomReferences(List<T> defs, DefinitionReferenceMap map)
+    {
+        // Overridden in child registries for complex/custom reference extraction.
+    }
+
+    private void CollectSchemaReferences(List<T> defs, RegistrySchema<T> schema, DefinitionReferenceMap map)
+    {
+        foreach (var definition in defs)
+        {
+            if (definition == null || string.IsNullOrWhiteSpace(definition.Id))
+                continue;
+
+            foreach (var rule in schema.ReferenceRules)
+            {
+                var ids = rule.GetReferenceIds(definition);
+                if (ids == null)
+                    continue;
+
+                foreach (var targetId in ids)
+                {
+                    if (string.IsNullOrWhiteSpace(targetId))
+                        continue;
+
+                    var matchedTargetCount = 0;
+
+                    foreach (var target in rule.AllowedTargets)
+                    {
+                        if (target.TargetExists != null && target.TargetExists(targetId))
+                        {
+                            map.AddReference(RegistryName, definition.Id, rule.FieldName, target.TargetName, targetId);
+                            matchedTargetCount++;
+                        }
+                    }
+
+                    if (matchedTargetCount > 0 || rule.AllowedTargets.Count == 0)
+                        continue;
+
+                    foreach (var target in rule.AllowedTargets)
+                        map.AddReference(RegistryName, definition.Id, rule.FieldName, target.TargetName, targetId);
+                }
+            }
+        }
     }
 
     protected virtual IEnumerable<string> GetValidationDependencyErrors()

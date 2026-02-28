@@ -30,6 +30,18 @@ public class ResourceNodeRegistry : DefinitionRegistry<ResourceNodeDefinition>
             reportError);
     }
 
+
+    protected override void CollectCustomReferences(List<ResourceNodeDefinition> defs, DefinitionReferenceMap map)
+    {
+        foreach (var definition in defs)
+        {
+            if (definition == null || string.IsNullOrWhiteSpace(definition.Id) || string.IsNullOrWhiteSpace(definition.ResourceId))
+                continue;
+
+            map.AddReference(RegistryName, definition.Id, nameof(ResourceNodeDefinition.ResourceId), nameof(ResourceRegistry), definition.ResourceId);
+        }
+    }
+
     protected override IEnumerable<string> GetValidationDependencyErrors()
     {
         if (ResourceRegistry.Instance == null)
