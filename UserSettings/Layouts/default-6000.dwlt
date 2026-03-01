@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEditor.dll::UnityEditor.ContainerWindow
   m_PixelRect:
     serializedVersion: 2
-    x: 0.8
-    y: 50.4
+    x: 253.6
+    y: 146.40001
     width: 875.2
     height: 764.8
   m_ShowMode: 4
@@ -1150,7 +1150,7 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: 0, y: 0, z: 0}
+    m_Target: {x: 2.39534, y: -2.065465, z: 0.5806923}
     speed: 2
     m_Value: {x: 0, y: 0, z: 0}
   m_RenderMode: 0
@@ -1198,11 +1198,11 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-    m_Target: {x: -0.08717229, y: 0.89959055, z: -0.21045254, w: -0.3726226}
+    m_Target: {x: -0.051265154, y: 0.9486857, z: -0.22554325, w: -0.21563274}
     speed: 2
     m_Value: {x: -0.08717229, y: 0.89959055, z: -0.21045254, w: -0.3726226}
   m_Size:
-    m_Target: 6.0949287
+    m_Target: 10.676245
     speed: 2
     m_Value: 6.0949287
   m_Ortho:
@@ -1349,9 +1349,10 @@ MonoBehaviour:
       m_Data: 46706
     m_ExpandedIDs:
     - m_Data: 0
-    - m_Data: 46538
-    - m_Data: 46540
-    - m_Data: 46542
+    - m_Data: 47220
+    - m_Data: 47222
+    - m_Data: 47224
+    - m_Data: 47226
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1384,9 +1385,10 @@ MonoBehaviour:
       m_Data: 0
     m_ExpandedIDs:
     - m_Data: 0
-    - m_Data: 46538
-    - m_Data: 46540
-    - m_Data: 46542
+    - m_Data: 47220
+    - m_Data: 47222
+    - m_Data: 47224
+    - m_Data: 47226
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 

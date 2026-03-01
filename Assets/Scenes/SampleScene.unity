@@ -1897,7 +1897,7 @@ PrefabInstance:
     - target: {fileID: 5149410281517860078, guid: 42518da65d1ecf843af7a3129bf88fc4, type: 3}
       propertyPath: InitialState
       value: 
-      objectReference: {fileID: 11400000, guid: ef55de18dbeeb24488207df499b80718, type: 2}
+      objectReference: {fileID: 11400000, guid: 7c6b3f38bb9a76f4c8302147c950f8b6, type: 2}
     - target: {fileID: 8046205476498553649, guid: 42518da65d1ecf843af7a3129bf88fc4, type: 3}
       propertyPath: m_Name
       value: Civilian
