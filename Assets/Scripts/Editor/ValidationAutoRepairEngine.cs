@@ -99,11 +99,9 @@ public static class ValidationAutoRepairEngine
     {
         var records = new List<DefinitionAssetRecord>();
 
-        foreach (var guid in AssetDatabase.FindAssets("t:ScriptableObject"))
+        foreach (var path in EditorAssetScanUtility.EnumerateScriptableObjectAssetPaths())
         {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
-            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-            if (asset == null)
+            if (!EditorAssetScanUtility.TryLoadAssetAtPath(path, out ScriptableObject asset))
                 continue;
 
             var serializedObject = new SerializedObject(asset);
@@ -286,11 +284,10 @@ public static class ValidationAutoRepairEngine
 
         foreach (var issue in report.Issues)
         {
-            if (string.IsNullOrWhiteSpace(issue.AssetPath) || string.IsNullOrWhiteSpace(issue.Field))
+            if (EditorAssetScanUtility.ShouldSkipAssetPath(issue.AssetPath) || string.IsNullOrWhiteSpace(issue.Field))
                 continue;
 
-            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(issue.AssetPath);
-            if (asset == null)
+            if (!EditorAssetScanUtility.TryLoadAssetAtPath(issue.AssetPath, out ScriptableObject asset))
                 continue;
 
             switch (issue.Code)

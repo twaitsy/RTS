@@ -204,11 +204,9 @@ public sealed class DefinitionIdMigrationTool : EditorWindow
     {
         var operations = new List<MigrationOperation>();
 
-        foreach (var guid in AssetDatabase.FindAssets("t:ScriptableObject"))
+        foreach (var path in EditorAssetScanUtility.EnumerateScriptableObjectAssetPaths())
         {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
-            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-            if (asset == null)
+            if (!EditorAssetScanUtility.TryLoadAssetAtPath(path, out ScriptableObject asset))
                 continue;
 
             var serializedObject = new SerializedObject(asset);
@@ -503,11 +501,9 @@ public sealed class DefinitionIdMigrationTool : EditorWindow
     {
         var entries = new List<DefinitionIdEntry>();
 
-        foreach (var guid in AssetDatabase.FindAssets("t:ScriptableObject"))
+        foreach (var path in EditorAssetScanUtility.EnumerateScriptableObjectAssetPaths())
         {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
-            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-            if (asset == null)
+            if (!EditorAssetScanUtility.TryLoadAssetAtPath(path, out ScriptableObject asset))
                 continue;
 
             if (!TryGetIdProperty(asset, out var serializedObject, out var idProperty))
@@ -548,11 +544,9 @@ public sealed class DefinitionIdMigrationTool : EditorWindow
 
     private static bool HasDuplicateId(ScriptableObject target, string candidate)
     {
-        foreach (var guid in AssetDatabase.FindAssets("t:ScriptableObject"))
+        foreach (var path in EditorAssetScanUtility.EnumerateScriptableObjectAssetPaths())
         {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
-            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-            if (asset == null || asset == target || asset is not IIdentifiable identifiable)
+            if (!EditorAssetScanUtility.TryLoadAssetAtPath(path, out ScriptableObject asset) || asset == target || asset is not IIdentifiable identifiable)
                 continue;
 
             if (string.Equals(DefinitionIdLifecycle.NormalizeId(identifiable.Id), candidate, StringComparison.Ordinal))
