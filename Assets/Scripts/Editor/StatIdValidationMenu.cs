@@ -97,10 +97,9 @@ public static class StatIdValidationMenu
         ValidateCatalogParity(statDefinitions, report);
         ValidateGeneratedConstants(report);
 
-        foreach (var path in EnumerateScriptableObjectAssetPaths())
+        foreach (var path in EditorAssetScanUtility.EnumerateScriptableObjectAssetPaths())
         {
-            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-            if (asset == null)
+            if (!EditorAssetScanUtility.TryLoadAssetAtPath(path, out ScriptableObject asset))
                 continue;
 
             if (asset is StatDefinition statDefinition)
@@ -113,11 +112,12 @@ public static class StatIdValidationMenu
     private static HashSet<string> LoadStatDefinitionIds()
     {
         var ids = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var guid in AssetDatabase.FindAssets("t:StatDefinition"))
+        foreach (var path in EditorAssetScanUtility.EnumerateScriptableObjectAssetPaths(nameof(StatDefinition)))
         {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
-            var asset = AssetDatabase.LoadAssetAtPath<StatDefinition>(path);
-            if (asset != null && !string.IsNullOrWhiteSpace(asset.Id))
+            if (!EditorAssetScanUtility.TryLoadAssetAtPath(path, out StatDefinition asset))
+                continue;
+
+            if (!string.IsNullOrWhiteSpace(asset.Id))
                 ids.Add(asset.Id);
         }
 
@@ -213,10 +213,9 @@ public static class StatIdValidationMenu
         int updatedAssets = 0;
         int rewrittenFields = 0;
 
-        foreach (var path in EnumerateScriptableObjectAssetPaths())
+        foreach (var path in EditorAssetScanUtility.EnumerateScriptableObjectAssetPaths())
         {
-            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-            if (asset == null)
+            if (!EditorAssetScanUtility.TryLoadAssetAtPath(path, out ScriptableObject asset))
                 continue;
 
             var serializedObject = new SerializedObject(asset);
@@ -238,10 +237,9 @@ public static class StatIdValidationMenu
         int updatedAssets = 0;
         int removals = 0;
 
-        foreach (var path in EnumerateScriptableObjectAssetPaths())
+        foreach (var path in EditorAssetScanUtility.EnumerateScriptableObjectAssetPaths())
         {
-            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-            if (asset == null)
+            if (!EditorAssetScanUtility.TryLoadAssetAtPath(path, out ScriptableObject asset))
                 continue;
 
             var serializedObject = new SerializedObject(asset);
@@ -355,10 +353,5 @@ public static class StatIdValidationMenu
         return int.TryParse(match.Groups[2].Value, out index);
     }
 
-    private static IEnumerable<string> EnumerateScriptableObjectAssetPaths()
-    {
-        foreach (var guid in AssetDatabase.FindAssets("t:ScriptableObject"))
-            yield return AssetDatabase.GUIDToAssetPath(guid);
-    }
 }
 #endif
