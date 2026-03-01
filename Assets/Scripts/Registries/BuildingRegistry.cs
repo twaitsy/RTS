@@ -44,12 +44,12 @@ public class BuildingRegistry : DefinitionRegistry<BuildingDefinition>
                 $"{nameof(BuildingDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
                 definition => RegistrySchema<BuildingDefinition>.ReferenceCollection(definition.Stats.Entries, stat => stat.StatId),
                 false,
-                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance.TryGet(targetId, out _)))
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance != null && StatRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(
                 nameof(BuildingDefinition.BuildCosts),
                 definition => RegistrySchema<BuildingDefinition>.ReferenceCollection(definition.BuildCosts, amount => amount.ResourceId),
                 false,
-                new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance.TryGet(targetId, out _)));
+                new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance != null && ResourceRegistry.Instance.TryGet(targetId, out _)));
 
         return schema;
     }
