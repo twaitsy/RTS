@@ -22,7 +22,7 @@ public static class CanonicalStatIds
         public const string GarrisonCapacity = "building.garrisonCapacity";
         public const string HitPoints = "building.hitPoints";
         public const string HousingCapacity = "building.housingCapacity";
-        public const string IsProduction = "building.is_production";
+        public const string IsProduction = "building.is.production";
         public const string PopulationSupport = "building.populationSupport";
         public const string PowerRadius = "building.powerRadius";
         public const string ProductionSpeedMultiplier = "building.productionSpeedMultiplier";
@@ -88,7 +88,7 @@ public static class CanonicalStatIds
         "building.garrisonCapacity",
         "building.hitPoints",
         "building.housingCapacity",
-        "building.is_production",
+        "building.is.production",
         "building.populationSupport",
         "building.powerRadius",
         "building.productionSpeedMultiplier",
