@@ -1,7 +1,7 @@
 Scene Required Scripts
 ======================
 
-Last updated: FSM transition definitions now auto-generate synchronized transition ScriptableObjects in editor
+Last updated: Validation orchestrator now logs each issue separately and keeps a compact summary line
 
 FSM runtime scripts (required):
 - Assets/FSM/UnitBrain.cs
@@ -33,3 +33,12 @@ FSM content requirements in scenes/prefabs:
 - Assign `UnitBrain.MachineDefinition` (or `MachineDefinitionId`) for each unit brain instance.
 - Populate `UnitBrain.LegacyStateMappings` during migration so each definition `stateId` maps to a concrete `BehaviourState` asset.
 - Ensure corresponding `StateDefinition` assets include `parentStateId` where hierarchical ancestry is required.
+
+
+Validation pipeline scripts (required):
+- Assets/Scripts/Validation/DefinitionValidationOrchestrator.cs
+  - `RunValidationAndLog()` logs each `ValidationIssue` individually using severity-specific Unity console APIs (`Debug.LogError`, `Debug.LogWarning`, `Debug.Log`).
+  - Per-issue log formatting includes code + registry + message and appends asset metadata (`AssetPath`, `AssetId`, `Field`) when available.
+  - Emits a final compact summary line (`N issue(s) / M error(s)`) after detailed issue output.
+- Assets/Scripts/Editor/Validation/DefinitionValidationMenu.cs
+  - `ValidateAllDefinitionsInEditor` and `ValidateAllForCI` still gate behavior through `report.HasErrors` and `report.ErrorCount`.

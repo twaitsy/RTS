@@ -1,7 +1,7 @@
 Master Setup Guide
 ==================
 
-Last updated: FSM transition assets are now auto-generated and synchronized from StateMachineDefinition data
+Last updated: Validation orchestrator now logs each issue separately with severity-specific console output and a compact summary line
 
 FSM event flow semantics (authoritative):
 
@@ -44,3 +44,14 @@ Legacy validation architecture notes:
 - Unity menu: `Tools/Validation/Validate All Definitions`
 - Runtime bootstrap, editor menu validation, and CI use the same validation orchestration core.
 - CI execute method: `DefinitionValidationMenu.ValidateAllForCI`.
+
+
+Validation logging semantics (authoritative):
+- `DefinitionValidationOrchestrator.RunValidationAndLog()` now emits one log line per validation issue for direct console triage.
+- Severity routing is explicit:
+  - `ValidationIssueSeverity.Error` -> `Debug.LogError`
+  - `ValidationIssueSeverity.Warning` -> `Debug.LogWarning`
+  - `ValidationIssueSeverity.Info` -> `Debug.Log`
+- Each issue log line includes: validation code, registry, message, and optional asset metadata (`AssetPath`, `AssetId`, `Field`) when present.
+- The run ends with a compact summary line in the format: `[Validation] N issue(s) / M error(s).`
+- Editor and CI entry points continue using `report.HasErrors` / `report.ErrorCount` for pass/fail behavior.
