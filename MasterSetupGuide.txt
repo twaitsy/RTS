@@ -1,34 +1,20 @@
 Master Setup Guide
 ==================
 
-Last updated: Task step result API renamed to explicit runner actions (StayOnStep/AdvanceStep/Jump/FailTask)
+Last updated: FSM transition-driving leaf events now bubble to UnitBrain transitions
 
-Task runner flow semantics (authoritative):
-- `TaskStepResult` uses explicit action/result constructors:
-  - `StayOnStep()`: keep executing the current step on the next tick.
-  - `AdvanceStep()`: move to the next step index.
-  - `Jump(index)`: jump to an explicit step index.
-  - `FailTask()`: end the whole task immediately.
-- `TaskRunner.Tick()` switches on explicit `TaskStepResult.Flow` values (`StayOnStep`, `AdvanceStep`, `JumpToStep`, `FailTask`).
-- `TaskRunner` validates current and jump step indices and terminates safely on invalid values.
+FSM event flow semantics (authoritative):
+- `UnitBrain.EmitEvent(evt)` first offers events to current state and parent chain via `HandleEvent`.
+- A state only blocks transition evaluation when it returns `true` from `HandleEvent`.
+- Transition-driving events in worker leaf states are intentionally not consumed internally.
+- Worker leaf states (`MoveToResourceState`, `GatheringState`, `MoveToDropoffState`, `DeliveringState`) now return `false` for `Arrived`, `WorkComplete`, and `DeliveryComplete` so transition assets can execute.
 
-Task step behavior mapping:
-- `QueryStep`
-  - Advances when a target is found and stored.
-  - Fails task when no target exists.
-- `MoveToStep`
-  - Stays while actor is moving toward target.
-  - Advances once actor is within arrival threshold.
-  - Fails task for invalid context/actor/target wiring.
-- `WorkStep`
-  - Stays while work timer remains above zero.
-  - Advances after work completion and inventory increment.
-- `DeliverStep`
-  - Stays while actor is moving into drop-off range.
-  - Advances only after in-range transfer is performed.
-  - Fails task when drop-off cannot be found or context is invalid.
-- `LoopStep`
-  - Uses explicit jump semantics via `Jump(0)`.
+Verified worker transition chain:
+- `Idle -> MoveToResource` on `OnOrderGather`
+- `MoveToResource -> Gathering` on `Arrived`
+- `Gathering -> MoveToDropoff` on `WorkComplete`
+- `MoveToDropoff -> Delivering` on `Arrived`
+- `Delivering -> Idle` on `DeliveryComplete`
 
 Legacy validation architecture notes:
 - Unity menu: `Tools/Validation/Validate All Definitions`

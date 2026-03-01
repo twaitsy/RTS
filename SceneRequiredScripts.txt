@@ -1,29 +1,27 @@
 Scene Required Scripts
 ======================
 
-Last updated: Task flow result constructors renamed to explicit action names
+Last updated: FSM leaf-state event handlers aligned for transition-driven flow
 
-Task runtime scripts (required):
-- Assets/Scripts/Tasks/Runtime/TaskStepResult.cs
-  - Defines explicit task flow actions via `StayOnStep()`, `AdvanceStep()`, `Jump(index)`, and `FailTask()`.
-- Assets/Scripts/Tasks/Runtime/TaskRunner.cs
-  - Executes flow handling and index validation in `Tick()` using explicit `Flow` cases.
+FSM runtime scripts (required):
+- Assets/FSM/UnitBrain.cs
+  - `EmitEvent` evaluates state handlers first, then transition assets when events are not consumed.
+- Assets/FSM/BehaviourTransition.cs
+  - Defines transition conditions with `From`, `EventName`, and `To`.
 
-Task step scripts (required and aligned):
-- Assets/Scripts/Tasks/Steps/QueryStep.cs
-  - `AdvanceStep()` on found target, `FailTask()` on missing target.
-- Assets/Scripts/Tasks/Steps/MoveToStep.cs
-  - `StayOnStep()` while moving, `AdvanceStep()` on arrival.
-- Assets/Scripts/Tasks/Steps/WorkStep.cs
-  - `StayOnStep()` while timer > 0, `AdvanceStep()` when work completes.
-- Assets/Scripts/Tasks/Steps/DeliverStep.cs
-  - `StayOnStep()` while moving to drop-off range, `AdvanceStep()` once delivery happens in range.
-- Assets/Scripts/Tasks/Steps/LoopStep.cs
-  - `Jump(0)` to restart task loop.
+FSM leaf states required for worker loop transitions:
+- Assets/FSM/States/LeafStates/MoveToResourceState.cs
+  - Does not consume `Arrived`; allows `MoveToResource -> Gathering` transition.
+- Assets/FSM/States/LeafStates/GatheringState.cs
+  - Does not consume `WorkComplete`; allows `Gathering -> MoveToDropoff` transition.
+- Assets/FSM/States/LeafStates/MoveToDropoffState.cs
+  - Does not consume `Arrived`; allows `MoveToDropoff -> Delivering` transition.
+- Assets/FSM/States/LeafStates/DeliveringState.cs
+  - Does not consume `DeliveryComplete`; allows `Delivering -> Idle` transition.
 
-Validation stack scripts (still required for project definition checks):
-- Assets/Scripts/Validation/DefinitionValidationReport.cs
-- Assets/Scripts/Validation/DefinitionValidationRunner.cs
-- Assets/Scripts/Validation/DefinitionValidationOrchestrator.cs
-- Assets/Editor/Validation/DefinitionValidationOrchestrator.Editor.cs
-- Assets/Editor/Validation/DefinitionValidationMenu.cs
+FSM transition assets expected in scene wiring:
+- Assets/FSM/Transitions/Idle_to_MoveToResource.asset (`OnOrderGather`)
+- Assets/FSM/Transitions/MoveToResource_to_Gathering.asset (`Arrived`)
+- Assets/FSM/Transitions/Gathering_to_MoveToDropoff.asset (`WorkComplete`)
+- Assets/FSM/Transitions/MoveToDropoff_to_Delivering.asset (`Arrived`)
+- Assets/FSM/Transitions/Delivering_to_Idle.asset (`DeliveryComplete`)

@@ -5,9 +5,6 @@ public class MoveToDropoffState : BehaviourState
 {
     public override bool HandleEvent(UnitBrain brain, string evt)
     {
-        if (evt == "Arrived")
-            return true;
-
         return false;
     }
 }
