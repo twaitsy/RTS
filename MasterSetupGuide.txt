@@ -1,9 +1,18 @@
 Master Setup Guide
 ==================
 
-Last updated: FSM transition-driving leaf events now bubble to UnitBrain transitions
+Last updated: UnitBrain transitions now perform parent-aware hierarchical OnExit/OnEnter lifecycle calls
 
 FSM event flow semantics (authoritative):
+
+FSM hierarchical transition lifecycle semantics:
+- `UnitBrain` now computes full ancestry chains (`state`, `Parent`, ... root) for both current and target states.
+- During transition, it finds the lowest common ancestor (LCA) between old and new chains.
+- `OnExit` is called from the old leaf upward, excluding the LCA.
+- `current` is then set to the transition target state.
+- `OnEnter` is called from just below the LCA downward to the new leaf.
+- This guarantees parent states (for example `WorkingState`) participate consistently when entering/exiting child states.
+
 - `UnitBrain.EmitEvent(evt)` first offers events to current state and parent chain via `HandleEvent`.
 - A state only blocks transition evaluation when it returns `true` from `HandleEvent`.
 - Transition-driving events in worker leaf states are intentionally not consumed internally.

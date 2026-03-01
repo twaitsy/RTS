@@ -1,11 +1,13 @@
 Scene Required Scripts
 ======================
 
-Last updated: FSM leaf-state event handlers aligned for transition-driven flow
+Last updated: UnitBrain transition lifecycle now supports hierarchical parent-state entry/exit
 
 FSM runtime scripts (required):
 - Assets/FSM/UnitBrain.cs
   - `EmitEvent` evaluates state handlers first, then transition assets when events are not consumed.
+  - Transition execution now uses ancestry chains + lowest common ancestor (LCA) to invoke `OnExit`/`OnEnter` across parent states.
+  - `OnExit` runs from old leaf upward (excluding LCA), then `OnEnter` runs from below LCA down to new leaf.
 - Assets/FSM/BehaviourTransition.cs
   - Defines transition conditions with `From`, `EventName`, and `To`.
 
