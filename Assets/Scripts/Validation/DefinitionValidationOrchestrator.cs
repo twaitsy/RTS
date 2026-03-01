@@ -84,6 +84,8 @@ public static class DefinitionValidationOrchestrator
             validator.ValidateAll(report);
         }
 
+        PrefabRegistry.AppendValidationIssues(report);
+
     }
 
     private static void SeedRegistrySingletonInstances(IEnumerable<MonoBehaviour> registries)

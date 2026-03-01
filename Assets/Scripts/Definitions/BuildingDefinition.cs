@@ -17,8 +17,14 @@ public class BuildingDefinition : ScriptableObject, IIdentifiable, IDefinitionMe
     [SerializeField] private string displayName;
     public string DisplayName => displayName;
 
-    [SerializeField] private Sprite icon;
-    public Sprite Icon => icon;
+    [SerializeField] private string prefabId;
+    public string PrefabId => prefabId;
+
+    [SerializeField] private string primaryCategoryId;
+    public string PrimaryCategoryId => primaryCategoryId;
+
+    [SerializeField] private List<string> secondaryCategoryIds = new();
+    public IReadOnlyList<string> SecondaryCategoryIds => secondaryCategoryIds;
 
     [SerializeField] private List<ResourceAmount> buildCosts = new();
     public IReadOnlyList<ResourceAmount> BuildCosts => buildCosts;
@@ -35,6 +41,7 @@ public class BuildingDefinition : ScriptableObject, IIdentifiable, IDefinitionMe
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
 
         stats ??= new();
+        secondaryCategoryIds ??= new();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

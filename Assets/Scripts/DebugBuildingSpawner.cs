@@ -3,8 +3,7 @@ using UnityEngine.InputSystem; // IMPORTANT
 
 public class DebugBuildingSpawner : MonoBehaviour
 {
-    [SerializeField] private BuildingDefinition houseDefinition;
-    [SerializeField] private GameObject housePrefab;
+    [SerializeField] private string buildingId = "building.house";
 
     private void Update()
     {
@@ -16,15 +15,30 @@ public class DebugBuildingSpawner : MonoBehaviour
 
     private void SpawnHouse()
     {
-        if (housePrefab == null)
+        if (BuildingRegistry.Instance == null)
         {
-            Debug.LogError("No house prefab assigned.");
+            Debug.LogError("Building placement aborted: BuildingRegistry.Instance is null.");
+            return;
+        }
+
+        PrefabRegistry.Initialize();
+
+        var definition = BuildingRegistry.Instance.Get(buildingId);
+        if (definition == null)
+        {
+            Debug.LogError($"Building placement aborted: missing BuildingDefinition '{buildingId}'.");
+            return;
+        }
+
+        if (!PrefabRegistry.TryGet(definition.PrefabId, out var prefab))
+        {
+            Debug.LogError($"Building placement aborted: BuildingDefinition '{definition.Id}' references unresolved prefabId '{definition.PrefabId}'.");
             return;
         }
 
         Vector3 spawnPos = Camera.main.transform.position + Camera.main.transform.forward * 5f;
-        Instantiate(housePrefab, spawnPos, Quaternion.identity);
+        Instantiate(prefab, spawnPos, Quaternion.identity);
 
-        Debug.Log($"Spawned house: {houseDefinition.Id}");
+        Debug.Log($"Spawned house: {definition.Id}");
     }
 }
