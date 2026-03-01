@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1444079306732069369}
   - component: {fileID: 4851800783026205445}
   - component: {fileID: 8557889250463040486}
-  - component: {fileID: 7727377846255000140}
+  - component: {fileID: 5149410281517860078}
   m_Layer: 0
   m_Name: Civilian
   m_TagString: Untagged
@@ -113,7 +113,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &7727377846255000140
+--- !u!114 &5149410281517860078
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -122,7 +122,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 8046205476498553649}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1010a90289edb0640a846aa3ed1b8d20, type: 3}
+  m_Script: {fileID: 11500000, guid: 91df31bf66ccd10458a41e064f707b1f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UnitTaskController
-  startingTask: {fileID: 11400000, guid: 48c59787f8ff85c4da0c4bcfec4cca17, type: 2}
+  m_EditorClassIdentifier: Assembly-CSharp::UnitBrain
+  InitialState: {fileID: 11400000, guid: 7c6b3f38bb9a76f4c8302147c950f8b6, type: 2}
+  Transitions:
+  - {fileID: 11400000, guid: a1468faa6a8b1a04698e0cb3a2c37735, type: 2}
+  - {fileID: 11400000, guid: 8966161c68fedba42a8f230f05eba599, type: 2}
+  - {fileID: 11400000, guid: 573708bc73ad14e4b83e632514e9cda1, type: 2}
+  - {fileID: 11400000, guid: 6e261514053042949b9acdc348d0354f, type: 2}
+  - {fileID: 11400000, guid: 73088bb3eadce3a49bb976058e976d70, type: 2}

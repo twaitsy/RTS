@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 218d47270ab0fba44ab5a51d7fec1bc9, type: 3}
+  m_Name: Delivering_to_Idle
+  m_EditorClassIdentifier: Assembly-CSharp::BehaviourTransition
+  From: {fileID: 11400000, guid: 4f6487864165898408558fdaa5a64e8b, type: 2}
+  EventName: DeliveryComplete
+  To: {fileID: 11400000, guid: 7c6b3f38bb9a76f4c8302147c950f8b6, type: 2}

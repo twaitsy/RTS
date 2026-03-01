@@ -23,6 +23,6 @@ public static class MovementSystem
 
         t.position += step;
 
-        Debug.Log($"MovementSystem: Moving '{actor.name}' to {target}, newPos={t.position}");
+    //    Debug.Log($"MovementSystem: Moving '{actor.name}' to {target}, newPos={t.position}");
     }
 }

@@ -9,11 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9231a1e019584bf48afedbac42d009d4, type: 3}
-  m_Name: New Resource Node Definition
-  m_EditorClassIdentifier: Assembly-CSharp::ResourceNodeDefinition
-  id: 
-  resourceId: 
-  amount: 0
-  respawnTime: 0
-  harvestTime: 0
+  m_Script: {fileID: 11500000, guid: d97ba6dcc44569c49beda2dd3d9216d8, type: 3}
+  m_Name: IdleState_Worker
+  m_EditorClassIdentifier: Assembly-CSharp::IdleState
+  Parent: {fileID: 0}

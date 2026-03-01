@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 218d47270ab0fba44ab5a51d7fec1bc9, type: 3}
+  m_Name: Gathering_to_MoveToDropoff
+  m_EditorClassIdentifier: Assembly-CSharp::BehaviourTransition
+  From: {fileID: 11400000, guid: b44eb666b9d7f974684695cd415429d7, type: 2}
+  EventName: WorkComplete
+  To: {fileID: 11400000, guid: a974455a98dfd4b4392f1a794d341698, type: 2}
