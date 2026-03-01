@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using UnityEngine;
 
 public static class DefinitionValidationOrchestrator
@@ -20,14 +21,43 @@ public static class DefinitionValidationOrchestrator
     public static DefinitionValidationReport RunValidationAndLog()
     {
         var report = RunValidation();
-        var summary = report.BuildSummary();
 
-        if (report.HasErrors)
-            Debug.LogError(summary);
-        else
-            Debug.Log(summary);
+        var issues = report.Issues;
+
+        foreach (var issue in issues)
+        {
+            var formattedIssue = FormatIssueForLog(issue);
+            switch (issue.Severity)
+            {
+                case ValidationIssueSeverity.Error:
+                    Debug.LogError(formattedIssue);
+                    break;
+                case ValidationIssueSeverity.Warning:
+                    Debug.LogWarning(formattedIssue);
+                    break;
+                default:
+                    Debug.Log(formattedIssue);
+                    break;
+            }
+        }
+
+        Debug.Log($"[Validation] {issues.Count} issue(s) / {report.ErrorCount} error(s).");
 
         return report;
+    }
+
+    private static string FormatIssueForLog(ValidationIssue issue)
+    {
+        var builder = new StringBuilder();
+        builder.Append($"[Validation] [{issue.Code}] [{issue.Registry}] {issue.Message}");
+
+        if (!string.IsNullOrWhiteSpace(issue.AssetPath) || !string.IsNullOrWhiteSpace(issue.AssetId) || !string.IsNullOrWhiteSpace(issue.Field))
+        {
+            builder.Append(" | ");
+            builder.Append($"assetPath={issue.AssetPath ?? "n/a"}, assetId={issue.AssetId ?? "n/a"}, field={issue.Field ?? "n/a"}");
+        }
+
+        return builder.ToString();
     }
 
     private static void ExecuteRegistryValidators(DefinitionValidationReport report, DefinitionReferenceMap referenceMap)

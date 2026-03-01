@@ -1,27 +1,29 @@
 Scene Required Scripts
 ======================
 
-Last updated: UnitBrain now requires definition-driven FSM runtime wiring
+Last updated: UnitBrain transition lifecycle now supports hierarchical parent-state entry/exit
 
-FSM runtime scripts (required):
+FSM runtime + bridge scripts (required):
 - Assets/FSM/UnitBrain.cs
-  - Uses `MachineDefinition` / `MachineDefinitionId` instead of direct transition list wiring.
-  - Delegates state/transition lookup and eligibility checks to `StateMachineRuntime`.
-  - Keeps hierarchical LCA `OnExit`/`OnEnter` traversal using runtime ancestry.
-  - Exposes migration glue via `LegacyStateMappings` + `LegacyInitialState`.
-- Assets/Scripts/FSM/Runtime/StateMachineRuntime.cs
-  - Loads one `StateMachineDefinition` for each brain.
-  - Builds runtime dictionaries for states (`stateId -> BehaviourState`) and transitions (`fromStateId -> transition list`).
-  - Evaluates transition eligibility from event + condition data (`eventName`, `conditionId`, legacy `conditionDescription` tokens).
-  - Resolves hierarchical parent relationships from `StateDefinition.parentStateId` with fallback to `BehaviourState.Parent`.
-- Assets/Scripts/Definitions/StateMachineDefinition.cs
-  - Defines machine-level `initialStateId`, state entries, and transition entries (`fromStateId`, `toStateId`, `eventName`, `conditionId`).
-
-Migration/deprecation scripts:
+  - `EmitEvent` evaluates state handlers first, then transition assets when events are not consumed.
+  - Transition execution now uses ancestry chains + lowest common ancestor (LCA) to invoke `OnExit`/`OnEnter` across parent states.
+  - `OnExit` runs from old leaf upward (excluding LCA), then `OnEnter` runs from below LCA down to new leaf.
 - Assets/FSM/BehaviourTransition.cs
-  - Marked obsolete; retained only for transitional compatibility.
+  - Defines transition conditions with `From`, `EventName`, and `To`.
 
-FSM content requirements in scenes/prefabs:
-- Assign `UnitBrain.MachineDefinition` (or `MachineDefinitionId`) for each unit brain instance.
-- Populate `UnitBrain.LegacyStateMappings` during migration so each definition `stateId` maps to a concrete `BehaviourState` asset.
-- Ensure corresponding `StateDefinition` assets include `parentStateId` where hierarchical ancestry is required.
+FSM leaf states required for worker loop transitions:
+- Assets/FSM/States/LeafStates/MoveToResourceState.cs
+  - Does not consume `Arrived`; allows `MoveToResource -> Gathering` transition.
+- Assets/FSM/States/LeafStates/GatheringState.cs
+  - Does not consume `WorkComplete`; allows `Gathering -> MoveToDropoff` transition.
+- Assets/FSM/States/LeafStates/MoveToDropoffState.cs
+  - Does not consume `Arrived`; allows `MoveToDropoff -> Delivering` transition.
+- Assets/FSM/States/LeafStates/DeliveringState.cs
+  - Does not consume `DeliveryComplete`; allows `Delivering -> Idle` transition.
+
+FSM transition assets expected in scene wiring:
+- Assets/FSM/Transitions/Idle_to_MoveToResource.asset (`OnOrderGather`)
+- Assets/FSM/Transitions/MoveToResource_to_Gathering.asset (`Arrived`)
+- Assets/FSM/Transitions/Gathering_to_MoveToDropoff.asset (`WorkComplete`)
+- Assets/FSM/Transitions/MoveToDropoff_to_Delivering.asset (`Arrived`)
+- Assets/FSM/Transitions/Delivering_to_Idle.asset (`DeliveryComplete`)
