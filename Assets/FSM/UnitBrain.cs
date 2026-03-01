@@ -1,26 +1,56 @@
-using UnityEngine;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
-public class UnitBrain : MonoBehaviour
+public class UnitBrain : MonoBehaviour, IStateMachineConditionContext
 {
+    [Header("Definition-Driven FSM")]
+    public StateMachineDefinition MachineDefinition;
+
+    [Tooltip("Optional: load machine from StateMachineRegistry by ID when MachineDefinition is unset.")]
+    public string MachineDefinitionId;
+
+    [Tooltip("Migration glue mapping legacy BehaviourState assets to StateDefinition IDs.")]
+    public List<LegacyStateIdMapping> LegacyStateMappings = new();
+
+    [Tooltip("Fallback state used only during migration when no mapping exists.")]
+    public BehaviourState LegacyInitialState;
+
+    [Header("Deprecated Direct-Wired Transition Path")]
+    [Obsolete("Use MachineDefinition + LegacyStateMappings instead.")]
     public BehaviourState InitialState;
+
+    [Obsolete("Use MachineDefinition transitions instead.")]
     public List<BehaviourTransition> Transitions;
 
+    private readonly Dictionary<string, float> lastEventTimeByName = new();
+
+    private StateMachineRuntime runtime;
     private BehaviourState current;
     private TaskRunner taskRunner;
 
-    void Start()
-    {
-        current = InitialState;
-        current.OnEnter(this);
-        EmitEvent("OnOrderGather");
+    public BehaviourState CurrentState => current;
 
+    private void Start()
+    {
+        runtime = new StateMachineRuntime();
+
+        if (!runtime.Initialize(MachineDefinition, MachineDefinitionId, LegacyStateMappings, LegacyInitialState, InitialState))
+        {
+            Debug.LogError($"{nameof(UnitBrain)} on '{name}' failed to initialize FSM runtime.");
+            enabled = false;
+            return;
+        }
+
+        current = runtime.GetInitialRuntimeState();
+        current?.OnEnter(this);
+
+        EmitEvent("OnOrderGather");
     }
 
-    void Update()
+    private void Update()
     {
-        current.Tick(this);
+        current?.Tick(this);
 
         if (taskRunner != null && !taskRunner.IsComplete)
             taskRunner.Tick();
@@ -33,6 +63,11 @@ public class UnitBrain : MonoBehaviour
 
     public void EmitEvent(string evt)
     {
+        if (string.IsNullOrWhiteSpace(evt) || current == null || runtime == null)
+            return;
+
+        lastEventTimeByName[evt] = Time.time;
+
         BehaviourState s = current;
 
         while (s != null)
@@ -40,30 +75,23 @@ public class UnitBrain : MonoBehaviour
             if (s.HandleEvent(this, evt))
                 return;
 
-            s = s.Parent;
+            s = runtime.GetParentState(s);
         }
 
-        foreach (var t in Transitions)
-        {
-            if (t.From == current && t.EventName == evt)
-            {
-                TransitionTo(t.To);
-                return;
-            }
-        }
+        if (runtime.TryResolveTransition(current, evt, this, out BehaviourState target))
+            TransitionTo(target);
     }
 
-    private static List<BehaviourState> BuildAncestryChain(BehaviourState state)
+    public bool TryGetElapsedSecondsSinceEvent(string eventName, out float seconds)
     {
-        List<BehaviourState> chain = new List<BehaviourState>();
-
-        while (state != null)
+        if (!lastEventTimeByName.TryGetValue(eventName, out float eventTime))
         {
-            chain.Add(state);
-            state = state.Parent;
+            seconds = 0f;
+            return false;
         }
 
-        return chain;
+        seconds = Mathf.Max(0f, Time.time - eventTime);
+        return true;
     }
 
     private void TransitionTo(BehaviourState target)
@@ -74,8 +102,8 @@ public class UnitBrain : MonoBehaviour
         if (current == target)
             return;
 
-        List<BehaviourState> oldChain = BuildAncestryChain(current);
-        List<BehaviourState> newChain = BuildAncestryChain(target);
+        List<BehaviourState> oldChain = runtime.BuildAncestryChain(current);
+        List<BehaviourState> newChain = runtime.BuildAncestryChain(target);
 
         int oldIndex = oldChain.Count - 1;
         int newIndex = newChain.Count - 1;
@@ -94,4 +122,11 @@ public class UnitBrain : MonoBehaviour
         for (int i = newIndex; i >= 0; i--)
             newChain[i].OnEnter(this);
     }
+}
+
+[Serializable]
+public struct LegacyStateIdMapping
+{
+    public BehaviourState state;
+    public string stateDefinitionId;
 }

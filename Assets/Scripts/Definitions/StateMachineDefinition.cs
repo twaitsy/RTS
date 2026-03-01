@@ -14,6 +14,9 @@ public struct StateTransitionEntry
 {
     public string fromStateId;
     public string toStateId;
+    public string eventName;
+    public string conditionId;
+    [Tooltip("Legacy fallback. Supports formats like event=Arrived;conditionId=logic.can.gather;minElapsed=0.25")]
     public string conditionDescription;
 }
 
@@ -28,6 +31,9 @@ public class StateMachineDefinition : ScriptableObject, IIdentifiable, IDefiniti
 
     [SerializeField, HideInInspector] private bool isIdFinalized;
     [SerializeField, HideInInspector] private string finalizedId;
+
+    [SerializeField] private string initialStateId;
+    public string InitialStateId => initialStateId;
 
     [SerializeField] private List<StateDefinitionEntry> states = new();
     public IReadOnlyList<StateDefinitionEntry> States => states;
