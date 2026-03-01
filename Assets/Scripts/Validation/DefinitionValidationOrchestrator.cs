@@ -68,6 +68,8 @@ public static class DefinitionValidationOrchestrator
             FindObjectsSortMode.None
         );
 
+        SeedRegistrySingletonInstances(registries);
+
         foreach (var registry in registries)
         {
             if (registry is IDefinitionRegistryValidator validator)
@@ -82,6 +84,37 @@ public static class DefinitionValidationOrchestrator
             validator.ValidateAll(report);
         }
 
+    }
+
+    private static void SeedRegistrySingletonInstances(IEnumerable<MonoBehaviour> registries)
+    {
+        foreach (var registry in registries)
+        {
+            if (registry == null)
+                continue;
+
+            var registryType = registry.GetType();
+            var instanceProperty = registryType.GetProperty(
+                "Instance",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+
+            if (instanceProperty == null || instanceProperty.PropertyType != registryType)
+                continue;
+
+            var setter = instanceProperty.GetSetMethod(true);
+            if (setter == null)
+                continue;
+
+            var existing = instanceProperty.GetValue(null);
+            if (existing == null)
+            {
+                setter.Invoke(null, new object[] { registry });
+                continue;
+            }
+
+            if (!ReferenceEquals(existing, registry))
+                Debug.LogWarning($"[Validation] Singleton mismatch for {registryType.Name}; keeping existing instance '{((MonoBehaviour)existing).name}'.");
+        }
     }
 
     private static void ExecuteEditorValidators(DefinitionValidationReport report)

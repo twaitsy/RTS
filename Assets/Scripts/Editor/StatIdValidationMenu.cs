@@ -157,7 +157,9 @@ public static class StatIdValidationMenu
             return;
         }
 
-        if (strictMode && StatIdCompatibilityMap.LegacyToCanonical.TryGetValue(definition.Id, out var requiredCanonicalId))
+        if (strictMode &&
+            StatIdCompatibilityMap.LegacyToCanonical.TryGetValue(definition.Id, out var requiredCanonicalId) &&
+            !string.Equals(definition.Id, requiredCanonicalId, StringComparison.Ordinal))
         {
             report.AddIssue(new ValidationIssue("STAT_LEGACY_ID_IN_STRICT_MODE", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"Asset '{path}' property 'id' uses legacy stat ID '{definition.Id}'. Required canonical ID: '{requiredCanonicalId}'.", assetPath: path, assetId: definition.Id, field: "id", suggestedFix: "Run Tools/Validation/Migrate Legacy Stat IDs."));
         }
@@ -193,7 +195,9 @@ public static class StatIdValidationMenu
                 continue;
             }
 
-            if (strictMode && StatIdCompatibilityMap.LegacyToCanonical.TryGetValue(value, out var requiredCanonicalId))
+            if (strictMode &&
+                StatIdCompatibilityMap.LegacyToCanonical.TryGetValue(value, out var requiredCanonicalId) &&
+                !string.Equals(value, requiredCanonicalId, StringComparison.Ordinal))
             {
                 report.AddIssue(new ValidationIssue("STAT_LEGACY_REFERENCE_IN_STRICT_MODE", ValidationIssueSeverity.Error, nameof(StatIdValidationMenu), $"Asset '{path}' property '{iterator.propertyPath}' uses legacy stat ID '{value}'. Required canonical ID: '{requiredCanonicalId}'.", assetPath: path, assetId: value, field: iterator.propertyPath, suggestedFix: "Run Tools/Validation/Migrate Legacy Stat IDs."));
             }

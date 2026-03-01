@@ -8,19 +8,35 @@ public static class CanonicalStatIds
 {
     public static class Building
     {
-        public const string Buildtime = "building.buildtime";
-        public const string BuildTime = Buildtime;
-        public const string Comfortbonus = "building.comfortbonus";
-        public const string ComfortBonus = Comfortbonus;
-        public const string Constructiontime = "building.constructiontime";
-        public const string ConstructionTime = Constructiontime;
-        public const string Hitpoints = "building.hitpoints";
-        public const string HitPoints = Hitpoints;
-        public const string Housingcapacity = "building.housingcapacity";
-        public const string HousingCapacity = Housingcapacity;
-        public const string IsProduction = "building.is.production";
-        public const string Upgradeslots = "building.upgradeslots";
-        public const string UpgradeSlots = Upgradeslots;
+        public const string Armor = "building.armor";
+        public const string BuildRadius = "building.buildRadius";
+        public const string BuildTime = "building.buildTime";
+        public const string CaptureResistance = "building.captureResistance";
+        public const string ComfortBonus = "building.comfortBonus";
+        public const string ConstructionTime = "building.constructionTime";
+        public const string DecayTime = "building.decayTime";
+        public const string DetectionRange = "building.detectionRange";
+        public const string EnergyConsumption = "building.energyConsumption";
+        public const string EnergyProduction = "building.energyProduction";
+        public const string Footprint = "building.footprint";
+        public const string GarrisonCapacity = "building.garrisonCapacity";
+        public const string HitPoints = "building.hitPoints";
+        public const string HousingCapacity = "building.housingCapacity";
+        public const string IsProduction = "building.is_production";
+        public const string PopulationSupport = "building.populationSupport";
+        public const string PowerRadius = "building.powerRadius";
+        public const string ProductionSpeedMultiplier = "building.productionSpeedMultiplier";
+        public const string RallyPointCount = "building.rallyPointCount";
+        public const string RepairRate = "building.repairRate";
+        public const string ResourceRadius = "building.resourceRadius";
+        public const string ShieldPoints = "building.shieldPoints";
+        public const string SightRange = "building.sightRange";
+        public const string SupplyProvided = "building.supplyProvided";
+        public const string SupplyUsed = "building.supplyUsed";
+        public const string TrainQueueSize = "building.trainQueueSize";
+        public const string TurretSlots = "building.turretSlots";
+        public const string UpgradeSlots = "building.upgradeSlots";
+        public const string UpgradeTimeReduction = "building.upgradeTimeReduction";
     }
 
     public static class Combat
@@ -50,8 +66,7 @@ public static class CanonicalStatIds
     public static class Production
     {
         public const string CarryCapacity = "production.carryCapacity";
-        public const string Storagecapacity = "production.storagecapacity";
-        public const string StorageCapacity = Storagecapacity;
+        public const string StorageCapacity = "production.storageCapacity";
         public const string WorkSpeed = "production.workSpeed";
     }
 
@@ -59,13 +74,35 @@ public static class CanonicalStatIds
 
     private static readonly string[] _catalog =
     {
-        "building.buildtime",
-        "building.comfortbonus",
-        "building.constructiontime",
-        "building.hitpoints",
-        "building.housingcapacity",
-        "building.is.production",
-        "building.upgradeslots",
+        "building.armor",
+        "building.buildRadius",
+        "building.buildTime",
+        "building.captureResistance",
+        "building.comfortBonus",
+        "building.constructionTime",
+        "building.decayTime",
+        "building.detectionRange",
+        "building.energyConsumption",
+        "building.energyProduction",
+        "building.footprint",
+        "building.garrisonCapacity",
+        "building.hitPoints",
+        "building.housingCapacity",
+        "building.is_production",
+        "building.populationSupport",
+        "building.powerRadius",
+        "building.productionSpeedMultiplier",
+        "building.rallyPointCount",
+        "building.repairRate",
+        "building.resourceRadius",
+        "building.shieldPoints",
+        "building.sightRange",
+        "building.supplyProvided",
+        "building.supplyUsed",
+        "building.trainQueueSize",
+        "building.turretSlots",
+        "building.upgradeSlots",
+        "building.upgradeTimeReduction",
         "combat.attackRange",
         "combat.attackSpeed",
         "combat.baseDamage",
@@ -75,7 +112,7 @@ public static class CanonicalStatIds
         "movement.moveSpeed",
         "movement.turnSpeed",
         "production.carryCapacity",
-        "production.storagecapacity",
+        "production.storageCapacity",
         "production.workSpeed",
     };
 }
