@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b9fb11cee1f7084bba16092360ffcdd, type: 3}
+  m_Name: building.medbay
+  m_EditorClassIdentifier: Assembly-CSharp::BuildingDefinition
+  id: building.medbay
+  metadata:
+    category: 4
+    tags: []
+    version: 1.0.0
+    schemaHash: 
+    lastModifiedUtc: 2026-03-01T16:33:46Z
+    author: 
+  isIdFinalized: 1
+  finalizedId: building.medbay
+  displayName: MedBay
+  icon: {fileID: 0}
+  buildCosts:
+  - resourceId: resource.wood
+    amount: 140
+  - resourceId: resource.stone
+    amount: 100
+  stats:
+    entries: []
