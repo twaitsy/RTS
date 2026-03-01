@@ -1,29 +1,33 @@
 Master Setup Guide
 ==================
 
-Last updated: UnitBrain transitions now perform parent-aware hierarchical OnExit/OnEnter lifecycle calls
+Last updated: UnitBrain now runs a definition-driven FSM runtime adapter via StateMachineDefinition assets
 
 FSM event flow semantics (authoritative):
 
+Definition-driven FSM runtime (authoritative):
+- `UnitBrain` now boots `StateMachineRuntime` and resolves a machine from:
+  1) directly assigned `MachineDefinition`, or
+  2) `MachineDefinitionId` through `StateMachineRegistry`.
+- Runtime state lookup is keyed by `StateDefinition` IDs declared in `StateMachineDefinition.States`.
+- Runtime transition lookup is keyed by `fromStateId` and evaluates transition eligibility using:
+  - `eventName` / legacy `conditionDescription` event token,
+  - optional `conditionId` (resolved through `ConditionRegistry`),
+  - optional `minElapsed` token from legacy description parsing.
+- `StateMachineDefinition.InitialStateId` is preferred for start state selection.
+
 FSM hierarchical transition lifecycle semantics:
-- `UnitBrain` now computes full ancestry chains (`state`, `Parent`, ... root) for both current and target states.
-- During transition, it finds the lowest common ancestor (LCA) between old and new chains.
-- `OnExit` is called from the old leaf upward, excluding the LCA.
-- `current` is then set to the transition target state.
-- `OnEnter` is called from just below the LCA downward to the new leaf.
-- This guarantees parent states (for example `WorkingState`) participate consistently when entering/exiting child states.
+- `UnitBrain` still computes old/new ancestry chains and performs LCA enter/exit traversal.
+- Parent ancestry is now sourced from definition data when available:
+  - Runtime checks `StateDefinition.parentStateId` first.
+  - If no definition parent mapping exists, runtime falls back to legacy `BehaviourState.Parent`.
+- During transition, `OnExit` is called from old leaf upward (excluding LCA), then `OnEnter` from below LCA down to new leaf.
 
-- `UnitBrain.EmitEvent(evt)` first offers events to current state and parent chain via `HandleEvent`.
-- A state only blocks transition evaluation when it returns `true` from `HandleEvent`.
-- Transition-driving events in worker leaf states are intentionally not consumed internally.
-- Worker leaf states (`MoveToResourceState`, `GatheringState`, `MoveToDropoffState`, `DeliveringState`) now return `false` for `Arrived`, `WorkComplete`, and `DeliveryComplete` so transition assets can execute.
-
-Verified worker transition chain:
-- `Idle -> MoveToResource` on `OnOrderGather`
-- `MoveToResource -> Gathering` on `Arrived`
-- `Gathering -> MoveToDropoff` on `WorkComplete`
-- `MoveToDropoff -> Delivering` on `Arrived`
-- `Delivering -> Idle` on `DeliveryComplete`
+Migration and deprecation notes:
+- `UnitBrain.LegacyStateMappings` maps legacy `BehaviourState` assets to `StateDefinition` IDs while content migrates.
+- `UnitBrain.LegacyInitialState` is a temporary fallback if no initial state ID can be resolved.
+- Legacy direct wiring fields (`InitialState`, `Transitions`) remain only as deprecated compatibility fallback.
+- `BehaviourTransition` assets are now marked obsolete and are no longer part of the authoritative runtime path.
 
 Legacy validation architecture notes:
 - Unity menu: `Tools/Validation/Validate All Definitions`
