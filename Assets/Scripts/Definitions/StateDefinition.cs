@@ -18,6 +18,9 @@ public class StateDefinition : ScriptableObject, IIdentifiable, IDefinitionMetad
     [SerializeField] private Sprite icon;
     public Sprite Icon => icon;
 
+    [SerializeField] private string parentStateId;
+    public string ParentStateId => parentStateId;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
