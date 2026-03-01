@@ -30,4 +30,6 @@ MonoBehaviour:
   - resourceId: resource.stone
     amount: 200
   stats:
-    entries: []
+    entries:
+    - statId: building.shieldPoints
+      value: 0

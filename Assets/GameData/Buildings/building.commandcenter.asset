@@ -30,4 +30,6 @@ MonoBehaviour:
   - resourceId: resource.stone
     amount: 220
   stats:
-    entries: []
+    entries:
+    - statId: building.sightRange
+      value: 0

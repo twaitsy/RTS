@@ -7,7 +7,7 @@ using UnityEngine;
 [InitializeOnLoad]
 public static class StateMachineTransitionGenerator
 {
-    private const string MenuPath = "Tools/FSM/Sync Runtime Transitions from Definitions";
+    private const string MenuPath = "Tools/FSM/Create Runtime Transitions from Definitions";
 
     private static bool generationQueued;
 
