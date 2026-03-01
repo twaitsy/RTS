@@ -23,7 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.headquarters
   displayName: HeadQuarters
-  icon: {fileID: 0}
+  prefabId: building.headquarters
+  primaryCategoryId: 
+  secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood
     amount: 250

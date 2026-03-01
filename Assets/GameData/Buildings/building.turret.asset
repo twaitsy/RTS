@@ -23,7 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.turret
   displayName: Turret
-  icon: {fileID: 0}
+  prefabId: building.turret
+  primaryCategoryId: 
+  secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood
     amount: 90

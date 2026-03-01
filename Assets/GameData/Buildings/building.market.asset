@@ -23,7 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.market
   displayName: Market
-  icon: {fileID: 0}
+  prefabId: building.market
+  primaryCategoryId: 
+  secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood
     amount: 150

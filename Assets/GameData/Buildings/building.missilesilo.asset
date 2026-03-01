@@ -23,7 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.missilesilo
   displayName: Missile Silo
-  icon: {fileID: 0}
+  prefabId: building.missilesilo
+  primaryCategoryId: 
+  secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood
     amount: 240

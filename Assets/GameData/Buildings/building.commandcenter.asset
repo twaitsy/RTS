@@ -23,7 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.commandcenter
   displayName: Command Center
-  icon: {fileID: 0}
+  prefabId: building.commandcenter
+  primaryCategoryId: 
+  secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood
     amount: 300

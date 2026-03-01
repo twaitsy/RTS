@@ -23,7 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.watchtower
   displayName: Watch Tower
-  icon: {fileID: 0}
+  prefabId: building.watchtower
+  primaryCategoryId: 
+  secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood
     amount: 110

@@ -23,7 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.shipyard
   displayName: Shipyard
-  icon: {fileID: 0}
+  prefabId: building.shipyard
+  primaryCategoryId: 
+  secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood
     amount: 280

@@ -23,9 +23,13 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.house
   displayName: House
-  icon: {fileID: 0}
+  prefabId: building.house
+  primaryCategoryId: 
+  secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood
     amount: 20
   stats:
-    entries: []
+    entries:
+    - statId: building.housingCapacity
+      value: 6

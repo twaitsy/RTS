@@ -23,7 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.powerplant
   displayName: Power Plant
-  icon: {fileID: 0}
+  prefabId: building.powerplant
+  primaryCategoryId: 
+  secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood
     amount: 120

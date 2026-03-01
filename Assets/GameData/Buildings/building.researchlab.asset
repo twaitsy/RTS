@@ -23,7 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.researchlab
   displayName: Research Lab
-  icon: {fileID: 0}
+  prefabId: building.researchlab
+  primaryCategoryId: 
+  secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood
     amount: 180

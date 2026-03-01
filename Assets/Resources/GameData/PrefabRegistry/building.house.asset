@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a33e130328b06841af56c7237b7abcd, type: 3}
+  m_Name: building.house
+  m_EditorClassIdentifier: Assembly-CSharp::PrefabDefinition
+  id: building.house
+  metadata:
+    category: 2
+    tags: []
+    version: 1.0.0
+    schemaHash: 
+    lastModifiedUtc: 2026-03-01T23:09:25.3045709Z
+    author: 
+  isIdFinalized: 0
+  finalizedId: 
+  prefab: {fileID: 7771315273194318374, guid: 5cd0a231c9f774549b34b0d55b2bfe07, type: 3}

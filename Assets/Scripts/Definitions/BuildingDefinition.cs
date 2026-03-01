@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-[CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/Building")]
+[CreateAssetMenu(menuName = "DataDrivenRTS/Buildings/Building")]
 public class BuildingDefinition : ScriptableObject, IIdentifiable, IDefinitionMetadataProvider
 {
     [SerializeField] private string id;

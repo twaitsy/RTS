@@ -30,13 +30,13 @@ public class ResourceDefinitionEditor : Editor
         EditorGUILayout.PropertyField(displayNameProp);
         EditorGUILayout.PropertyField(iconProp);
 
-        EditorGUILayout.Space(8);
-        StatContainerInspectorUtility.DrawStatsSection(
-            serializedObject,
-            "stats",
-            "ResourceDefinition_Stats",
-            "Stats"
-        );
+      //  EditorGUILayout.Space(8);
+     //   StatContainerInspectorUtility.DrawStatsSection(
+     //       serializedObject,
+     //       "stats",
+     //       "ResourceDefinition_Stats",
+     //       "Stats"
+     //   );
 
         EditorGUILayout.Space(8);
         StatModifierInspectorUtility.DrawModifiersSection(
