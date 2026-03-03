@@ -149,6 +149,9 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
         {
             EditorGUILayout.PropertyField(prefabIdProperty, new GUIContent("Prefab ID"));
 
+            if (GUILayout.Button("Pick…", GUILayout.Width(72f)))
+                PrefabIdPickerWindow.OpenForTarget(selectedBuildingDefinition, prefabIdProperty.propertyPath, prefabIdProperty.stringValue);
+
             var trimmedPreview = prefabIdProperty.stringValue?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(trimmedPreview))
             {

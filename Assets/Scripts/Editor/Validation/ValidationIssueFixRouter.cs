@@ -46,15 +46,18 @@ public static class ValidationIssueFixRouter
 
     private static bool TryOpenKnownTool(ValidationIssue issue, ScriptableObject target)
     {
+        if (IsPrefabRelatedIssue(issue) && !string.IsNullOrWhiteSpace(issue.Field))
+        {
+            var currentValue = string.IsNullOrWhiteSpace(issue.AssetId) ? issue.SuggestedFix : issue.AssetId;
+            PrefabIdPickerWindow.OpenForTarget(target, issue.Field, currentValue);
+            return true;
+        }
+
         switch (issue.Code)
         {
             case "INVALID_OR_NONCANONICAL_ID":
             case "DUPLICATE_ID":
                 DefinitionIdMigrationTool.OpenWithTarget(target, issue.Field, issue.SuggestedFix);
-                return true;
-
-            case "MISSING_REFERENCE" when target is BuildingDefinition building && IsBuildingField(issue):
-                BuildingPrefabMigrationTool.OpenForBuilding(building, issue.Field, issue.SuggestedFix);
                 return true;
         }
 
@@ -68,6 +71,25 @@ public static class ValidationIssueFixRouter
                    || issue.Field.IndexOf("categoryId", System.StringComparison.OrdinalIgnoreCase) >= 0
                    || issue.Field.IndexOf("primaryCategoryId", System.StringComparison.OrdinalIgnoreCase) >= 0
                    || string.Equals(issue.Registry, nameof(BuildingDefinition), System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsPrefabRelatedIssue(ValidationIssue issue)
+    {
+        if (issue == null)
+            return false;
+
+        if (!string.IsNullOrWhiteSpace(issue.Field)
+            && issue.Field.IndexOf("prefabId", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            return true;
+
+        if (!string.IsNullOrWhiteSpace(issue.Code)
+            && issue.Code.IndexOf("prefab", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            return true;
+
+        return IsBuildingField(issue)
+               && !string.IsNullOrWhiteSpace(issue.AssetId)
+               && !string.IsNullOrWhiteSpace(issue.SuggestedFix)
+               && issue.SuggestedFix.IndexOf("prefab", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private static void ShowManualFallback(ValidationIssue issue, ScriptableObject target)
