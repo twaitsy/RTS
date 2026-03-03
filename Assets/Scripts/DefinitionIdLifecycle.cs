@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -11,6 +12,7 @@ public static class DefinitionIdLifecycle
 {
 #if UNITY_EDITOR
     private static readonly Regex IdFormatRegex = new("^[a-z0-9]+(?:\\.[a-zA-Z0-9]+)*$", RegexOptions.Compiled);
+    private static readonly HashSet<string> EditorWarningDedupCache = new();
 
     public static bool IsValidIdFormat(string id)
     {
@@ -82,7 +84,8 @@ public static class DefinitionIdLifecycle
             {
                 candidate = NormalizeId(asset.name);
                 id = candidate;
-                Debug.LogWarning($"[Definition IDs] Auto-assigned initial ID '{id}' for '{asset.name}'. Future ID changes must use Tools/Data/Definition ID Migration.", asset);
+                LogWarningOnce(asset, "auto-assigned-initial-id", rawCandidate, candidate,
+                    $"[Definition IDs] Auto-assigned initial ID '{id}' for '{asset.name}'. Future ID changes must use Tools/Data/Definition ID Migration.");
             }
 
             if (string.IsNullOrWhiteSpace(candidate))
@@ -90,7 +93,8 @@ public static class DefinitionIdLifecycle
 
             if (!string.Equals(rawCandidate, candidate, StringComparison.Ordinal))
             {
-                Debug.LogWarning($"[Definition IDs] Normalized non-canonical ID on '{asset.name}' from '{rawCandidate}' to '{candidate}'.", asset);
+                LogWarningOnce(asset, "normalized-non-canonical-id", rawCandidate, candidate,
+                    $"[Definition IDs] Normalized non-canonical ID on '{asset.name}' from '{rawCandidate}' to '{candidate}'.");
                 id = candidate;
             }
 
@@ -117,7 +121,8 @@ public static class DefinitionIdLifecycle
             var repairedFinalized = NormalizeId(finalizedId);
             if (IsValidIdFormat(repairedFinalized))
             {
-                Debug.LogWarning($"[Definition IDs] Repaired legacy finalized ID on '{asset.name}' from '{finalizedId}' to '{repairedFinalized}'.", asset);
+                LogWarningOnce(asset, "repaired-legacy-finalized-id", finalizedId, repairedFinalized,
+                    $"[Definition IDs] Repaired legacy finalized ID on '{asset.name}' from '{finalizedId}' to '{repairedFinalized}'.");
                 finalizedId = repairedFinalized;
                 id = repairedFinalized;
             }
@@ -136,15 +141,30 @@ public static class DefinitionIdLifecycle
 
         if (!string.Equals(rawCandidate, candidate, StringComparison.Ordinal))
         {
-            Debug.LogWarning($"[Definition IDs] Normalized edited ID on '{asset.name}' from '{rawCandidate}' to '{candidate}', but finalized IDs can only be changed via Tools/Data/Definition ID Migration.", asset);
+            LogWarningOnce(asset, "normalized-edited-id", rawCandidate, candidate,
+                $"[Definition IDs] Normalized edited ID on '{asset.name}' from '{rawCandidate}' to '{candidate}', but finalized IDs can only be changed via Tools/Data/Definition ID Migration.");
             id = candidate;
         }
 
         if (!string.Equals(candidate, finalizedId, StringComparison.Ordinal))
         {
-            Debug.LogWarning($"[Definition IDs] Ignoring implicit ID edit on '{asset.name}': '{candidate}' -> '{finalizedId}'. Use Tools/Data/Definition ID Migration for a deliberate rename.", asset);
+            LogWarningOnce(asset, "ignored-implicit-edit", candidate, finalizedId,
+                $"[Definition IDs] Ignoring implicit ID edit on '{asset.name}': '{candidate}' -> '{finalizedId}'. Use Tools/Data/Definition ID Migration for a deliberate rename.");
             id = finalizedId;
         }
+    }
+
+    private static void LogWarningOnce(ScriptableObject asset, string warningType, string before, string after, string message)
+    {
+        var path = AssetDatabase.GetAssetPath(asset);
+        var guid = string.IsNullOrEmpty(path) ? string.Empty : AssetDatabase.AssetPathToGUID(path);
+        var assetKey = !string.IsNullOrEmpty(guid) ? guid : path;
+        var key = $"{assetKey}|{warningType}|{before ?? string.Empty}->{after ?? string.Empty}";
+
+        if (!EditorWarningDedupCache.Add(key))
+            return;
+
+        Debug.LogWarning(message, asset);
     }
 
     private static bool TryFindIdCollision(ScriptableObject currentAsset, string candidate, out string conflictPath)
