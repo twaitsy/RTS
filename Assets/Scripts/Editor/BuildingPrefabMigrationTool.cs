@@ -42,6 +42,33 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
         GetWindow<BuildingPrefabMigrationTool>("Building Prefab Migration").Show();
     }
 
+    public static void OpenForBuilding(BuildingDefinition building, string fieldPath, string suggestedValue)
+    {
+        var window = GetWindow<BuildingPrefabMigrationTool>("Building Prefab Migration");
+        window.selectedBuildingDefinition = building;
+        window.Show();
+        window.Focus();
+
+        if (building != null)
+            EditorGUIUtility.PingObject(building);
+
+        if (building == null)
+            return;
+
+        var serialized = new SerializedObject(building);
+        var property = string.IsNullOrWhiteSpace(fieldPath) ? null : serialized.FindProperty(fieldPath);
+        if (property != null && property.propertyType == SerializedPropertyType.String)
+        {
+            var suggested = ExtractSuggestion(suggestedValue);
+            if (!string.IsNullOrWhiteSpace(suggested))
+            {
+                property.stringValue = suggested;
+                if (serialized.ApplyModifiedPropertiesWithoutUndo())
+                    EditorUtility.SetDirty(building);
+            }
+        }
+    }
+
     private void OnGUI()
     {
         EditorGUILayout.HelpBox("Previews and migrates BuildingDefinition defaults for prefabId/primaryCategoryId, and scans unresolved prefab references.", MessageType.Info);
@@ -429,6 +456,20 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
         ScanUnresolvedPrefabIds();
 
         Debug.Log($"[BuildingPrefabMigrationTool] Created {created} prefab definition stub(s). Unresolved remaining: {unresolvedEntries.Count}.");
+    }
+
+    private static string ExtractSuggestion(string suggestedValue)
+    {
+        if (string.IsNullOrWhiteSpace(suggestedValue))
+            return string.Empty;
+
+        const string marker = "'";
+        var firstQuote = suggestedValue.IndexOf(marker, System.StringComparison.Ordinal);
+        var secondQuote = firstQuote >= 0 ? suggestedValue.IndexOf(marker, firstQuote + 1, System.StringComparison.Ordinal) : -1;
+        if (firstQuote >= 0 && secondQuote > firstQuote)
+            return suggestedValue.Substring(firstQuote + 1, secondQuote - firstQuote - 1).Trim();
+
+        return suggestedValue.Trim();
     }
 
     private static GameObject FindPrefabById(string prefabId)

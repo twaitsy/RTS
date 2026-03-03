@@ -143,6 +143,17 @@ public sealed class DefinitionIssueExplorerWindow : EditorWindow
                         EditorGUILayout.LabelField(issue.Message ?? string.Empty, EditorStyles.wordWrappedMiniLabel);
                         if (!string.IsNullOrWhiteSpace(issue.AssetPath))
                             EditorGUILayout.LabelField(issue.AssetPath, EditorStyles.miniLabel);
+
+                        var canFix = ValidationIssueFixRouter.CanFix(issue, out var fixDisabledReason);
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            GUILayout.FlexibleSpace();
+                            using (new EditorGUI.DisabledScope(!canFix))
+                            {
+                                if (GUILayout.Button(new GUIContent("Fix", canFix ? "Open the recommended fix tool." : fixDisabledReason), GUILayout.Width(72f)))
+                                    ValidationIssueFixRouter.OpenFix(issue);
+                            }
+                        }
                     }
                 }
             }
@@ -176,6 +187,13 @@ public sealed class DefinitionIssueExplorerWindow : EditorWindow
                 EditorGUILayout.Space(8f);
                 EditorGUILayout.LabelField("SuggestedFix", EditorStyles.boldLabel);
                 EditorGUILayout.HelpBox(string.IsNullOrWhiteSpace(selectedIssue.SuggestedFix) ? "(none)" : selectedIssue.SuggestedFix, MessageType.None);
+
+                var canFix = ValidationIssueFixRouter.CanFix(selectedIssue, out var fixDisabledReason);
+                using (new EditorGUI.DisabledScope(!canFix))
+                {
+                    if (GUILayout.Button(new GUIContent("Fix Selected Issue", canFix ? "Open the recommended fix tool." : fixDisabledReason), GUILayout.Height(24f)))
+                        ValidationIssueFixRouter.OpenFix(selectedIssue);
+                }
             }
 
             EditorGUILayout.EndScrollView();
