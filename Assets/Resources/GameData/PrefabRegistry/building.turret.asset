@@ -22,4 +22,4 @@ MonoBehaviour:
     author: 
   isIdFinalized: 1
   finalizedId: prefab.turret
-  prefab: {fileID: 0}
+  prefab: {fileID: 8001038770274580808, guid: 8400adae63828f24d94d476e63eb8dcd, type: 3}

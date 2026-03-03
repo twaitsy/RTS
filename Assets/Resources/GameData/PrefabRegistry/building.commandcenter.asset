@@ -22,4 +22,4 @@ MonoBehaviour:
     author: 
   isIdFinalized: 1
   finalizedId: prefab.commandcenter
-  prefab: {fileID: 0}
+  prefab: {fileID: 8001038770274580808, guid: 98ca4fa70b5ea0f4799d40c21ae60a20, type: 3}

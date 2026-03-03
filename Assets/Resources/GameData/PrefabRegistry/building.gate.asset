@@ -22,4 +22,4 @@ MonoBehaviour:
     author: 
   isIdFinalized: 1
   finalizedId: prefab.gate
-  prefab: {fileID: 0}
+  prefab: {fileID: 8001038770274580808, guid: 01b4df21c76aa154888cf680c4c06865, type: 3}

@@ -25,11 +25,14 @@ MonoBehaviour:
   displayName: House
   prefabId: prefab.house
   primaryCategoryId: category.housing
-  secondaryCategoryIds: []
+  secondaryCategoryIds:
+  - category.housing
   buildCosts:
   - resourceId: resource.wood
     amount: 20
   stats:
     entries:
     - statId: building.housingCapacity
-      value: 6
+      value: 4
+    - statId: building.buildTime
+      value: 20

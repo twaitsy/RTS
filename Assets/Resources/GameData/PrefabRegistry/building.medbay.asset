@@ -22,4 +22,4 @@ MonoBehaviour:
     author: 
   isIdFinalized: 1
   finalizedId: prefab.medbay
-  prefab: {fileID: 0}
+  prefab: {fileID: 8001038770274580808, guid: 8d933a4f49d29e24596878a796949e95, type: 3}

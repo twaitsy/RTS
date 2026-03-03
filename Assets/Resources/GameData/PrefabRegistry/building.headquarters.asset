@@ -22,4 +22,4 @@ MonoBehaviour:
     author: 
   isIdFinalized: 1
   finalizedId: prefab.headquarters
-  prefab: {fileID: 0}
+  prefab: {fileID: 8001038770274580808, guid: a894071e7b1f96b42bbf815f1daefa57, type: 3}

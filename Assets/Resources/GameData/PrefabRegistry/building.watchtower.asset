@@ -22,4 +22,4 @@ MonoBehaviour:
     author: 
   isIdFinalized: 1
   finalizedId: prefab.watchtower
-  prefab: {fileID: 0}
+  prefab: {fileID: 8001038770274580808, guid: 15b6f95072df325488f40a3d01ce1e30, type: 3}
