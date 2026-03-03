@@ -23,7 +23,7 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.airfield
   displayName: Airfield
-  prefabId: building.airfield
+  prefabId: prefab.airfield
   primaryCategoryId: 
   secondaryCategoryIds: []
   buildCosts:

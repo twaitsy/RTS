@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a33e130328b06841af56c7237b7abcd, type: 3}
   m_Name: building.factory
   m_EditorClassIdentifier: Assembly-CSharp::PrefabDefinition
-  id: building.factory
+  id: p.factory
   metadata:
     category: 2
     tags: []
@@ -20,6 +20,6 @@ MonoBehaviour:
     schemaHash: 
     lastModifiedUtc: 2026-03-01T23:09:25.0641956Z
     author: 
-  isIdFinalized: 0
-  finalizedId: 
+  isIdFinalized: 1
+  finalizedId: p.factory
   prefab: {fileID: 0}
