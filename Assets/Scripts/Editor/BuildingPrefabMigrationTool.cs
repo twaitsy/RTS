@@ -6,9 +6,27 @@ using UnityEngine;
 
 public sealed class BuildingPrefabMigrationTool : EditorWindow
 {
+    private sealed class PreviewEntry
+    {
+        public string assetPath;
+        public string buildingId;
+        public string currentPrefabId;
+        public string proposedPrefabId;
+        public bool selected;
+
+        public bool updatePrefabId;
+        public string proposedPrimaryCategoryId;
+        public bool updatePrimaryCategory;
+    }
+
     private const string DefaultPrefabDefinitionFolder = PrefabRegistry.PrefabRegistryAssetFolder;
     private Vector2 scroll;
+    private Vector2 previewScroll;
     private readonly List<string> unresolvedBuildingIds = new();
+    private readonly List<PreviewEntry> previewEntries = new();
+    private bool hasPreview;
+    private int selectedPreviewCount;
+    private int skippedPreviewCount;
 
     [MenuItem("Tools/Data/Building Prefab Migration")]
     public static void Open()
@@ -18,10 +36,16 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
 
     private void OnGUI()
     {
-        EditorGUILayout.HelpBox("Migrates BuildingDefinition assets to prefabId/primaryCategoryId fields and scans unresolved prefab references.", MessageType.Info);
+        EditorGUILayout.HelpBox("Previews and migrates BuildingDefinition defaults for prefabId/primaryCategoryId, and scans unresolved prefab references.", MessageType.Info);
 
-        if (GUILayout.Button("Run migration defaults"))
-            RunMigrationDefaults();
+        if (GUILayout.Button("Build migration preview"))
+            BuildMigrationPreview();
+
+        EditorGUILayout.Space();
+        DrawPreviewSection();
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Unresolved Prefab Scan", EditorStyles.boldLabel);
 
         if (GUILayout.Button("Scan unresolved prefabId values"))
             ScanUnresolvedPrefabIds();
@@ -41,9 +65,57 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
             EditorGUILayout.LabelField(entry, EditorStyles.wordWrappedMiniLabel);
     }
 
-    private static void RunMigrationDefaults()
+    private void DrawPreviewSection()
     {
-        var changes = 0;
+        EditorGUILayout.LabelField("Migration Preview", EditorStyles.boldLabel);
+
+        if (!hasPreview)
+        {
+            EditorGUILayout.HelpBox("No preview generated yet. Click 'Build migration preview' to scan BuildingDefinition assets.", MessageType.None);
+            return;
+        }
+
+        EditorGUILayout.LabelField($"Preview entries: {previewEntries.Count} | Selected: {selectedPreviewCount} | Skipped: {skippedPreviewCount}", EditorStyles.miniBoldLabel);
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Select All"))
+                SetAllPreviewSelections(true);
+
+            if (GUILayout.Button("Select None"))
+                SetAllPreviewSelections(false);
+        }
+
+        using (var scope = new EditorGUILayout.ScrollViewScope(previewScroll, GUILayout.Height(220f)))
+        {
+            previewScroll = scope.scrollPosition;
+            foreach (var entry in previewEntries)
+            {
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    entry.selected = EditorGUILayout.ToggleLeft(
+                        $"{entry.buildingId} ({entry.assetPath})",
+                        entry.selected);
+
+                    EditorGUILayout.LabelField($"PrefabId: '{entry.currentPrefabId}' -> '{entry.proposedPrefabId}'", EditorStyles.wordWrappedMiniLabel);
+                    if (entry.updatePrimaryCategory)
+                        EditorGUILayout.LabelField($"PrimaryCategoryId: set to '{entry.proposedPrimaryCategoryId}'", EditorStyles.wordWrappedMiniLabel);
+                }
+            }
+        }
+
+        RefreshPreviewCounts();
+        using (new EditorGUI.DisabledScope(selectedPreviewCount == 0))
+        {
+            if (GUILayout.Button("Apply Selected Migration"))
+                ApplySelectedMigration();
+        }
+    }
+
+    private void BuildMigrationPreview()
+    {
+        previewEntries.Clear();
+        hasPreview = true;
 
         foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(BuildingDefinition)}"))
         {
@@ -56,32 +128,131 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
             var id = serialized.FindProperty("id")?.stringValue?.Trim();
             var prefabId = serialized.FindProperty("prefabId");
             var primaryCategory = serialized.FindProperty("primaryCategoryId");
+            var currentPrefabId = prefabId?.stringValue?.Trim() ?? string.Empty;
 
-            if (prefabId != null && string.IsNullOrWhiteSpace(prefabId.stringValue) && !string.IsNullOrWhiteSpace(id))
+            var proposedPrefabId = currentPrefabId;
+            var updatePrefabId = false;
+            if (prefabId != null && string.IsNullOrWhiteSpace(currentPrefabId) && !string.IsNullOrWhiteSpace(id))
             {
-                prefabId.stringValue = id;
-                changes++;
+                proposedPrefabId = id;
+                updatePrefabId = true;
             }
 
+            var proposedPrimaryCategoryId = string.Empty;
+            var updatePrimaryCategory = false;
             if (primaryCategory != null && string.IsNullOrWhiteSpace(primaryCategory.stringValue))
             {
                 var legacyCategory = serialized.FindProperty("categoryId") ?? serialized.FindProperty("buildingCategoryId");
                 if (legacyCategory != null && legacyCategory.propertyType == SerializedPropertyType.String)
                 {
-                    primaryCategory.stringValue = legacyCategory.stringValue?.Trim() ?? string.Empty;
-                    if (!string.IsNullOrWhiteSpace(primaryCategory.stringValue))
-                        changes++;
+                    proposedPrimaryCategoryId = legacyCategory.stringValue?.Trim() ?? string.Empty;
+                    updatePrimaryCategory = !string.IsNullOrWhiteSpace(proposedPrimaryCategoryId);
                 }
             }
 
-            if (serialized.ApplyModifiedPropertiesWithoutUndo())
-                EditorUtility.SetDirty(asset);
+            if (!updatePrefabId && !updatePrimaryCategory)
+                continue;
+
+            previewEntries.Add(new PreviewEntry
+            {
+                assetPath = path,
+                buildingId = id,
+                currentPrefabId = currentPrefabId,
+                proposedPrefabId = proposedPrefabId,
+                selected = true,
+                updatePrefabId = updatePrefabId,
+                proposedPrimaryCategoryId = proposedPrimaryCategoryId,
+                updatePrimaryCategory = updatePrimaryCategory
+            });
         }
 
-        if (changes > 0)
-            AssetDatabase.SaveAssets();
+        RefreshPreviewCounts();
+        Debug.Log($"[BuildingPrefabMigrationTool] Preview generated. Entries: {previewEntries.Count}, selected: {selectedPreviewCount}, skipped: {skippedPreviewCount}.");
+    }
 
-        Debug.Log($"[BuildingPrefabMigrationTool] Migration complete. Changed field values: {changes}.");
+    private void SetAllPreviewSelections(bool selected)
+    {
+        foreach (var entry in previewEntries)
+            entry.selected = selected;
+
+        RefreshPreviewCounts();
+    }
+
+    private void RefreshPreviewCounts()
+    {
+        selectedPreviewCount = 0;
+        foreach (var entry in previewEntries)
+        {
+            if (entry.selected)
+                selectedPreviewCount++;
+        }
+
+        skippedPreviewCount = previewEntries.Count - selectedPreviewCount;
+    }
+
+    private void ApplySelectedMigration()
+    {
+        RefreshPreviewCounts();
+        if (selectedPreviewCount == 0)
+            return;
+
+        if (!EditorUtility.DisplayDialog(
+                "Apply Selected Migration",
+                $"Apply migration updates to {selectedPreviewCount} selected BuildingDefinition asset(s)?",
+                "Apply",
+                "Cancel"))
+            return;
+
+        var appliedEntries = 0;
+        var changedFields = 0;
+
+        foreach (var entry in previewEntries)
+        {
+            if (!entry.selected)
+                continue;
+
+            var asset = AssetDatabase.LoadAssetAtPath<BuildingDefinition>(entry.assetPath);
+            if (asset == null)
+                continue;
+
+            var serialized = new SerializedObject(asset);
+            var prefabId = serialized.FindProperty("prefabId");
+            var primaryCategory = serialized.FindProperty("primaryCategoryId");
+            var wroteAny = false;
+
+            if (entry.updatePrefabId && prefabId != null)
+            {
+                prefabId.stringValue = entry.proposedPrefabId;
+                wroteAny = true;
+                changedFields++;
+            }
+
+            if (entry.updatePrimaryCategory && primaryCategory != null)
+            {
+                primaryCategory.stringValue = entry.proposedPrimaryCategoryId;
+                wroteAny = true;
+                changedFields++;
+            }
+
+            if (!wroteAny)
+                continue;
+
+            if (serialized.ApplyModifiedPropertiesWithoutUndo())
+            {
+                EditorUtility.SetDirty(asset);
+                appliedEntries++;
+            }
+        }
+
+        if (appliedEntries > 0)
+        {
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        BuildMigrationPreview();
+
+        Debug.Log($"[BuildingPrefabMigrationTool] Selected changes applied. Assets updated: {appliedEntries}, field writes: {changedFields}, preview remaining: {previewEntries.Count}.");
     }
 
     private void ScanUnresolvedPrefabIds()
@@ -103,7 +274,7 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
             unresolvedBuildingIds.Add($"{definition.Id} -> '{prefabId}' ({path})");
         }
 
-        Debug.Log($"[BuildingPrefabMigrationTool] Scan complete. Unresolved entries: {unresolvedBuildingIds.Count}.");
+        Debug.Log($"[BuildingPrefabMigrationTool] Unresolved scan results: {unresolvedBuildingIds.Count} unresolved prefabId entr{(unresolvedBuildingIds.Count == 1 ? "y" : "ies")}.");
     }
 
     private void CreatePrefabDefinitionStubs()
