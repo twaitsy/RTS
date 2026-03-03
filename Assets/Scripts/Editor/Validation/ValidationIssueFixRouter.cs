@@ -177,6 +177,36 @@ public static class ValidationIssueFixRouter
 
                 if (GUILayout.Button("Select Asset") && target != null)
                     Selection.activeObject = target;
+
+                if (GUILayout.Button("Delete Asset") && target != null)
+                {
+                    var assetName = target.name;
+                    var confirmDelete = EditorUtility.DisplayDialog(
+                        "Delete Asset",
+                        $"Are you sure you want to delete '{assetName}' at '{issue.AssetPath}'?\n\nThis cannot be undone.",
+                        "Delete",
+                        "Cancel");
+
+                    if (confirmDelete)
+                    {
+                        var deleted = AssetDatabase.DeleteAsset(issue.AssetPath);
+                        AssetDatabase.SaveAssets();
+                        AssetDatabase.Refresh();
+
+                        if (deleted)
+                        {
+                            Selection.activeObject = null;
+                            Close();
+                        }
+                        else
+                        {
+                            EditorUtility.DisplayDialog(
+                                "Delete Failed",
+                                $"Failed to delete asset at '{issue.AssetPath}'.",
+                                "OK");
+                        }
+                    }
+                }
             }
 
             EditorGUILayout.EndScrollView();
