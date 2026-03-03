@@ -26,7 +26,6 @@ MonoBehaviour:
   prefabId: prefab.commandcenter
   primaryCategoryId: category.command
   secondaryCategoryIds:
-  - category.military
   - category.production
   buildCosts:
   - resourceId: resource.wood
@@ -35,5 +34,5 @@ MonoBehaviour:
     amount: 220
   stats:
     entries:
-    - statId: building.sightRange
+    - statId: building.resourceRadius
       value: 0
