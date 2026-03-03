@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.armory
   displayName: Armory
   prefabId: building.armory
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.military
+  secondaryCategoryIds: 
+  - category.technology
   buildCosts:
   - resourceId: resource.wood
     amount: 160

@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.supplydepot
   displayName: Supply Depot
   prefabId: building.supplydepot
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.economy
+  secondaryCategoryIds: 
+  - category.command
   buildCosts:
   - resourceId: resource.wood
     amount: 100

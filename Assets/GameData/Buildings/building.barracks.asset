@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.barracks
   displayName: Barracks
   prefabId: building.barracks
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.military
+  secondaryCategoryIds: 
+  - category.production
   buildCosts:
   - resourceId: resource.wood
     amount: 180

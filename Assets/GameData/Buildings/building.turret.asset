@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.turret
   displayName: Turret
   prefabId: building.turret
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.defense
+  secondaryCategoryIds: 
+  - category.military
   buildCosts:
   - resourceId: resource.wood
     amount: 90

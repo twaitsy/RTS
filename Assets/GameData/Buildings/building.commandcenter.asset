@@ -24,8 +24,10 @@ MonoBehaviour:
   finalizedId: building.commandcenter
   displayName: Command Center
   prefabId: building.commandcenter
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.command
+  secondaryCategoryIds: 
+  - category.military
+  - category.production
   buildCosts:
   - resourceId: resource.wood
     amount: 300

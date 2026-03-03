@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.shipyard
   displayName: Shipyard
   prefabId: building.shipyard
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.military
+  secondaryCategoryIds: 
+  - category.production
   buildCosts:
   - resourceId: resource.wood
     amount: 280

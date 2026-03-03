@@ -24,7 +24,7 @@ MonoBehaviour:
   finalizedId: building.gate
   displayName: Gate
   prefabId: building.gate
-  primaryCategoryId: 
+  primaryCategoryId: category.defense
   secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood

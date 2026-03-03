@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.airfield
   displayName: Airfield
   prefabId: prefab.airfield
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.military
+  secondaryCategoryIds: 
+  - category.production
   buildCosts:
   - resourceId: resource.wood
     amount: 260

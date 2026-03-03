@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.missilesilo
   displayName: Missile Silo
   prefabId: building.missilesilo
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.defense
+  secondaryCategoryIds: 
+  - category.military
   buildCosts:
   - resourceId: resource.wood
     amount: 240
