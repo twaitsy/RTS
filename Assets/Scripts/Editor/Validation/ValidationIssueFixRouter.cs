@@ -53,7 +53,13 @@ public static class ValidationIssueFixRouter
             return true;
         }
 
-        if (IsPrefabRelatedIssue(issue) && !string.IsNullOrWhiteSpace(issue.Field))
+        if (IsPrefabAssetAssignmentIssue(issue, target) && !string.IsNullOrWhiteSpace(issue.Field))
+        {
+            PrefabAssetPickerWindow.OpenForTarget(target, issue.Field);
+            return true;
+        }
+
+        if (IsPrefabIdIssue(issue) && !string.IsNullOrWhiteSpace(issue.Field))
         {
             var currentValue = string.IsNullOrWhiteSpace(issue.AssetId) ? issue.SuggestedFix : issue.AssetId;
             PrefabIdPickerWindow.OpenForTarget(target, issue.Field, currentValue);
@@ -99,15 +105,19 @@ public static class ValidationIssueFixRouter
                && issue.SuggestedFix.IndexOf("category.", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
-    private static bool IsBuildingField(ValidationIssue issue)
+    private static bool IsPrefabAssetAssignmentIssue(ValidationIssue issue, ScriptableObject target)
     {
-        return (!string.IsNullOrWhiteSpace(issue.Field)
-                && (issue.Field.IndexOf("prefabId", System.StringComparison.OrdinalIgnoreCase) >= 0
-                    || IsCategoryFieldName(issue.Field)))
-               || string.Equals(issue.Registry, nameof(BuildingDefinition), System.StringComparison.OrdinalIgnoreCase);
+        if (issue == null || target == null)
+            return false;
+
+        if (string.Equals(issue.Code, "PREFAB_DEFINITION_MISSING_PREFAB", System.StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return target is PrefabDefinition
+               && string.Equals(issue.Field, "prefab", System.StringComparison.Ordinal);
     }
 
-    private static bool IsPrefabRelatedIssue(ValidationIssue issue)
+    private static bool IsPrefabIdIssue(ValidationIssue issue)
     {
         if (issue == null)
             return false;
@@ -116,11 +126,7 @@ public static class ValidationIssueFixRouter
             && issue.Field.IndexOf("prefabId", System.StringComparison.OrdinalIgnoreCase) >= 0)
             return true;
 
-        if (!string.IsNullOrWhiteSpace(issue.Code)
-            && issue.Code.IndexOf("prefab", System.StringComparison.OrdinalIgnoreCase) >= 0)
-            return true;
-
-        return IsBuildingField(issue)
+        return string.Equals(issue.Registry, nameof(BuildingDefinition), System.StringComparison.OrdinalIgnoreCase)
                && !string.IsNullOrWhiteSpace(issue.AssetId)
                && !string.IsNullOrWhiteSpace(issue.SuggestedFix)
                && issue.SuggestedFix.IndexOf("prefab", System.StringComparison.OrdinalIgnoreCase) >= 0;

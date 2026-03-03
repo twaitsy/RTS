@@ -15,6 +15,7 @@ public static class PrefabRegistry
     private static readonly Dictionary<string, PrefabDefinition> definitionsById = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, GameObject> prefabsById = new(StringComparer.Ordinal);
     private static bool initialized;
+    private const string MissingPrefabIssueCode = "PREFAB_DEFINITION_MISSING_PREFAB";
 
 #if UNITY_EDITOR
     [InitializeOnLoadMethod]
@@ -136,7 +137,24 @@ public static class PrefabRegistry
             }
 
             if (definition.Prefab == null)
-                report.AddError(nameof(PrefabRegistry), $"[Validation] Asset '{definition.name}' (id: '{id}') field '{nameof(PrefabDefinition.Prefab)}' is required.");
+            {
+                var message = $"[Validation] Asset '{definition.name}' (id: '{id}') field '{nameof(PrefabDefinition.Prefab)}' is required.";
+#if UNITY_EDITOR
+                var assetPath = AssetDatabase.GetAssetPath(definition);
+#else
+                const string assetPath = null;
+#endif
+
+                report.AddIssue(new ValidationIssue(
+                    code: MissingPrefabIssueCode,
+                    severity: ValidationIssueSeverity.Error,
+                    registry: nameof(PrefabRegistry),
+                    message: message,
+                    assetPath: assetPath,
+                    assetId: id,
+                    field: "prefab",
+                    suggestedFix: "Assign a prefab asset from Assets/Prefabs."));
+            }
         }
     }
 
