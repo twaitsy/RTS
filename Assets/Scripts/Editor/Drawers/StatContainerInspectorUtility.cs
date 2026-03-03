@@ -11,13 +11,13 @@ public static class StatContainerInspectorUtility
         if (obj == null || string.IsNullOrEmpty(propertyPath))
             return;
 
-        obj.Update();
+        bool statsChanged = false;
+        bool requiresDirty = false;
 
         SerializedProperty rootProp = obj.FindProperty(propertyPath);
         if (rootProp == null)
         {
             EditorGUILayout.HelpBox($"Property '{propertyPath}' not found.", MessageType.Warning);
-            obj.ApplyModifiedProperties();
             return;
         }
 
@@ -25,7 +25,6 @@ public static class StatContainerInspectorUtility
         if (arrayProp == null)
         {
             EditorGUILayout.HelpBox($"No array found at '{propertyPath}' or inside it.", MessageType.Warning);
-            obj.ApplyModifiedProperties();
             return;
         }
 
@@ -67,8 +66,8 @@ public static class StatContainerInspectorUtility
                 {
                     Undo.RecordObject(targetObject, "Change Stat Id");
                     idProp.stringValue = statIds[newIndex];
-                    obj.ApplyModifiedProperties();
-                    EditorUtility.SetDirty(targetObject);
+                    statsChanged = true;
+                    requiresDirty = true;
                 }
             }
 
@@ -82,8 +81,8 @@ public static class StatContainerInspectorUtility
             {
                 Undo.RecordObject(targetObject, "Remove Stat Entry");
                 arrayProp.DeleteArrayElementAtIndex(i);
-                obj.ApplyModifiedProperties();
-                EditorUtility.SetDirty(targetObject);
+                statsChanged = true;
+                requiresDirty = true;
                 break;
             }
             EditorGUILayout.EndHorizontal();
@@ -117,11 +116,17 @@ public static class StatContainerInspectorUtility
                 }
             }
 
-            obj.ApplyModifiedProperties();
-            EditorUtility.SetDirty(targetObject);
+            statsChanged = true;
+            requiresDirty = true;
         }
 
-        obj.ApplyModifiedProperties();
+        if (statsChanged)
+        {
+            obj.ApplyModifiedProperties();
+
+            if (requiresDirty)
+                EditorUtility.SetDirty(targetObject);
+        }
     }
 
     private static SerializedProperty FindFirstChildArray(SerializedProperty root)
