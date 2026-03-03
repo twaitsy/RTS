@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a33e130328b06841af56c7237b7abcd, type: 3}
   m_Name: building.armory
   m_EditorClassIdentifier: Assembly-CSharp::PrefabDefinition
-  id: building.armory
+  id: prefab.armory
   metadata:
     category: 2
     tags: []
@@ -20,6 +20,6 @@ MonoBehaviour:
     schemaHash: 
     lastModifiedUtc: 2026-03-01T23:09:24.8203574Z
     author: 
-  isIdFinalized: 0
-  finalizedId: 
-  prefab: {fileID: 0}
+  isIdFinalized: 1
+  finalizedId: prefab.armory
+  prefab: {fileID: 8623371425880423387, guid: a86ecc61e6051e045ab0ad0f6724dbe0, type: 3}

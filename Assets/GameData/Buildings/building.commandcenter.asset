@@ -23,9 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.commandcenter
   displayName: Command Center
-  prefabId: building.commandcenter
+  prefabId: prefab.commandcenter
   primaryCategoryId: category.command
-  secondaryCategoryIds: 
+  secondaryCategoryIds:
   - category.military
   - category.production
   buildCosts:

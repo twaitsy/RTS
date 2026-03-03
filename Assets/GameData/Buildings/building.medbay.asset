@@ -23,9 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.medbay
   displayName: MedBay
-  prefabId: building.medbay
+  prefabId: prefab.medbay
   primaryCategoryId: category.housing
-  secondaryCategoryIds: 
+  secondaryCategoryIds:
   - category.technology
   buildCosts:
   - resourceId: resource.wood

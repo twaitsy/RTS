@@ -23,7 +23,7 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.wall
   displayName: Wall
-  prefabId: building.wall
+  prefabId: prefab.wall
   primaryCategoryId: category.defense
   secondaryCategoryIds: []
   buildCosts:

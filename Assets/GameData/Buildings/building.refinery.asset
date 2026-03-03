@@ -23,9 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.refinery
   displayName: Refinery
-  prefabId: building.refinery
+  prefabId: prefab.refinery
   primaryCategoryId: category.economy
-  secondaryCategoryIds: 
+  secondaryCategoryIds:
   - category.production
   buildCosts:
   - resourceId: resource.wood

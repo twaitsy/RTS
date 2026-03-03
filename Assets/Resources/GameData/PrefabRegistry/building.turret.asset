@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a33e130328b06841af56c7237b7abcd, type: 3}
   m_Name: building.turret
   m_EditorClassIdentifier: Assembly-CSharp::PrefabDefinition
-  id: building.turret
+  id: prefab.turret
   metadata:
     category: 2
     tags: []
@@ -20,6 +20,6 @@ MonoBehaviour:
     schemaHash: 
     lastModifiedUtc: 2026-03-01T23:09:26.1796886Z
     author: 
-  isIdFinalized: 0
-  finalizedId: 
+  isIdFinalized: 1
+  finalizedId: prefab.turret
   prefab: {fileID: 0}

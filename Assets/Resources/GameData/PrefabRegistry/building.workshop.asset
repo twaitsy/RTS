@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a33e130328b06841af56c7237b7abcd, type: 3}
   m_Name: building.workshop
   m_EditorClassIdentifier: Assembly-CSharp::PrefabDefinition
-  id: building.workshop
+  id: prefab.workshop
   metadata:
     category: 2
     tags: []
@@ -20,6 +20,6 @@ MonoBehaviour:
     schemaHash: 
     lastModifiedUtc: 2026-03-01T23:09:26.4199703Z
     author: 
-  isIdFinalized: 0
-  finalizedId: 
+  isIdFinalized: 1
+  finalizedId: prefab.workshop
   prefab: {fileID: 0}

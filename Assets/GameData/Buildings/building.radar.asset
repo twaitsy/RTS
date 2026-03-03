@@ -23,9 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.radar
   displayName: Radar
-  prefabId: building.radar
+  prefabId: prefab.radar
   primaryCategoryId: category.defense
-  secondaryCategoryIds: 
+  secondaryCategoryIds:
   - category.technology
   buildCosts:
   - resourceId: resource.wood

@@ -23,7 +23,7 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.house
   displayName: House
-  prefabId: building.house
+  prefabId: prefab.house
   primaryCategoryId: category.housing
   secondaryCategoryIds: []
   buildCosts:

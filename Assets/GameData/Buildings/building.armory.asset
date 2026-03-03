@@ -23,9 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.armory
   displayName: Armory
-  prefabId: building.armory
+  prefabId: prefab.armory
   primaryCategoryId: category.military
-  secondaryCategoryIds: 
+  secondaryCategoryIds:
   - category.technology
   buildCosts:
   - resourceId: resource.wood

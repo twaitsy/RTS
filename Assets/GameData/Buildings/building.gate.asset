@@ -23,7 +23,7 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.gate
   displayName: Gate
-  prefabId: building.gate
+  prefabId: prefab.gate
   primaryCategoryId: category.defense
   secondaryCategoryIds: []
   buildCosts:

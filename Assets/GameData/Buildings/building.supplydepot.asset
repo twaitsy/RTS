@@ -23,9 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.supplydepot
   displayName: Supply Depot
-  prefabId: building.supplydepot
+  prefabId: prefab.supplydepot
   primaryCategoryId: category.economy
-  secondaryCategoryIds: 
+  secondaryCategoryIds:
   - category.command
   buildCosts:
   - resourceId: resource.wood

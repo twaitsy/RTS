@@ -23,9 +23,9 @@ MonoBehaviour:
   isIdFinalized: 1
   finalizedId: building.workshop
   displayName: Workshop
-  prefabId: building.workshop
+  prefabId: prefab.workshop
   primaryCategoryId: category.production
-  secondaryCategoryIds: 
+  secondaryCategoryIds:
   - category.technology
   buildCosts:
   - resourceId: resource.wood

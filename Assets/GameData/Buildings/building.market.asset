@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b9fb11cee1f7084bba16092360ffcdd, type: 3}
   m_Name: building.market
   m_EditorClassIdentifier: Assembly-CSharp::BuildingDefinition
-  id: building.market
+  id: prefab.market
   metadata:
     category: 4
     tags: []
@@ -21,9 +21,9 @@ MonoBehaviour:
     lastModifiedUtc: 2026-03-01T16:33:46Z
     author: 
   isIdFinalized: 1
-  finalizedId: building.market
+  finalizedId: prefab.market
   displayName: Market
-  prefabId: building.market
+  prefabId: prefab.market
   primaryCategoryId: category.economy
   secondaryCategoryIds: []
   buildCosts:
