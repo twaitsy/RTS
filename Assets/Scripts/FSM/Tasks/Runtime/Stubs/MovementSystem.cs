@@ -1,10 +1,15 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class MovementSystem
 {
-    private const float SPEED = 2f;
+    private const float DefaultMoveSpeed = 2f;
 
-    public static void MoveTo(GameObject actor, Vector3 target)
+    public static void MoveTo(
+        GameObject actor,
+        Vector3 target,
+        SerializedStatContainer stats = null,
+        IEnumerable<StatModifier> modifiers = null)
     {
         Transform t = actor.transform;
 
@@ -14,15 +19,17 @@ public static class MovementSystem
         if (distance <= 0f)
             return;
 
-        // Normalized movement
-        Vector3 step = direction.normalized * SPEED * Time.deltaTime;
+        float moveSpeed = CanonicalStatResolver.ResolveStatValue(
+            stats,
+            modifiers,
+            CanonicalStatIds.Movement.MoveSpeed,
+            DefaultMoveSpeed);
 
-        // Prevent overshooting
+        Vector3 step = direction.normalized * moveSpeed * Time.deltaTime;
+
         if (step.magnitude > distance)
             step = direction;
 
         t.position += step;
-
-    //    Debug.Log($"MovementSystem: Moving '{actor.name}' to {target}, newPos={t.position}");
     }
 }

@@ -6,6 +6,12 @@ using System.Collections.Generic;
 // </auto-generated>
 public static class CanonicalStatIds
 {
+
+    public static class AI
+    {
+        public const string PerceptionRadius = "ai.perceptionRadius";
+    }
+
     public static class Building
     {
         public const string Armor = "building.armor";
@@ -57,6 +63,12 @@ public static class CanonicalStatIds
         public const string Weight = "item.weight";
     }
 
+
+    public static class Needs
+    {
+        public const string HungerRate = "needs.hungerRate";
+    }
+
     public static class Movement
     {
         public const string MoveSpeed = "movement.moveSpeed";
@@ -74,6 +86,7 @@ public static class CanonicalStatIds
 
     private static readonly string[] _catalog =
     {
+        "ai.perceptionRadius",
         "building.armor",
         "building.buildRadius",
         "building.buildTime",
@@ -111,6 +124,7 @@ public static class CanonicalStatIds
         "item.weight",
         "movement.moveSpeed",
         "movement.turnSpeed",
+        "needs.hungerRate",
         "production.carryCapacity",
         "production.storageCapacity",
         "production.workSpeed",
