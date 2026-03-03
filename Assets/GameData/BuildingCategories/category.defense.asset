@@ -24,3 +24,5 @@ MonoBehaviour:
   finalizedId: category.defense
   displayName: Defense
   icon: {fileID: 0}
+  color: {r: 0.64, g: 0.52, b: 0.87, a: 1.0}
+  sortOrder: 5

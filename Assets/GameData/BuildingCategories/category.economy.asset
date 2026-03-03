@@ -24,3 +24,5 @@ MonoBehaviour:
   finalizedId: category.economy
   displayName: Economy
   icon: {fileID: 0}
+  color: {r: 1.0, g: 0.78, b: 0.25, a: 1.0}
+  sortOrder: 1

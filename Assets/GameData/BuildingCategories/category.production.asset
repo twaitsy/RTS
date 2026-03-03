@@ -24,3 +24,5 @@ MonoBehaviour:
   finalizedId: category.production
   displayName: Production
   icon: {fileID: 0}
+  color: {r: 1.0, g: 0.56, b: 0.3, a: 1.0}
+  sortOrder: 3
