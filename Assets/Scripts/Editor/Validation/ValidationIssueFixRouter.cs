@@ -46,6 +46,13 @@ public static class ValidationIssueFixRouter
 
     private static bool TryOpenKnownTool(ValidationIssue issue, ScriptableObject target)
     {
+        if (IsCategoryRelatedIssue(issue) && !string.IsNullOrWhiteSpace(issue.Field))
+        {
+            var currentValue = string.IsNullOrWhiteSpace(issue.AssetId) ? issue.SuggestedFix : issue.AssetId;
+            BuildingCategoryIdPickerWindow.OpenForTarget(target, issue.Field, currentValue);
+            return true;
+        }
+
         if (IsPrefabRelatedIssue(issue) && !string.IsNullOrWhiteSpace(issue.Field))
         {
             var currentValue = string.IsNullOrWhiteSpace(issue.AssetId) ? issue.SuggestedFix : issue.AssetId;
@@ -64,13 +71,40 @@ public static class ValidationIssueFixRouter
         return false;
     }
 
+
+    private static bool IsCategoryFieldName(string field)
+    {
+        if (string.IsNullOrWhiteSpace(field))
+            return false;
+
+        return field.IndexOf("primaryCategoryId", System.StringComparison.OrdinalIgnoreCase) >= 0
+               || field.IndexOf("secondaryCategoryIds", System.StringComparison.OrdinalIgnoreCase) >= 0
+               || field.IndexOf("categoryId", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static bool IsCategoryRelatedIssue(ValidationIssue issue)
+    {
+        if (issue == null)
+            return false;
+
+        if (IsCategoryFieldName(issue.Field))
+            return true;
+
+        if (!string.IsNullOrWhiteSpace(issue.Code)
+            && issue.Code.IndexOf("category", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            return true;
+
+        return string.Equals(issue.Registry, nameof(BuildingDefinition), System.StringComparison.OrdinalIgnoreCase)
+               && !string.IsNullOrWhiteSpace(issue.SuggestedFix)
+               && issue.SuggestedFix.IndexOf("category.", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
     private static bool IsBuildingField(ValidationIssue issue)
     {
-        return !string.IsNullOrWhiteSpace(issue.Field)
-               && (issue.Field.IndexOf("prefabId", System.StringComparison.OrdinalIgnoreCase) >= 0
-                   || issue.Field.IndexOf("categoryId", System.StringComparison.OrdinalIgnoreCase) >= 0
-                   || issue.Field.IndexOf("primaryCategoryId", System.StringComparison.OrdinalIgnoreCase) >= 0
-                   || string.Equals(issue.Registry, nameof(BuildingDefinition), System.StringComparison.OrdinalIgnoreCase));
+        return (!string.IsNullOrWhiteSpace(issue.Field)
+                && (issue.Field.IndexOf("prefabId", System.StringComparison.OrdinalIgnoreCase) >= 0
+                    || IsCategoryFieldName(issue.Field)))
+               || string.Equals(issue.Registry, nameof(BuildingDefinition), System.StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsPrefabRelatedIssue(ValidationIssue issue)
