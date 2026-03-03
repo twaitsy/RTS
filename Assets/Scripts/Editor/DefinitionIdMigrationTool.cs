@@ -21,6 +21,22 @@ public sealed class DefinitionIdMigrationTool : EditorWindow
         window.Show();
     }
 
+    public static void OpenWithTarget(ScriptableObject target, string fieldPath, string suggestedValue)
+    {
+        var window = GetWindow<DefinitionIdMigrationTool>("Definition ID Migration");
+        window.minSize = new Vector2(640f, 360f);
+        window.targetDefinition = target;
+        window.newId = ExtractSuggestedId(suggestedValue);
+        window.plannedChangeLog.Clear();
+        if (!string.IsNullOrWhiteSpace(fieldPath))
+            window.plannedChangeLog.Add($"Context field: {fieldPath}");
+        window.Show();
+        window.Focus();
+
+        if (target != null)
+            EditorGUIUtility.PingObject(target);
+    }
+
     private void OnGUI()
     {
         EditorGUILayout.HelpBox("Safely migrate a definition ID. This tool now updates only the target's own ID/finalizedId and known definition reference fields from schema metadata + explicit custom reference paths.", MessageType.Info);
@@ -399,6 +415,31 @@ public sealed class DefinitionIdMigrationTool : EditorWindow
             return propertyPath;
 
         return System.Text.RegularExpressions.Regex.Replace(propertyPath, @"\.Array\.data\[\d+\]", ".Array.data[]");
+    }
+
+    private static string ExtractSuggestedId(string suggestedValue)
+    {
+        if (string.IsNullOrWhiteSpace(suggestedValue))
+            return string.Empty;
+
+        var arrowIndex = suggestedValue.LastIndexOf("->", StringComparison.Ordinal);
+        if (arrowIndex >= 0)
+        {
+            var candidate = suggestedValue.Substring(arrowIndex + 2).Trim().Trim('\'', '"', '.', ';');
+            if (!string.IsNullOrWhiteSpace(candidate))
+                return candidate;
+        }
+
+        var oneOfIndex = suggestedValue.IndexOf(":", StringComparison.Ordinal);
+        if (oneOfIndex >= 0)
+        {
+            var list = suggestedValue.Substring(oneOfIndex + 1);
+            var first = list.Split(',').FirstOrDefault()?.Trim().Trim('\'', '"', '.', ';');
+            if (!string.IsNullOrWhiteSpace(first))
+                return first;
+        }
+
+        return suggestedValue.Trim();
     }
 
     private static void NormalizeExistingIdsInBulk()
