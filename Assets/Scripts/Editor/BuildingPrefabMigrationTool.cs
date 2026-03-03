@@ -19,11 +19,19 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
         public bool updatePrimaryCategory;
     }
 
+    private sealed class UnresolvedEntry
+    {
+        public string buildingId;
+        public string prefabId;
+        public string assetPath;
+    }
+
     private const string DefaultPrefabDefinitionFolder = PrefabRegistry.PrefabRegistryAssetFolder;
     private Vector2 scroll;
     private Vector2 previewScroll;
-    private readonly List<string> unresolvedBuildingIds = new();
+    private readonly List<UnresolvedEntry> unresolvedEntries = new();
     private readonly List<PreviewEntry> previewEntries = new();
+    private BuildingDefinition selectedBuildingDefinition;
     private bool hasPreview;
     private int selectedPreviewCount;
     private int skippedPreviewCount;
@@ -45,24 +53,129 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
         DrawPreviewSection();
 
         EditorGUILayout.Space();
+        DrawDirectEditSection();
+
+        EditorGUILayout.Space();
         EditorGUILayout.LabelField("Unresolved Prefab Scan", EditorStyles.boldLabel);
 
         if (GUILayout.Button("Scan unresolved prefabId values"))
             ScanUnresolvedPrefabIds();
 
-        using (new EditorGUI.DisabledScope(unresolvedBuildingIds.Count == 0))
+        using (new EditorGUI.DisabledScope(unresolvedEntries.Count == 0))
         {
             if (GUILayout.Button("Create PrefabDefinition stubs for unresolved ids"))
                 CreatePrefabDefinitionStubs();
         }
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField($"Unresolved building count: {unresolvedBuildingIds.Count}", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField($"Unresolved building count: {unresolvedEntries.Count}", EditorStyles.boldLabel);
         using var scope = new EditorGUILayout.ScrollViewScope(scroll, GUILayout.Height(180f));
         scroll = scope.scrollPosition;
 
-        foreach (var entry in unresolvedBuildingIds)
-            EditorGUILayout.LabelField(entry, EditorStyles.wordWrappedMiniLabel);
+        foreach (var entry in unresolvedEntries)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField($"{entry.buildingId} -> '{entry.prefabId}' ({entry.assetPath})", EditorStyles.wordWrappedMiniLabel);
+                if (GUILayout.Button("Select", GUILayout.Width(64f)))
+                {
+                    selectedBuildingDefinition = AssetDatabase.LoadAssetAtPath<BuildingDefinition>(entry.assetPath);
+                    if (selectedBuildingDefinition != null)
+                        EditorGUIUtility.PingObject(selectedBuildingDefinition);
+                }
+            }
+        }
+    }
+
+    private void DrawDirectEditSection()
+    {
+        EditorGUILayout.LabelField("Direct Building Prefab ID Edit", EditorStyles.boldLabel);
+        selectedBuildingDefinition = (BuildingDefinition)EditorGUILayout.ObjectField(
+            "Building Definition",
+            selectedBuildingDefinition,
+            typeof(BuildingDefinition),
+            false);
+
+        if (selectedBuildingDefinition == null)
+            return;
+
+        var serialized = new SerializedObject(selectedBuildingDefinition);
+        serialized.Update();
+
+        var idProperty = serialized.FindProperty("id");
+        var prefabIdProperty = serialized.FindProperty("prefabId");
+
+        if (idProperty == null || prefabIdProperty == null)
+        {
+            EditorGUILayout.HelpBox("Selected BuildingDefinition is missing id/prefabId serialized fields.", MessageType.Warning);
+            return;
+        }
+
+        var id = idProperty.stringValue?.Trim() ?? string.Empty;
+        using (new EditorGUI.DisabledScope(true))
+            EditorGUILayout.TextField("Current ID", id);
+
+        var validationMessage = string.Empty;
+        var validationType = MessageType.None;
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            EditorGUILayout.PropertyField(prefabIdProperty, new GUIContent("Prefab ID"));
+
+            var trimmedPreview = prefabIdProperty.stringValue?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(trimmedPreview))
+            {
+                validationMessage = "Empty";
+                validationType = MessageType.Warning;
+            }
+            else
+            {
+                PrefabRegistry.Initialize();
+                if (!PrefabRegistry.TryGetDefinition(trimmedPreview, out _))
+                {
+                    validationMessage = "Unknown prefab";
+                    validationType = MessageType.Warning;
+                }
+                else
+                {
+                    validationMessage = "OK";
+                }
+            }
+
+            var color = GUI.color;
+            if (validationType == MessageType.Warning)
+                GUI.color = Color.yellow;
+            EditorGUILayout.LabelField(validationMessage, GUILayout.Width(96f));
+            GUI.color = color;
+        }
+
+        var trimmedPrefabId = prefabIdProperty.stringValue?.Trim() ?? string.Empty;
+        if (validationType == MessageType.Warning)
+            EditorGUILayout.HelpBox(
+                string.IsNullOrWhiteSpace(trimmedPrefabId)
+                    ? "Prefab ID is empty after trimming."
+                    : $"No PrefabDefinition found for '{trimmedPrefabId}'.",
+                MessageType.Warning);
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(id)))
+            {
+                if (GUILayout.Button("Use building id as prefab id"))
+                    prefabIdProperty.stringValue = id;
+            }
+
+            if (GUILayout.Button("Apply Prefab ID"))
+            {
+                prefabIdProperty.stringValue = trimmedPrefabId;
+                if (serialized.ApplyModifiedPropertiesWithoutUndo())
+                {
+                    EditorUtility.SetDirty(selectedBuildingDefinition);
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+                }
+            }
+        }
     }
 
     private void DrawPreviewSection()
@@ -257,7 +370,7 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
 
     private void ScanUnresolvedPrefabIds()
     {
-        unresolvedBuildingIds.Clear();
+        unresolvedEntries.Clear();
         PrefabRegistry.Initialize();
 
         foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(BuildingDefinition)}"))
@@ -271,10 +384,15 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
             if (string.IsNullOrWhiteSpace(prefabId) || PrefabRegistry.TryGetDefinition(prefabId, out _))
                 continue;
 
-            unresolvedBuildingIds.Add($"{definition.Id} -> '{prefabId}' ({path})");
+            unresolvedEntries.Add(new UnresolvedEntry
+            {
+                buildingId = definition.Id,
+                prefabId = prefabId,
+                assetPath = path
+            });
         }
 
-        Debug.Log($"[BuildingPrefabMigrationTool] Unresolved scan results: {unresolvedBuildingIds.Count} unresolved prefabId entr{(unresolvedBuildingIds.Count == 1 ? "y" : "ies")}.");
+        Debug.Log($"[BuildingPrefabMigrationTool] Unresolved scan results: {unresolvedEntries.Count} unresolved prefabId entr{(unresolvedEntries.Count == 1 ? "y" : "ies")}.");
     }
 
     private void CreatePrefabDefinitionStubs()
@@ -282,15 +400,9 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
         EnsureFolder(DefaultPrefabDefinitionFolder);
 
         var created = 0;
-        foreach (var unresolved in unresolvedBuildingIds)
+        foreach (var unresolved in unresolvedEntries)
         {
-            var separatorIndex = unresolved.IndexOf("->", System.StringComparison.Ordinal);
-            if (separatorIndex <= 0)
-                continue;
-
-            var prefabId = unresolved.Substring(separatorIndex + 2).Trim();
-            if (prefabId.StartsWith("'"))
-                prefabId = prefabId.Substring(1, prefabId.IndexOf('\'', 1) - 1);
+            var prefabId = unresolved.prefabId;
 
             if (PrefabRegistry.TryGetDefinition(prefabId, out _))
                 continue;
@@ -316,7 +428,7 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
         PrefabRegistry.Initialize();
         ScanUnresolvedPrefabIds();
 
-        Debug.Log($"[BuildingPrefabMigrationTool] Created {created} prefab definition stub(s). Unresolved remaining: {unresolvedBuildingIds.Count}.");
+        Debug.Log($"[BuildingPrefabMigrationTool] Created {created} prefab definition stub(s). Unresolved remaining: {unresolvedEntries.Count}.");
     }
 
     private static GameObject FindPrefabById(string prefabId)
