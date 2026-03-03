@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.powerplant
   displayName: Power Plant
   prefabId: building.powerplant
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.economy
+  secondaryCategoryIds: 
+  - category.production
   buildCosts:
   - resourceId: resource.wood
     amount: 120

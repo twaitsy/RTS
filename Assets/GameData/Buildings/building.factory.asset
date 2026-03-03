@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.factory
   displayName: Factory
   prefabId: building.factory
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.production
+  secondaryCategoryIds: 
+  - category.military
   buildCosts:
   - resourceId: resource.wood
     amount: 220

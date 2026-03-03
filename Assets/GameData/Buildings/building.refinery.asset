@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.refinery
   displayName: Refinery
   prefabId: building.refinery
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.economy
+  secondaryCategoryIds: 
+  - category.production
   buildCosts:
   - resourceId: resource.wood
     amount: 140

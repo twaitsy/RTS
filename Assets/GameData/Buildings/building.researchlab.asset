@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.researchlab
   displayName: Research Lab
   prefabId: building.researchlab
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.technology
+  secondaryCategoryIds: 
+  - category.production
   buildCosts:
   - resourceId: resource.wood
     amount: 180

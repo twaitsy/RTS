@@ -24,7 +24,7 @@ MonoBehaviour:
   finalizedId: building.market
   displayName: Market
   prefabId: building.market
-  primaryCategoryId: 
+  primaryCategoryId: category.economy
   secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood

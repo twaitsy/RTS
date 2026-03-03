@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.radar
   displayName: Radar
   prefabId: building.radar
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.defense
+  secondaryCategoryIds: 
+  - category.technology
   buildCosts:
   - resourceId: resource.wood
     amount: 130

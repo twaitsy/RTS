@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.headquarters
   displayName: HeadQuarters
   prefabId: building.headquarters
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.command
+  secondaryCategoryIds: 
+  - category.economy
   buildCosts:
   - resourceId: resource.wood
     amount: 250

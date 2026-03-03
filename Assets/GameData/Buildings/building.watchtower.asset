@@ -24,8 +24,9 @@ MonoBehaviour:
   finalizedId: building.watchtower
   displayName: Watch Tower
   prefabId: building.watchtower
-  primaryCategoryId: 
-  secondaryCategoryIds: []
+  primaryCategoryId: category.defense
+  secondaryCategoryIds: 
+  - category.military
   buildCosts:
   - resourceId: resource.wood
     amount: 110

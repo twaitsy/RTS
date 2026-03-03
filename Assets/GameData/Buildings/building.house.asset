@@ -24,7 +24,7 @@ MonoBehaviour:
   finalizedId: building.house
   displayName: House
   prefabId: building.house
-  primaryCategoryId: 
+  primaryCategoryId: category.housing
   secondaryCategoryIds: []
   buildCosts:
   - resourceId: resource.wood

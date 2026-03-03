@@ -1448,7 +1448,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a76d78f45ec8c4e42addb7884b54f9a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuildingCategoryRegistry
-  definitions: []
+  definitions:
+  - {fileID: 11400000, guid: 9b0346d91c35409fbef02415bfbac364, type: 2}
+  - {fileID: 11400000, guid: 26a894edb2c44eaea3c042e656e40a93, type: 2}
+  - {fileID: 11400000, guid: 3a65abe3493b4c41842636b13af809cb, type: 2}
+  - {fileID: 11400000, guid: 9c0eba75d5b24b1d8e8e1303842dd909, type: 2}
+  - {fileID: 11400000, guid: 8bb343dfbe7a47c58be55e465455364a, type: 2}
+  - {fileID: 11400000, guid: d3da4c7171b04e9d87e48bc7463437fc, type: 2}
+  - {fileID: 11400000, guid: 815418d81a874a16aeaaaf0e2fb7233c, type: 2}
 --- !u!114 &709939207
 MonoBehaviour:
   m_ObjectHideFlags: 0
