@@ -17,7 +17,7 @@ public static class StatModifierLinkValidator
             var duplicateTargets = new HashSet<string>(StringComparer.Ordinal);
             var seenTargets = new HashSet<string>(StringComparer.Ordinal);
 
-            foreach (var modifier in statModifierDefinition.Modifiers)
+            foreach (var modifier in statModifierDefinition.StatModifiers)
             {
                 if (string.IsNullOrWhiteSpace(modifier.targetStatId))
                 {
@@ -81,7 +81,7 @@ public static class StatModifierLinkValidator
                 if (statModifier == null)
                     continue;
 
-                foreach (var modifier in statModifier.Modifiers)
+                foreach (var modifier in statModifier.StatModifiers)
                 {
                     if (string.IsNullOrWhiteSpace(modifier.targetStatId))
                     {
