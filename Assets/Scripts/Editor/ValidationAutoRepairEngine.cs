@@ -231,9 +231,9 @@ public static class ValidationAutoRepairEngine
                     continue;
                 }
 
-                var nearest = FindNearestId(value, idSet);
-                var suggestion = nearest != null
-                    ? $"Replace with nearest valid id '{nearest}'."
+                var preferred = GetPreferredReferenceSuggestion(iterator.name, value, idSet);
+                var suggestion = preferred != null
+                    ? $"Replace with nearest valid id '{preferred}'."
                     : "No nearest match found; clear field if optional.";
 
                 report.AddIssue(new ValidationIssue(
@@ -404,6 +404,30 @@ public static class ValidationAutoRepairEngine
             .ToArray();
 
         Debug.Log("[Validation] Preview fix script:\n" + string.Join("\n", lines));
+    }
+
+    private static string GetPreferredReferenceSuggestion(string fieldName, string missingId, HashSet<string> idSet)
+    {
+        if (IsCategoryField(fieldName))
+        {
+            var canonicalCategories = idSet
+                .Where(id => !string.IsNullOrWhiteSpace(id) && id.StartsWith("category.", StringComparison.Ordinal))
+                .ToHashSet(StringComparer.Ordinal);
+
+            var nearestCanonical = FindNearestId(missingId, canonicalCategories);
+            if (!string.IsNullOrWhiteSpace(nearestCanonical))
+                return nearestCanonical;
+        }
+
+        return FindNearestId(missingId, idSet);
+    }
+
+    private static bool IsCategoryField(string fieldName)
+    {
+        return !string.IsNullOrWhiteSpace(fieldName)
+               && (fieldName.IndexOf("categoryId", StringComparison.OrdinalIgnoreCase) >= 0
+                   || fieldName.IndexOf("primaryCategoryId", StringComparison.OrdinalIgnoreCase) >= 0
+                   || fieldName.IndexOf("secondaryCategoryIds", StringComparison.OrdinalIgnoreCase) >= 0);
     }
 
     private static IEnumerable<string> BuildRenameSuggestions(string id)

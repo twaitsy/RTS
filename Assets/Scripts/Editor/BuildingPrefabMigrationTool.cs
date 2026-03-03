@@ -1,6 +1,8 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -187,6 +189,55 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
                     : $"No PrefabDefinition found for '{trimmedPrefabId}'.",
                 MessageType.Warning);
 
+        var primaryCategoryProperty = serialized.FindProperty("primaryCategoryId");
+        var categoryValidationMessage = string.Empty;
+        var categoryValidationType = MessageType.None;
+        if (primaryCategoryProperty != null)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.PropertyField(primaryCategoryProperty, new GUIContent("Primary Category ID"));
+
+                if (GUILayout.Button("Pick…", GUILayout.Width(72f)))
+                    BuildingCategoryIdPickerWindow.OpenForTarget(selectedBuildingDefinition, primaryCategoryProperty.propertyPath, primaryCategoryProperty.stringValue);
+
+                var categoryPreview = primaryCategoryProperty.stringValue?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(categoryPreview))
+                {
+                    categoryValidationMessage = "Empty";
+                    categoryValidationType = MessageType.Warning;
+                }
+                else
+                {
+                    if (BuildingCategoryRegistry.Instance == null || !BuildingCategoryRegistry.Instance.TryGet(categoryPreview, out _))
+                    {
+                        categoryValidationMessage = "Unknown category";
+                        categoryValidationType = MessageType.Warning;
+                    }
+                    else
+                    {
+                        categoryValidationMessage = "OK";
+                    }
+                }
+
+                var categoryColor = GUI.color;
+                if (categoryValidationType == MessageType.Warning)
+                    GUI.color = Color.yellow;
+                EditorGUILayout.LabelField(categoryValidationMessage, GUILayout.Width(120f));
+                GUI.color = categoryColor;
+            }
+
+            var trimmedCategoryId = primaryCategoryProperty.stringValue?.Trim() ?? string.Empty;
+            if (categoryValidationType == MessageType.Warning)
+            {
+                EditorGUILayout.HelpBox(
+                    string.IsNullOrWhiteSpace(trimmedCategoryId)
+                        ? "Primary category ID is empty after trimming."
+                        : $"No BuildingCategoryDefinition found for '{trimmedCategoryId}' in BuildingCategoryRegistry.",
+                    MessageType.Warning);
+            }
+        }
+
         using (new EditorGUILayout.HorizontalScope())
         {
             using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(id)))
@@ -195,9 +246,24 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
                     prefabIdProperty.stringValue = id;
             }
 
-            if (GUILayout.Button("Apply Prefab ID"))
+            if (GUILayout.Button("Apply IDs"))
             {
                 prefabIdProperty.stringValue = trimmedPrefabId;
+                if (primaryCategoryProperty != null)
+                {
+                    var trimmedCategoryId = primaryCategoryProperty.stringValue?.Trim() ?? string.Empty;
+                    primaryCategoryProperty.stringValue = trimmedCategoryId;
+
+                    if (!string.IsNullOrWhiteSpace(trimmedCategoryId))
+                    {
+                        if (BuildingCategoryRegistry.Instance == null || !BuildingCategoryRegistry.Instance.TryGet(trimmedCategoryId, out _))
+                        {
+                            EditorUtility.DisplayDialog("Building Prefab Migration", $"Primary category '{trimmedCategoryId}' is not present in BuildingCategoryRegistry.", "OK");
+                            return;
+                        }
+                    }
+                }
+
                 if (serialized.ApplyModifiedPropertiesWithoutUndo())
                 {
                     EditorUtility.SetDirty(selectedBuildingDefinition);
@@ -288,7 +354,8 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
                 var legacyCategory = serialized.FindProperty("categoryId") ?? serialized.FindProperty("buildingCategoryId");
                 if (legacyCategory != null && legacyCategory.propertyType == SerializedPropertyType.String)
                 {
-                    proposedPrimaryCategoryId = legacyCategory.stringValue?.Trim() ?? string.Empty;
+                    var legacyCategoryId = legacyCategory.stringValue?.Trim() ?? string.Empty;
+                    proposedPrimaryCategoryId = ResolveCanonicalCategoryId(legacyCategoryId);
                     updatePrimaryCategory = !string.IsNullOrWhiteSpace(proposedPrimaryCategoryId);
                 }
             }
@@ -372,9 +439,13 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
 
             if (entry.updatePrimaryCategory && primaryCategory != null)
             {
-                primaryCategory.stringValue = entry.proposedPrimaryCategoryId;
-                wroteAny = true;
-                changedFields++;
+                var resolved = ResolveCanonicalCategoryId(entry.proposedPrimaryCategoryId);
+                if (!string.IsNullOrWhiteSpace(resolved) && IsRegisteredBuildingCategoryId(resolved))
+                {
+                    primaryCategory.stringValue = resolved;
+                    wroteAny = true;
+                    changedFields++;
+                }
             }
 
             if (!wroteAny)
@@ -459,6 +530,89 @@ public sealed class BuildingPrefabMigrationTool : EditorWindow
         ScanUnresolvedPrefabIds();
 
         Debug.Log($"[BuildingPrefabMigrationTool] Created {created} prefab definition stub(s). Unresolved remaining: {unresolvedEntries.Count}.");
+    }
+
+    private static bool IsRegisteredBuildingCategoryId(string categoryId)
+    {
+        var trimmed = categoryId?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(trimmed))
+            return false;
+
+        return BuildingCategoryRegistry.Instance != null && BuildingCategoryRegistry.Instance.TryGet(trimmed, out _);
+    }
+
+    private static string ResolveCanonicalCategoryId(string candidate)
+    {
+        var normalized = DefinitionIdLifecycle.NormalizeId(candidate);
+        if (string.IsNullOrWhiteSpace(normalized))
+            return string.Empty;
+
+        var canonicalIds = AssetDatabase.FindAssets($"t:{nameof(BuildingCategoryDefinition)}")
+            .Select(AssetDatabase.GUIDToAssetPath)
+            .Select(path => AssetDatabase.LoadAssetAtPath<BuildingCategoryDefinition>(path))
+            .Where(definition => definition != null)
+            .Select(definition => definition.Id?.Trim() ?? string.Empty)
+            .Where(id => !string.IsNullOrWhiteSpace(id) && id.StartsWith("category.", StringComparison.OrdinalIgnoreCase))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        if (canonicalIds.Contains(normalized, StringComparer.Ordinal))
+            return normalized;
+
+        if (canonicalIds.Length == 0)
+            return normalized;
+
+        return FindNearestCanonicalId(normalized, canonicalIds) ?? string.Empty;
+    }
+
+    private static string FindNearestCanonicalId(string candidate, IReadOnlyCollection<string> ids)
+    {
+        var best = string.Empty;
+        var bestScore = int.MaxValue;
+
+        foreach (var id in ids)
+        {
+            var score = ComputeLevenshteinDistance(candidate, id);
+            if (score >= bestScore)
+                continue;
+
+            bestScore = score;
+            best = id;
+        }
+
+        return best;
+    }
+
+    private static int ComputeLevenshteinDistance(string left, string right)
+    {
+        if (string.IsNullOrEmpty(left))
+            return string.IsNullOrEmpty(right) ? 0 : right.Length;
+
+        if (string.IsNullOrEmpty(right))
+            return left.Length;
+
+        var width = right.Length + 1;
+        var height = left.Length + 1;
+        var matrix = new int[height, width];
+
+        for (var y = 0; y < height; y++)
+            matrix[y, 0] = y;
+
+        for (var x = 0; x < width; x++)
+            matrix[0, x] = x;
+
+        for (var y = 1; y < height; y++)
+        {
+            for (var x = 1; x < width; x++)
+            {
+                var substitutionCost = left[y - 1] == right[x - 1] ? 0 : 1;
+                matrix[y, x] = Math.Min(
+                    Math.Min(matrix[y - 1, x] + 1, matrix[y, x - 1] + 1),
+                    matrix[y - 1, x - 1] + substitutionCost);
+            }
+        }
+
+        return matrix[height - 1, width - 1];
     }
 
     private static string ExtractSuggestion(string suggestedValue)
