@@ -24,3 +24,5 @@ MonoBehaviour:
   finalizedId: category.technology
   displayName: Technology
   icon: {fileID: 0}
+  color: {r: 0.37, g: 0.86, b: 0.95, a: 1.0}
+  sortOrder: 6

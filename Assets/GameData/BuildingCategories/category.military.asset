@@ -24,3 +24,5 @@ MonoBehaviour:
   finalizedId: category.military
   displayName: Military
   icon: {fileID: 0}
+  color: {r: 0.87, g: 0.32, b: 0.32, a: 1.0}
+  sortOrder: 4

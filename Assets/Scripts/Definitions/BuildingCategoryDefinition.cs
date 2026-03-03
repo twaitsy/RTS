@@ -18,11 +18,18 @@ public class BuildingCategoryDefinition : ScriptableObject, IIdentifiable, IDefi
     [SerializeField] private Sprite icon;
     public Sprite Icon => icon;
 
+    [SerializeField] private Color color = Color.white;
+    public Color Color => color;
+
+    [SerializeField] private int sortOrder;
+    public int SortOrder => sortOrder;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
         DefinitionMetadataUtility.EnsureMetadata(ref metadata, DefinitionCategory.Building);
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
+        sortOrder = Mathf.Max(0, sortOrder);
     }
 #endif
 }
