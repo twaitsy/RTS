@@ -126,7 +126,8 @@ public class BuildingDefinitionEditor : Editor
     {
         var displayName = string.IsNullOrWhiteSpace(category.DisplayName) ? category.Id : category.DisplayName;
         var orderSuffix = $" ({category.SortOrder})";
-        return new GUIContent($"{ColorUtility.ToHtmlStringRGB(category.Color)} • {displayName}{orderSuffix}", category.Icon);
+        var iconTexture = category.Icon != null ? category.Icon.texture : null;
+        return new GUIContent($"{ColorUtility.ToHtmlStringRGB(category.Color)} • {displayName}{orderSuffix}", iconTexture);
     }
 
     private static bool SerializedArrayContains(SerializedProperty arrayProperty, string value)
