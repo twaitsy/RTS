@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bbbb221424c5f9449afb3495384c902, type: 3}
   m_Name: resource.stone
   m_EditorClassIdentifier: Assembly-CSharp::ResourceDefinition
-  id: 
-  isIdFinalized: 0
-  finalizedId: 
+  id: resource.stone
+  isIdFinalized: 1
+  finalizedId: resource.stone
   displayName: 
   icon: {fileID: 0}
   stats:

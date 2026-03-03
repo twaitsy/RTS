@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f5dbeecbdef7454eb3bd6bc69564531, type: 3}
   m_Name: RequiresFarmingOrWorkshop
   m_EditorClassIdentifier: Assembly-CSharp::RequirementDefinition
-  id: RequiresFarmingOrWorkshop
+  id: requiresfarmingorworkshop
   isIdFinalized: 1
-  finalizedId: RequiresFarmingOrWorkshop
+  finalizedId: requiresfarmingorworkshop
   displayName: 
   icon: {fileID: 0}
   root:
