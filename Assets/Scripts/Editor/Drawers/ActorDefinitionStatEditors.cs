@@ -52,6 +52,7 @@ public class BuildingDefinitionEditor : Editor
         if (primaryCategoryId == null || secondaryCategoryIds == null)
             return;
 
+        SanitizeSerializedStringArray(secondaryCategoryIds);
         var categories = LoadCategories();
         DrawPrimaryCategoryField(primaryCategoryId, categories);
         DrawSecondaryCategoryField(secondaryCategoryIds, categories);
@@ -101,14 +102,24 @@ public class BuildingDefinitionEditor : Editor
 
     private static List<BuildingCategoryDefinition> LoadCategories()
     {
+        var categories = LoadCategoriesFromRegistryOrAssets();
+        return categories
+            .OrderBy(category => category.SortOrder)
+            .ThenBy(category => category.DisplayName, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static IEnumerable<BuildingCategoryDefinition> LoadCategoriesFromRegistryOrAssets()
+    {
+        var registry = BuildingCategoryRegistry.Instance;
+        if (registry != null)
+            return registry.GetDefinitions().Where(category => category != null);
+
         return AssetDatabase
             .FindAssets($"t:{nameof(BuildingCategoryDefinition)}")
             .Select(AssetDatabase.GUIDToAssetPath)
             .Select(path => AssetDatabase.LoadAssetAtPath<BuildingCategoryDefinition>(path))
-            .Where(category => category != null)
-            .OrderBy(category => category.SortOrder)
-            .ThenBy(category => category.DisplayName, StringComparer.Ordinal)
-            .ToList();
+            .Where(category => category != null);
     }
 
     private static GUIContent BuildCategoryContent(BuildingCategoryDefinition category)
@@ -147,6 +158,18 @@ public class BuildingDefinitionEditor : Editor
                 continue;
 
             arrayProperty.DeleteArrayElementAtIndex(index);
+        }
+    }
+
+    private static void SanitizeSerializedStringArray(SerializedProperty arrayProperty)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        for (var index = arrayProperty.arraySize - 1; index >= 0; index--)
+        {
+            var value = arrayProperty.GetArrayElementAtIndex(index).stringValue;
+            if (string.IsNullOrWhiteSpace(value) || !seen.Add(value))
+                arrayProperty.DeleteArrayElementAtIndex(index);
         }
     }
 }
