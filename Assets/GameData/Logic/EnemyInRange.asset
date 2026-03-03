@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32bb3ad705b5e9a46820a053f6ba7a44, type: 3}
   m_Name: EnemyInRange
   m_EditorClassIdentifier: Assembly-CSharp::ConditionDefinition
-  id: EnemyInRange
+  id: enemyinrange
+  isIdFinalized: 1
+  finalizedId: enemyinrange
   displayName: 
   icon: {fileID: 0}
   root:
