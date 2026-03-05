@@ -1,9 +1,83 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class UnitRegistry : DefinitionRegistry<UnitDefinition>
 {
+    private static readonly string[] MovementStatSet =
+    {
+        CanonicalStatIds.Movement.MoveSpeed,
+        CanonicalStatIds.Movement.Acceleration,
+        CanonicalStatIds.Movement.TurnRate,
+    };
+
+    private static readonly string[] CombatStatSet =
+    {
+        CanonicalStatIds.Combat.Health,
+        CanonicalStatIds.Combat.AttackDamage,
+        CanonicalStatIds.Combat.AttackSpeed,
+        CanonicalStatIds.Combat.AttackRange,
+    };
+
+    private static readonly string[] NeedsStatSet =
+    {
+        CanonicalStatIds.Needs.HungerRate,
+        CanonicalStatIds.Needs.ThirstRate,
+    };
+
+    private static readonly string[] PerceptionStatSet =
+    {
+        CanonicalStatIds.Perception.PerceptionRadius,
+        CanonicalStatIds.Perception.HearingRadius,
+    };
+
+    private static readonly string[] ProductionWorkStatSet =
+    {
+        CanonicalStatIds.Production.WorkSpeed,
+        CanonicalStatIds.Production.CarryCapacity,
+    };
+
+    private static readonly string[] AiStatSet =
+    {
+        CanonicalStatIds.AI.Aggression,
+        CanonicalStatIds.AI.Courage,
+        CanonicalStatIds.AI.Obedience,
+    };
+
+    private static readonly string[] EconomyStatSet =
+    {
+        CanonicalStatIds.Economy.UpkeepRate,
+        CanonicalStatIds.Economy.PopulationCost,
+    };
+
+    private static readonly string[] LifecycleStatSet =
+    {
+        CanonicalStatIds.Lifecycle.XPPerKill,
+        CanonicalStatIds.Lifecycle.MaxLevel,
+    };
+
+    private static readonly Dictionary<string, string[]> RequiredStatSetsByName = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["movement"] = MovementStatSet,
+        ["combat"] = CombatStatSet,
+        ["needs"] = NeedsStatSet,
+        ["perception"] = PerceptionStatSet,
+        ["production/work"] = ProductionWorkStatSet,
+        ["ai"] = AiStatSet,
+        ["economy"] = EconomyStatSet,
+        ["lifecycle"] = LifecycleStatSet,
+    };
+
+    private static readonly Dictionary<string, string[]> RequiredSetNamesByMode = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["baseline"] = new[] { "movement", "ai", "economy", "lifecycle" },
+        ["combatant"] = new[] { "movement", "combat", "perception", "ai", "economy", "lifecycle" },
+        ["worker"] = new[] { "movement", "needs", "perception", "production/work", "ai", "economy", "lifecycle" },
+        ["civilian"] = new[] { "movement", "needs", "perception", "ai", "economy", "lifecycle" },
+        ["scout"] = new[] { "movement", "perception", "ai", "economy", "lifecycle" },
+    };
+
     private static RegistrySchema<UnitDefinition> schema;
 
     public static UnitRegistry Instance { get; private set; }
@@ -88,14 +162,72 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
             .AddReference(nameof(UnitDefinition.DefaultFactionId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.DefaultFactionId), false, new ReferenceTargetRule(nameof(FactionRegistry), targetId => FactionRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.Costs), definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.Costs, amount => amount.ResourceId), false, new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.UpkeepCosts), definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.UpkeepCosts, amount => amount.ResourceId), false, new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance.TryGet(targetId, out _)))
+            .AddConstraint("UnitSchemaRequirements", ValidateRequiredStatSets)
             .AddConstraint("UnitSimulationRelationalConstraints", ValidateSimulationRelationalConstraints);
 
         return schema;
     }
 
-    protected override void ValidateDefinitions(List<UnitDefinition> defs, System.Action<string> reportError)
+    protected override void ValidateDefinitions(List<UnitDefinition> defs, Action<string> reportError)
     {
         // Validation handled by schema constraints.
+    }
+
+    private static IEnumerable<string> ValidateRequiredStatSets(UnitDefinition definition)
+    {
+        if (definition == null)
+            yield break;
+
+        var schemaMode = ResolveSchemaMode(definition, out var modeSource);
+        if (!RequiredSetNamesByMode.TryGetValue(schemaMode, out var requiredSetNames))
+            requiredSetNames = RequiredSetNamesByMode["baseline"];
+
+        var missingStatsBySet = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var setName in requiredSetNames)
+        {
+            if (!RequiredStatSetsByName.TryGetValue(setName, out var requiredStats))
+                continue;
+
+            foreach (var missingStatId in requiredStats.Where(statId => !HasStat(definition, statId)))
+            {
+                if (!missingStatsBySet.TryGetValue(setName, out var missingInSet))
+                {
+                    missingInSet = new List<string>();
+                    missingStatsBySet[setName] = missingInSet;
+                }
+
+                missingInSet.Add(missingStatId);
+            }
+        }
+
+        if (missingStatsBySet.Count > 0)
+        {
+            var setSummaries = missingStatsBySet
+                .Select(pair => $"{pair.Key} => [{string.Join(", ", pair.Value.Distinct(StringComparer.Ordinal))}]")
+                .OrderBy(summary => summary, StringComparer.OrdinalIgnoreCase);
+
+            yield return $"Schema mode '{schemaMode}' ({modeSource}) is missing required stat IDs by set: {string.Join("; ", setSummaries)}.";
+        }
+
+        var missingProfiles = new List<string>();
+        if (requiredSetNames.Contains("movement") && string.IsNullOrWhiteSpace(definition.MovementProfileId))
+            missingProfiles.Add(nameof(UnitDefinition.MovementProfileId));
+        if (requiredSetNames.Contains("needs") && string.IsNullOrWhiteSpace(definition.NeedsProfileId))
+            missingProfiles.Add(nameof(UnitDefinition.NeedsProfileId));
+        if (requiredSetNames.Contains("perception") && string.IsNullOrWhiteSpace(definition.PerceptionProfileId))
+            missingProfiles.Add(nameof(UnitDefinition.PerceptionProfileId));
+        if (requiredSetNames.Contains("production/work") && string.IsNullOrWhiteSpace(definition.ProductionProfileId))
+            missingProfiles.Add(nameof(UnitDefinition.ProductionProfileId));
+
+        if (missingProfiles.Count > 0)
+        {
+            yield return $"Schema mode '{schemaMode}' ({modeSource}) is missing required profile links: {string.Join(", ", missingProfiles)}.";
+        }
+
+        if (HasStat(definition, CanonicalStatIds.AI.PerceptionRadius))
+        {
+            yield return $"Use '{CanonicalStatIds.Perception.PerceptionRadius}' instead of '{CanonicalStatIds.AI.PerceptionRadius}' to keep perception stat namespace consistent.";
+        }
     }
 
     private static IEnumerable<string> ValidateSimulationRelationalConstraints(UnitDefinition definition)
@@ -112,7 +244,11 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         if (HasStatInRelationalGraph(definition, CanonicalStatIds.Needs.HungerRate) && string.IsNullOrWhiteSpace(definition.NeedsProfileId))
             yield return $"{nameof(UnitDefinition.NeedsProfileId)} is required when '{CanonicalStatIds.Needs.HungerRate}' is present.";
 
+<<<<<<< HEAD
         if (HasStatInRelationalGraph(definition, CanonicalStatIds.Perception.PerceptionRadius) && string.IsNullOrWhiteSpace(definition.PerceptionProfileId))
+=======
+        if (HasPerceptionRadiusStat(definition) && string.IsNullOrWhiteSpace(definition.PerceptionProfileId))
+>>>>>>> origin/main
             yield return $"{nameof(UnitDefinition.PerceptionProfileId)} is required when '{CanonicalStatIds.Perception.PerceptionRadius}' is present.";
 
         if (HasCosts(definition) && string.IsNullOrWhiteSpace(definition.ProductionProfileId))
@@ -137,7 +273,115 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         }
     }
 
+<<<<<<< HEAD
     private static bool HasStatInRelationalGraph(UnitDefinition definition, string statId)
+=======
+    private static string ResolveSchemaMode(UnitDefinition definition, out string modeSource)
+    {
+        var explicitMode = TryGetExplicitSchemaMode(definition?.Metadata?.Tags);
+        if (!string.IsNullOrWhiteSpace(explicitMode))
+        {
+            modeSource = "metadata tag";
+            return explicitMode;
+        }
+
+        var tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        AddArchetypeTokens(tokens, definition?.Metadata?.Tags);
+        AddToken(tokens, definition?.UnitCategoryId);
+        AddToken(tokens, definition?.RoleId);
+
+        if (definition?.Metadata?.Tags != null)
+        {
+            foreach (var tag in definition.Metadata.Tags)
+                AddToken(tokens, tag);
+        }
+
+        if (ContainsAny(tokens, "worker", "builder", "gatherer", "harvester"))
+        {
+            modeSource = "category/role/tags heuristic";
+            return "worker";
+        }
+
+        if (ContainsAny(tokens, "civilian", "villager"))
+        {
+            modeSource = "category/role/tags heuristic";
+            return "civilian";
+        }
+
+        if (ContainsAny(tokens, "scout", "recon"))
+        {
+            modeSource = "category/role/tags heuristic";
+            return "scout";
+        }
+
+        if (ContainsAny(tokens, "combat", "military", "soldier", "guard", "warrior"))
+        {
+            modeSource = "category/role/tags heuristic";
+            return "combatant";
+        }
+
+        modeSource = "default";
+        return "baseline";
+    }
+
+    private static void AddArchetypeTokens(ISet<string> tokens, IReadOnlyList<string> tags)
+    {
+        if (tokens == null || tags == null)
+            return;
+
+        foreach (var tag in tags)
+        {
+            var trimmed = tag?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed))
+                continue;
+
+            if (trimmed.StartsWith("archetype:", StringComparison.OrdinalIgnoreCase))
+            {
+                var archetypeValue = trimmed.Substring("archetype:".Length).Trim();
+                AddToken(tokens, archetypeValue);
+            }
+        }
+    }
+
+    private static string TryGetExplicitSchemaMode(IReadOnlyList<string> tags)
+    {
+        if (tags == null)
+            return null;
+
+        foreach (var tag in tags)
+        {
+            var trimmed = tag?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed))
+                continue;
+
+            const string modePrefix = "schema.mode:";
+            if (trimmed.StartsWith(modePrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var mode = trimmed.Substring(modePrefix.Length).Trim();
+                if (RequiredSetNamesByMode.ContainsKey(mode))
+                    return mode;
+            }
+
+            const string shortPrefix = "schema:";
+            if (trimmed.StartsWith(shortPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var mode = trimmed.Substring(shortPrefix.Length).Trim();
+                if (RequiredSetNamesByMode.ContainsKey(mode))
+                    return mode;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool HasPerceptionRadiusStat(UnitDefinition definition)
+    {
+        return HasStat(definition, CanonicalStatIds.Perception.PerceptionRadius)
+            || HasStat(definition, CanonicalStatIds.AI.PerceptionRadius);
+    }
+
+    private static bool HasStat(UnitDefinition definition, string statId)
+>>>>>>> origin/main
     {
         if (definition == null || string.IsNullOrWhiteSpace(statId))
             return false;
@@ -264,6 +508,28 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         }
 
         return false;
+    }
+
+    private static bool ContainsAny(HashSet<string> values, params string[] probes)
+    {
+        foreach (var value in values)
+        {
+            foreach (var probe in probes)
+            {
+                if (value.IndexOf(probe, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void AddToken(ISet<string> tokens, string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return;
+
+        tokens.Add(value.Trim());
     }
 
     protected override IEnumerable<string> GetValidationDependencyErrors()
