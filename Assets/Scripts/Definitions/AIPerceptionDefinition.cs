@@ -18,6 +18,21 @@ public class AIPerceptionDefinition : ScriptableObject, IIdentifiable, IDefiniti
     [SerializeField] private SerializedStatContainer stats = new();
     public SerializedStatContainer Stats => stats;
 
+    [SerializeField] private float visionArc = 120f;
+    public float VisionArc => visionArc;
+
+    [SerializeField] private float hearingRadius = 8f;
+    public float HearingRadius => hearingRadius;
+
+    [SerializeField] private float stealthDetection = 0.25f;
+    public float StealthDetection => stealthDetection;
+
+    [SerializeField] private float alertnessDecay = 0.5f;
+    public float AlertnessDecay => alertnessDecay;
+
+    [SerializeField] private float memoryDuration = 6f;
+    public float MemoryDuration => memoryDuration;
+
     [SerializeField] private Sprite icon;
     public Sprite Icon => icon;
 

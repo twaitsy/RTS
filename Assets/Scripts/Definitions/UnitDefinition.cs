@@ -40,17 +40,36 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     // ----------------------------------------------------------------------
 
     [Header("Combat")]
+    [SerializeField] private List<string> weaponIds = new();
+    public IReadOnlyList<string> WeaponIds => weaponIds;
+
     [SerializeField] private string weaponTypeId;
     public string WeaponTypeId => weaponTypeId;
 
+    [SerializeField] private string armorProfileId;
+    public string ArmorProfileId => armorProfileId;
+
+    [SerializeField] private string defenseProfileId;
+    public string DefenseProfileId => defenseProfileId;
+
     [SerializeField] private string armorTypeId;
     public string ArmorTypeId => armorTypeId;
+
+    [Header("Movement")]
+    [SerializeField] private string movementProfileId;
+    public string MovementProfileId => movementProfileId;
+
+    [SerializeField] private string locomotionProfileId;
+    public string LocomotionProfileId => locomotionProfileId;
 
     // ----------------------------------------------------------------------
     // Identity
     // ----------------------------------------------------------------------
 
     [Header("Identity")]
+    [SerializeField] private string unitCategoryId;
+    public string UnitCategoryId => unitCategoryId;
+
     [SerializeField] private string roleId;
     public string RoleId => roleId;
 
@@ -79,6 +98,9 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [SerializeField] private string needsProfileId;
     public string NeedsProfileId => needsProfileId;
 
+    [SerializeField] private string moodProfileId;
+    public string MoodProfileId => moodProfileId;
+
     [SerializeField] private List<string> moodModifierIds = new();
     public IReadOnlyList<string> MoodModifierIds => moodModifierIds;
 
@@ -101,6 +123,18 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     // ----------------------------------------------------------------------
 
     [Header("Work & Production")]
+    [SerializeField] private string productionProfileId;
+    public string ProductionProfileId => productionProfileId;
+
+    [SerializeField] private List<string> requiredBuildingIds = new();
+    public IReadOnlyList<string> RequiredBuildingIds => requiredBuildingIds;
+
+    [SerializeField] private List<string> requiredTechIds = new();
+    public IReadOnlyList<string> RequiredTechIds => requiredTechIds;
+
+    [SerializeField] private List<string> jobProfileIds = new();
+    public IReadOnlyList<string> JobProfileIds => jobProfileIds;
+
     [SerializeField] private List<string> jobIds = new();
     public IReadOnlyList<string> JobIds => jobIds;
 
@@ -109,6 +143,9 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     // ----------------------------------------------------------------------
 
     [Header("AI")]
+    [SerializeField] private string aiBehaviorProfileId;
+    public string AIBehaviorProfileId => aiBehaviorProfileId;
+
     [SerializeField] private List<string> aiGoalIds = new();
     public IReadOnlyList<string> AIGoalIds => aiGoalIds;
 
@@ -152,6 +189,18 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
 
         stats ??= new();
         statModifiers ??= new();
+        weaponIds ??= new();
+        traitIds ??= new();
+        startingSkillIds ??= new();
+        moodModifierIds ??= new();
+        startingItemIds ??= new();
+        requiredBuildingIds ??= new();
+        requiredTechIds ??= new();
+        jobProfileIds ??= new();
+        jobIds ??= new();
+        aiGoalIds ??= new();
+        costs ??= new();
+        upkeepCosts ??= new();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

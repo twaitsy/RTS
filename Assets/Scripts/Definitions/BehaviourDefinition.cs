@@ -19,6 +19,9 @@ public class BehaviourDefinition : ScriptableObject, IIdentifiable, IDefinitionM
     [SerializeField] private int priority;
     public int Priority => priority;
 
+    [SerializeField] private SerializedStatContainer stats = new();
+    public SerializedStatContainer Stats => stats;
+
     [SerializeField] private List<string> jobIds = new();
     public IReadOnlyList<string> JobIds => jobIds;
 
@@ -27,6 +30,9 @@ public class BehaviourDefinition : ScriptableObject, IIdentifiable, IDefinitionM
     {
         DefinitionMetadataUtility.EnsureMetadata(ref metadata, DefinitionCategory.AI);
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
+
+        stats ??= new();
+        jobIds ??= new();
     }
 #endif
 }
