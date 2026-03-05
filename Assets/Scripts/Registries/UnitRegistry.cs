@@ -65,19 +65,19 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
                 false,
                 new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.WeaponIds), definition => definition.WeaponIds, false, new ReferenceTargetRule(nameof(WeaponRegistry), targetId => WeaponRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.ArmorProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.ArmorProfileId), false, new ReferenceTargetRule(nameof(ArmorTypeRegistry), targetId => ArmorTypeRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.DefenseProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.DefenseProfileId), false, new ReferenceTargetRule(nameof(DamageTableRegistry), targetId => DamageTableRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.ArmorProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.ArmorProfileId), false, new ReferenceTargetRule(nameof(ArmorProfileRegistry), targetId => ArmorProfileRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.DefenseProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.DefenseProfileId), false, new ReferenceTargetRule(nameof(DefenseProfileRegistry), targetId => DefenseProfileRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.WeaponTypeId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.WeaponTypeId), false, new ReferenceTargetRule(nameof(WeaponTypeRegistry), targetId => WeaponTypeRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.ArmorTypeId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.ArmorTypeId), false, new ReferenceTargetRule(nameof(ArmorTypeRegistry), targetId => ArmorTypeRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.MovementProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.MovementProfileId), false, new ReferenceTargetRule(nameof(TerrainTypeRegistry), targetId => TerrainTypeRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.LocomotionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.LocomotionProfileId), false, new ReferenceTargetRule(nameof(AnimationRegistry), targetId => AnimationRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.ProductionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.ProductionProfileId), false, new ReferenceTargetRule(nameof(ProductionRegistry), targetId => ProductionRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.MovementProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.MovementProfileId), false, new ReferenceTargetRule(nameof(MovementProfileRegistry), targetId => MovementProfileRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.LocomotionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.LocomotionProfileId), false, new ReferenceTargetRule(nameof(LocomotionProfileRegistry), targetId => LocomotionProfileRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.ProductionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.ProductionProfileId), false, new ReferenceTargetRule(nameof(ProductionProfileRegistry), targetId => ProductionProfileRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.RequiredBuildingIds), definition => definition.RequiredBuildingIds, false, new ReferenceTargetRule(nameof(BuildingRegistry), targetId => BuildingRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.RequiredTechIds), definition => definition.RequiredTechIds, false, new ReferenceTargetRule(nameof(TechRegistry), targetId => TechRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.RoleId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.RoleId), false, new ReferenceTargetRule(nameof(RoleRegistry), targetId => RoleRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.TraitIds), definition => definition.TraitIds, false, new ReferenceTargetRule(nameof(TraitRegistry), targetId => TraitRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.StartingSkillIds), definition => definition.StartingSkillIds, false, new ReferenceTargetRule(nameof(SkillRegistry), targetId => SkillRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.NeedsProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.NeedsProfileId), false, new ReferenceTargetRule(nameof(CivilianNeedsProfileRegistry), targetId => CivilianNeedsProfileRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.NeedsProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.NeedsProfileId), false, new ReferenceTargetRule(nameof(NeedsProfileRegistry), targetId => NeedsProfileRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.MoodProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.MoodProfileId), false, new ReferenceTargetRule(nameof(MoodRegistry), targetId => MoodRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.MoodModifierIds), definition => definition.MoodModifierIds, false, new ReferenceTargetRule(nameof(MoodRegistry), targetId => MoodRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.StartingItemIds), definition => definition.StartingItemIds, false, new ReferenceTargetRule(nameof(ItemRegistry), targetId => ItemRegistry.Instance.TryGet(targetId, out _)))
@@ -87,7 +87,7 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
             .AddReference(nameof(UnitDefinition.AIGoalIds), definition => definition.AIGoalIds, false, new ReferenceTargetRule(nameof(AIGoalRegistry), targetId => AIGoalRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.AIPriorityId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.AIPriorityId), false, new ReferenceTargetRule(nameof(AIPriorityRegistry), targetId => AIPriorityRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.PerceptionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.PerceptionProfileId), false, new ReferenceTargetRule(nameof(AIPerceptionRegistry), targetId => AIPerceptionRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.UnitCategoryId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.UnitCategoryId), false, new ReferenceTargetRule(nameof(RoleRegistry), targetId => RoleRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.UnitCategoryId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.UnitCategoryId), false, new ReferenceTargetRule(nameof(UnitCategoryRegistry), targetId => UnitCategoryRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.DefaultFactionId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.DefaultFactionId), false, new ReferenceTargetRule(nameof(FactionRegistry), targetId => FactionRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.Costs), definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.Costs, amount => amount.ResourceId), false, new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.UpkeepCosts), definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.UpkeepCosts, amount => amount.ResourceId), false, new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance.TryGet(targetId, out _)))
@@ -145,18 +145,20 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
     {
         if (StatRegistry.Instance == null) yield return "Missing dependency: StatRegistry.Instance is null.";
         if (WeaponRegistry.Instance == null) yield return "Missing dependency: WeaponRegistry.Instance is null.";
-        if (DamageTableRegistry.Instance == null) yield return "Missing dependency: DamageTableRegistry.Instance is null.";
+        if (DefenseProfileRegistry.Instance == null) yield return "Missing dependency: DefenseProfileRegistry.Instance is null.";
         if (WeaponTypeRegistry.Instance == null) yield return "Missing dependency: WeaponTypeRegistry.Instance is null.";
+        if (ArmorProfileRegistry.Instance == null) yield return "Missing dependency: ArmorProfileRegistry.Instance is null.";
         if (ArmorTypeRegistry.Instance == null) yield return "Missing dependency: ArmorTypeRegistry.Instance is null.";
-        if (TerrainTypeRegistry.Instance == null) yield return "Missing dependency: TerrainTypeRegistry.Instance is null.";
-        if (AnimationRegistry.Instance == null) yield return "Missing dependency: AnimationRegistry.Instance is null.";
-        if (ProductionRegistry.Instance == null) yield return "Missing dependency: ProductionRegistry.Instance is null.";
+        if (MovementProfileRegistry.Instance == null) yield return "Missing dependency: MovementProfileRegistry.Instance is null.";
+        if (LocomotionProfileRegistry.Instance == null) yield return "Missing dependency: LocomotionProfileRegistry.Instance is null.";
+        if (ProductionProfileRegistry.Instance == null) yield return "Missing dependency: ProductionProfileRegistry.Instance is null.";
         if (BuildingRegistry.Instance == null) yield return "Missing dependency: BuildingRegistry.Instance is null.";
         if (TechRegistry.Instance == null) yield return "Missing dependency: TechRegistry.Instance is null.";
+        if (UnitCategoryRegistry.Instance == null) yield return "Missing dependency: UnitCategoryRegistry.Instance is null.";
         if (RoleRegistry.Instance == null) yield return "Missing dependency: RoleRegistry.Instance is null.";
         if (TraitRegistry.Instance == null) yield return "Missing dependency: TraitRegistry.Instance is null.";
         if (SkillRegistry.Instance == null) yield return "Missing dependency: SkillRegistry.Instance is null.";
-        if (CivilianNeedsProfileRegistry.Instance == null) yield return "Missing dependency: CivilianNeedsProfileRegistry.Instance is null.";
+        if (NeedsProfileRegistry.Instance == null) yield return "Missing dependency: NeedsProfileRegistry.Instance is null.";
         if (MoodRegistry.Instance == null) yield return "Missing dependency: MoodRegistry.Instance is null.";
         if (ItemRegistry.Instance == null) yield return "Missing dependency: ItemRegistry.Instance is null.";
         if (JobRegistry.Instance == null) yield return "Missing dependency: JobRegistry.Instance is null.";
