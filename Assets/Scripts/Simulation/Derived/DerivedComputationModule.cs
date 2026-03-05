@@ -1,12 +1,57 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public readonly struct DerivedRuntimeSnapshot
+{
+    public DerivedRuntimeSnapshot(
+        float dps,
+        float effectiveHp,
+        float threatRating,
+        float moraleStability,
+        float fatigueDecay,
+        float jobProficiency,
+        float movementEfficiency)
+    {
+        Dps = dps;
+        EffectiveHp = effectiveHp;
+        ThreatRating = threatRating;
+        MoraleStability = moraleStability;
+        FatigueDecay = fatigueDecay;
+        JobProficiency = jobProficiency;
+        MovementEfficiency = movementEfficiency;
+    }
+
+    public float Dps { get; }
+    public float EffectiveHp { get; }
+    public float ThreatRating { get; }
+    public float MoraleStability { get; }
+    public float FatigueDecay { get; }
+    public float JobProficiency { get; }
+    public float MovementEfficiency { get; }
+}
+
 public static class DerivedComputationModule
 {
     public static float ComputeDps(UnitDefinition unitDefinition)
     {
         var context = UnitRuntimeContextResolver.Resolve(unitDefinition, definitionResolver: null);
         return ComputeDps(context);
+    }
+
+    public static DerivedRuntimeSnapshot ComputeSnapshot(UnitRuntimeContext context)
+    {
+        if (context?.Unit == null)
+            return default;
+
+        var dps = ComputeDps(context);
+        var effectiveHp = ComputeEffectiveHp(context);
+        var threat = ComputeThreat(context);
+        var morale = ComputeMoraleStability(context);
+        var fatigueDecay = ComputeFatigueDecay(context);
+        var jobProficiency = ComputeJobProficiency(context);
+        var movementEfficiency = ComputeMovementEfficiency(context);
+
+        return new DerivedRuntimeSnapshot(dps, effectiveHp, threat, morale, fatigueDecay, jobProficiency, movementEfficiency);
     }
 
     public static float ComputeDps(UnitRuntimeContext context)
@@ -66,6 +111,17 @@ public static class DerivedComputationModule
         return moodStability / Mathf.Max(0.0001f, 1f + ((moraleDecay + stressGain - recovery) * decayFactor));
     }
 
+    public static float ComputeFatigueDecay(UnitRuntimeContext context)
+    {
+        if (context?.Unit == null)
+            return 0f;
+
+        float fatigueRate = Mathf.Max(0f, context.ResolveStat(CanonicalStatIds.Needs.FatigueRate, 0f));
+        float fatigueCurve = Mathf.Max(0f, context.NeedsProfile?.FatigueCurve ?? 1f);
+        float moraleStability = Mathf.Max(0.1f, ComputeMoraleStability(context));
+        return fatigueRate * fatigueCurve / moraleStability;
+    }
+
     public static float ComputeJobProficiency(UnitRuntimeContext context)
     {
         if (context?.Unit == null)
@@ -73,10 +129,29 @@ public static class DerivedComputationModule
 
         float productionWorkSpeed = Mathf.Max(0f, context.ResolveStat(CanonicalStatIds.Production.WorkSpeed, 1f));
         float buildSpeed = Mathf.Max(0f, context.ResolveStat(CanonicalStatIds.Production.BuildSpeed, 1f));
-
         float profileThroughput = ComputeProductionThroughput(context);
 
         return (productionWorkSpeed + buildSpeed + profileThroughput) / 3f;
+    }
+
+    public static float ComputeMovementEfficiency(UnitRuntimeContext context)
+    {
+        if (context?.Unit == null)
+            return 0f;
+
+        float speed = Mathf.Max(0f, context.ResolveStat(CanonicalStatIds.Movement.MoveSpeed, context.MovementProfile?.MoveSpeedMultiplier ?? 1f));
+        float acceleration = Mathf.Max(0f, context.ResolveStat(CanonicalStatIds.Movement.Acceleration, context.MovementProfile?.Acceleration ?? 1f));
+        float turnRate = Mathf.Max(1f, context.ResolveStat(CanonicalStatIds.Movement.TurnRate, context.MovementProfile?.TurnRate ?? 1f));
+
+        float locomotionFactor = context.LocomotionProfile switch
+        {
+            null => 1f,
+            var p when p.CanTraverseAir => 1.15f,
+            var p when p.CanTraverseWater => 1.05f,
+            _ => 1f
+        };
+
+        return ((speed * 0.6f) + (acceleration * 0.25f) + (turnRate * 0.15f / 180f)) * locomotionFactor;
     }
 
     public static float ComputeProductionThroughput(UnitRuntimeContext context)

@@ -8,7 +8,7 @@ public static class StatIdCompatibilityMap
     {
         ["combat.maxHealth"] = CanonicalStatIds.Core.MaxHealth,
         ["locomotion.moveSpeed"] = CanonicalStatIds.Movement.MoveSpeed,
-        ["locomotion.turnSpeed"] = CanonicalStatIds.Movement.TurnSpeed,
+        ["locomotion.turnSpeed"] = CanonicalStatIds.Movement.TurnRate,
         ["ai.visionRange"] = CanonicalStatIds.Core.VisionRange,
         ["economy.workSpeed"] = CanonicalStatIds.Production.WorkSpeed,
         ["economy.carryCapacity"] = CanonicalStatIds.Production.CarryCapacity,
@@ -31,8 +31,8 @@ public static class StatIdCompatibilityMap
 
         ["movement-movespeed"] = CanonicalStatIds.Movement.MoveSpeed,
         ["movement.movespeed"] = CanonicalStatIds.Movement.MoveSpeed,
-        ["movement-turnspeed"] = CanonicalStatIds.Movement.TurnSpeed,
-        ["movement.turnspeed"] = CanonicalStatIds.Movement.TurnSpeed,
+        ["movement-turnspeed"] = CanonicalStatIds.Movement.TurnRate,
+        ["movement.turnspeed"] = CanonicalStatIds.Movement.TurnRate,
 
         ["combat-attackrange"] = CanonicalStatIds.Combat.AttackRange,
         ["combat.attackrange"] = CanonicalStatIds.Combat.AttackRange,
@@ -65,3 +65,4 @@ public static class StatIdCompatibilityMap
         ["item.weight"] = CanonicalStatIds.Item.Weight
     };
 }
+

@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00f0d222d69a07d40a75a9ba46c1f094, type: 3}
+  m_Name: machine.worker.gather.loop
+  m_EditorClassIdentifier: Assembly-CSharp::StateMachineDefinition
+  id: machine.worker.gather.loop
+  metadata:
+    category: 0
+    tags: []
+    version: 1.0.0
+    schemaHash: 
+    lastModifiedUtc: 2026-03-05T00:00:00.0000000Z
+    author: 
+  isIdFinalized: 1
+  finalizedId: machine.worker.gather.loop
+  initialStateId: state.worker.idle
+  states:
+  - stateId: state.worker.idle
+    actionId: task.worker.gather.loop
+  - stateId: state.worker.moveToResource
+    actionId: task.worker.gather.loop
+  - stateId: state.worker.gathering
+    actionId: task.worker.gather.loop
+  - stateId: state.worker.moveToDropoff
+    actionId: task.worker.gather.loop
+  - stateId: state.worker.delivering
+    actionId: task.worker.gather.loop
+  transitions:
+  - fromStateId: state.worker.idle
+    toStateId: state.worker.moveToResource
+    eventName: task.query.succeeded
+    conditionId: 
+  - fromStateId: state.worker.moveToResource
+    toStateId: state.worker.gathering
+    eventName: task.move.arrived.resource
+    conditionId: 
+  - fromStateId: state.worker.gathering
+    toStateId: state.worker.moveToDropoff
+    eventName: task.gather.completed
+    conditionId: 
+  - fromStateId: state.worker.moveToDropoff
+    toStateId: state.worker.delivering
+    eventName: task.move.arrived.dropoff
+    conditionId: 
+  - fromStateId: state.worker.delivering
+    toStateId: state.worker.idle
+    eventName: task.deliver.completed
+    conditionId: 
+  - fromStateId: state.worker.moveToResource
+    toStateId: state.worker.idle
+    eventName: task.failed
+    conditionId: 
+  - fromStateId: state.worker.gathering
+    toStateId: state.worker.idle
+    eventName: task.failed
+    conditionId: 
+  - fromStateId: state.worker.moveToDropoff
+    toStateId: state.worker.idle
+    eventName: task.failed
+    conditionId: 
+  - fromStateId: state.worker.delivering
+    toStateId: state.worker.idle
+    eventName: task.failed
+    conditionId: 

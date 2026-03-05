@@ -29,11 +29,20 @@ public static class CanonicalStatIdsGenerator
             ["core.visionrange"] = new[] { "VisionRange" },
 
             ["movement.movespeed"] = new[] { "MoveSpeed" },
-            ["movement.turnspeed"] = new[] { "TurnSpeed" },
+            ["movement.turnrate"] = new[] { "TurnRate" },
+
+            ["lifecycle.xpperkill"] = new[] { "XPPerKill" },
+            ["lifecycle.xptolevel"] = new[] { "XPToLevel" },
 
             ["production.carrycapacity"] = new[] { "CarryCapacity" },
             ["production.storagecapacity"] = new[] { "StorageCapacity" },
             ["production.workspeed"] = new[] { "WorkSpeed" }
+        };
+
+    private static readonly IReadOnlyDictionary<string, string> DomainClassNameOverrides =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["ai"] = "AI"
         };
 
     [MenuItem("Tools/Validation/Regenerate CanonicalStatIds")]
@@ -118,13 +127,13 @@ public static class CanonicalStatIdsGenerator
 
         foreach (var (domain, values) in byDomain)
         {
-            sb.AppendLine($"    public static class {ToPascalIdentifier(new[] { domain })}");
+            sb.AppendLine($"    public static class {ResolveDomainClassName(domain)}");
             sb.AppendLine("    {");
             foreach (var (name, id) in values)
             {
                 sb.AppendLine($"        public const string {name} = \"{id}\";");
 
-                if (!LegacyFriendlyAliasesById.TryGetValue(id, out var aliases))
+                if (!LegacyFriendlyAliasesById.TryGetValue(id.ToLowerInvariant(), out var aliases))
                     continue;
 
                 foreach (var alias in aliases)
@@ -150,6 +159,14 @@ public static class CanonicalStatIdsGenerator
         sb.AppendLine("}");
 
         return sb.ToString();
+    }
+
+    private static string ResolveDomainClassName(string domain)
+    {
+        if (!string.IsNullOrWhiteSpace(domain) && DomainClassNameOverrides.TryGetValue(domain, out var overrideName))
+            return overrideName;
+
+        return ToPascalIdentifier(new[] { domain });
     }
 
     private static string ToPascalIdentifier(IEnumerable<string> rawParts)

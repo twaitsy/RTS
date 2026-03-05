@@ -46,6 +46,7 @@ public class JobDefinition : ScriptableObject, IIdentifiable, IDefinitionMetadat
         preferredNeedIds ??= new();
         baseWorkTime = Mathf.Max(0f, baseWorkTime);
         workPriority = Mathf.Max(0, workPriority);
+        UnitRuntimeContextResolver.ClearCache();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

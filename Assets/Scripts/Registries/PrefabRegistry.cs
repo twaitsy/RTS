@@ -8,13 +8,15 @@ using UnityEditor;
 
 public static class PrefabRegistry
 {
-    public const string PrefabRegistryAssetFolder = "Assets/Resources/GameData/PrefabRegistry";
+    public const string PrefabRegistryAssetFolder = "Assets/GameData/PrefabRegistry";
+    public const string LegacyPrefabRegistryAssetFolder = "Assets/Resources/GameData/PrefabRegistry";
     private const string ResourcesFolder = "GameData/PrefabRegistry";
 
     private static readonly List<PrefabDefinition> allDefinitions = new();
     private static readonly Dictionary<string, PrefabDefinition> definitionsById = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, GameObject> prefabsById = new(StringComparer.Ordinal);
     private static bool initialized;
+    private static bool loggedFallbackSearch;
     private const string MissingPrefabIssueCode = "PREFAB_DEFINITION_MISSING_PREFAB";
 
 #if UNITY_EDITOR
@@ -167,9 +169,10 @@ public static class PrefabRegistry
     private static IEnumerable<PrefabDefinition> LoadDefinitions()
     {
 #if UNITY_EDITOR
-        if (!Application.isPlaying)
+        var searchFolders = GetSearchFolders();
+        if (searchFolders.Length > 0)
         {
-            foreach (var invalidType in AssetDatabase.FindAssets("t:ScriptableObject", new[] { PrefabRegistryAssetFolder }))
+            foreach (var invalidType in AssetDatabase.FindAssets("t:ScriptableObject", searchFolders))
             {
                 var invalidPath = AssetDatabase.GUIDToAssetPath(invalidType);
                 var scriptableObject = AssetDatabase.LoadAssetAtPath<ScriptableObject>(invalidPath);
@@ -177,7 +180,7 @@ public static class PrefabRegistry
                     Debug.LogError($"[Validation] [PrefabRegistry] Invalid asset type in prefab registry folder: '{invalidPath}' ({scriptableObject.GetType().Name}). Only PrefabDefinition assets are allowed.");
             }
 
-            foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(PrefabDefinition)}", new[] { PrefabRegistryAssetFolder }))
+            foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(PrefabDefinition)}", searchFolders))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 var definition = AssetDatabase.LoadAssetAtPath<PrefabDefinition>(path);
@@ -187,10 +190,38 @@ public static class PrefabRegistry
 
             yield break;
         }
+
+        if (!loggedFallbackSearch)
+        {
+            Debug.LogWarning($"[Validation] [PrefabRegistry] Expected folder not found. Falling back to global '{nameof(PrefabDefinition)}' search.");
+            loggedFallbackSearch = true;
+        }
+
+        foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(PrefabDefinition)}"))
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            var definition = AssetDatabase.LoadAssetAtPath<PrefabDefinition>(path);
+            if (definition != null)
+                yield return definition;
+        }
+
+        yield break;
 #endif
 
         var loaded = Resources.LoadAll<PrefabDefinition>(ResourcesFolder);
         foreach (var definition in loaded.Where(definition => definition != null))
             yield return definition;
     }
+
+#if UNITY_EDITOR
+    private static string[] GetSearchFolders()
+    {
+        var folders = new List<string>(2);
+        if (AssetDatabase.IsValidFolder(PrefabRegistryAssetFolder))
+            folders.Add(PrefabRegistryAssetFolder);
+        if (AssetDatabase.IsValidFolder(LegacyPrefabRegistryAssetFolder))
+            folders.Add(LegacyPrefabRegistryAssetFolder);
+        return folders.ToArray();
+    }
+#endif
 }

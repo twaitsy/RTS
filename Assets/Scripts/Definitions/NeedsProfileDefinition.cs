@@ -64,6 +64,7 @@ public class NeedsProfileDefinition : ScriptableObject, IIdentifiable, IDefiniti
         stressCurve = Mathf.Max(0f, stressCurve);
         socialNeedCurve = Mathf.Max(0f, socialNeedCurve);
         criticalNeedThreshold = Mathf.Clamp01(criticalNeedThreshold);
+        UnitRuntimeContextResolver.ClearCache();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
             Debug.LogError($"[Validation] Asset '{name}' (id: '{id}') has duplicate stat '{duplicateStatId}' in its base stat container.");

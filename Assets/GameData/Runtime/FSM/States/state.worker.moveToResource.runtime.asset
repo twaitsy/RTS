@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca96528e98286c545ae2ec96c0847c08, type: 3}
+  m_Name: state.worker.moveToResource.runtime
+  m_EditorClassIdentifier: Assembly-CSharp::MoveToResourceState
+  Parent: {fileID: 11400000, guid: c2c4772c15e54d2f92741f90f5f2aab1, type: 2}

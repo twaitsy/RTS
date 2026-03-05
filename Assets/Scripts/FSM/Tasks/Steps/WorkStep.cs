@@ -4,24 +4,36 @@ using UnityEngine;
 public class WorkStep : TaskStepDefinition
 {
     [SerializeField] private float duration = 1f;
+    [SerializeField] private int gatherAmount = 1;
+    [SerializeField] private string completedEventId;
+    [SerializeField] private string failedEventId;
 
     public override TaskStepResult Execute(TaskContext context)
     {
-        // Initialize timer if needed
-        if (context.WorkTimer <= 0f)
-            context.WorkTimer = duration;
+        if (context == null)
+            return TaskStepResult.FailTask("WorkStep: Context is null.", failedEventId);
 
-        // Count down
+        if (context.RuntimeContext == null)
+            return TaskStepResult.FailTask("WorkStep: RuntimeContext is null.", failedEventId);
+
+        var configuredDuration = Mathf.Max(0.01f, duration);
+        var throughput = ProductionWorkSystem.ComputeWorkThroughput(context.RuntimeContext);
+        var speedFactor = Mathf.Max(0.1f, throughput <= 0f ? 1f : throughput);
+        var effectiveDuration = configuredDuration / speedFactor;
+
+        if (context.WorkTimer <= 0f)
+            context.WorkTimer = effectiveDuration;
+
         context.WorkTimer -= Time.deltaTime;
 
-        // Still working
         if (context.WorkTimer > 0f)
             return TaskStepResult.StayOnStep();
 
-        // Work finished
         context.WorkTimer = 0f;
-        context.InventoryCount++;
 
-        return TaskStepResult.AdvanceStep();
+        int carryCap = Mathf.Max(1, Mathf.RoundToInt(context.RuntimeContext.ResolveStat(CanonicalStatIds.Production.CarryCapacity, 1f)));
+        context.InventoryCount = Mathf.Clamp(context.InventoryCount + Mathf.Max(1, gatherAmount), 0, carryCap);
+
+        return TaskStepResult.AdvanceStep(completedEventId);
     }
 }

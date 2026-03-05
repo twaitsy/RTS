@@ -21,10 +21,6 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [SerializeField] private Sprite icon;
     public Sprite Icon => icon;
 
-    // ----------------------------------------------------------------------
-    // Canonical Stats
-    // ----------------------------------------------------------------------
-
     [Header("Stats")]
     [FormerlySerializedAs("baseStats")]
     [SerializeField] private SerializedStatContainer stats = new();
@@ -34,10 +30,6 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [FormerlySerializedAs("equipmentStatModifiers")]
     [SerializeField] private List<StatModifier> statModifiers = new();
     public IReadOnlyList<StatModifier> StatModifiers => statModifiers;
-
-    // ----------------------------------------------------------------------
-    // Combat (non-numeric links only)
-    // ----------------------------------------------------------------------
 
     [Header("Combat")]
     [SerializeField] private List<string> weaponIds = new();
@@ -62,9 +54,9 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [SerializeField] private string locomotionProfileId;
     public string LocomotionProfileId => locomotionProfileId;
 
-    // ----------------------------------------------------------------------
-    // Identity
-    // ----------------------------------------------------------------------
+    [Header("Simulation")]
+    [SerializeField] private string schemaModeId = "baseline";
+    public string SchemaModeId => schemaModeId;
 
     [Header("Identity")]
     [SerializeField] private string unitCategoryId;
@@ -76,10 +68,6 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [SerializeField] private List<string> traitIds = new();
     public IReadOnlyList<string> TraitIds => traitIds;
 
-    // ----------------------------------------------------------------------
-    // Skills (IDs only  numeric skill levels now live in stats)
-    // ----------------------------------------------------------------------
-
     [Header("Skills")]
     [SerializeField] private List<string> startingSkillIds = new();
     public IReadOnlyList<string> StartingSkillIds => startingSkillIds;
@@ -89,10 +77,6 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
 
     [SerializeField] private int levelCap = 10;
     public int LevelCap => levelCap;
-
-    // ----------------------------------------------------------------------
-    // Needs & Mood (IDs only  numeric values now live in stats)
-    // ----------------------------------------------------------------------
 
     [Header("Needs & Mood")]
     [SerializeField] private string needsProfileId;
@@ -104,10 +88,6 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [SerializeField] private List<string> moodModifierIds = new();
     public IReadOnlyList<string> MoodModifierIds => moodModifierIds;
 
-    // ----------------------------------------------------------------------
-    // Inventory & Equipment
-    // ----------------------------------------------------------------------
-
     [Header("Inventory & Equipment")]
     [SerializeField] private int inventorySlots = 4;
     public int InventorySlots => inventorySlots;
@@ -117,10 +97,6 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
 
     [SerializeField] private List<string> startingItemIds = new();
     public IReadOnlyList<string> StartingItemIds => startingItemIds;
-
-    // ----------------------------------------------------------------------
-    // Work & Production (IDs only  numeric values now live in stats)
-    // ----------------------------------------------------------------------
 
     [Header("Work & Production")]
     [SerializeField] private string productionProfileId;
@@ -138,10 +114,6 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [SerializeField] private List<string> jobIds = new();
     public IReadOnlyList<string> JobIds => jobIds;
 
-    // ----------------------------------------------------------------------
-    // AI
-    // ----------------------------------------------------------------------
-
     [Header("AI")]
     [SerializeField] private string aiBehaviorProfileId;
     public string AIBehaviorProfileId => aiBehaviorProfileId;
@@ -155,10 +127,6 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [SerializeField] private string perceptionProfileId;
     public string PerceptionProfileId => perceptionProfileId;
 
-    // ----------------------------------------------------------------------
-    // Costs & Upkeep
-    // ----------------------------------------------------------------------
-
     [Header("Costs")]
     [SerializeField] private List<ResourceAmount> costs = new();
     public IReadOnlyList<ResourceAmount> Costs => costs;
@@ -169,23 +137,18 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [SerializeField] private int populationCost = 1;
     public int PopulationCost => populationCost;
 
-    // ----------------------------------------------------------------------
-    // Faction
-    // ----------------------------------------------------------------------
-
     [Header("Faction")]
     [SerializeField] private string defaultFactionId;
     public string DefaultFactionId => defaultFactionId;
-
-    // ----------------------------------------------------------------------
-    // Editor Validation
-    // ----------------------------------------------------------------------
 
 #if UNITY_EDITOR
     private void OnValidate()
     {
         DefinitionMetadataUtility.EnsureMetadata(ref metadata, DefinitionCategory.Unit);
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
+
+        if (string.IsNullOrWhiteSpace(schemaModeId))
+            schemaModeId = "baseline";
 
         stats ??= new();
         statModifiers ??= new();
@@ -201,6 +164,8 @@ public class UnitDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
         aiGoalIds ??= new();
         costs ??= new();
         upkeepCosts ??= new();
+
+        UnitRuntimeContextResolver.Invalidate(this, UnitRuntimeInvalidationReason.ProfileChanged);
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

@@ -49,6 +49,7 @@ public class MoodDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
         moraleStability = Mathf.Max(0f, moraleStability);
         stressRecoveryRate = Mathf.Max(0f, stressRecoveryRate);
         panicThreshold = Mathf.Clamp01(panicThreshold);
+        UnitRuntimeContextResolver.ClearCache();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

@@ -42,6 +42,7 @@ public class RoleDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
         jobIds ??= new();
         needMultipliers ??= new();
         requiredStatIds ??= new();
+        UnitRuntimeContextResolver.ClearCache();
     }
 #endif
 }

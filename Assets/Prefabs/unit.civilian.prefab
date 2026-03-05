@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4851800783026205445}
   - component: {fileID: 8557889250463040486}
   - component: {fileID: 5149410281517860078}
+  - component: {fileID: 5218679835567950355}
   m_Layer: 0
   m_Name: unit.civilian
   m_TagString: Untagged
@@ -125,14 +126,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91df31bf66ccd10458a41e064f707b1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitBrain
-  MachineDefinition: {fileID: 0}
-  MachineDefinitionId: 
-  LegacyStateMappings: []
-  LegacyInitialState: {fileID: 0}
+  MachineDefinition: {fileID: 11400000, guid: 90b38d47d2f54d7dba1555f4f0c1fbcd, type: 2}
+  UnitDefinition: {fileID: 11400000, guid: 17f4fa6db2e24c1ab8578d7e5eeecf7b, type: 2}
+  MachineDefinitionId: machine.worker.gather.loop
+  LegacyStateMappings:
+  - state: {fileID: 11400000, guid: 6d836358ff844432b205c74d6132cf3b, type: 2}
+    stateDefinitionId: state.worker.idle
+  - state: {fileID: 11400000, guid: 2809994dc9e7427e93f53f91f7872fb7, type: 2}
+    stateDefinitionId: state.worker.moveToResource
+  - state: {fileID: 11400000, guid: 0272749f3b4e4f8d81cd74e4620cd53d, type: 2}
+    stateDefinitionId: state.worker.gathering
+  - state: {fileID: 11400000, guid: 3a0f588a46494cc18459ff5085d10f8c, type: 2}
+    stateDefinitionId: state.worker.moveToDropoff
+  - state: {fileID: 11400000, guid: e778aa898433492f9990fc16d4ca6ce8, type: 2}
+    stateDefinitionId: state.worker.delivering
+  simulationTickIntervalSeconds: 0.1
+  maxTicksPerFrame: 5
+  LegacyInitialState: {fileID: 11400000, guid: 6d836358ff844432b205c74d6132cf3b, type: 2}
   InitialState: {fileID: 0}
-  Transitions:
-  - {fileID: 11400000, guid: a1468faa6a8b1a04698e0cb3a2c37735, type: 2}
-  - {fileID: 11400000, guid: 8966161c68fedba42a8f230f05eba599, type: 2}
-  - {fileID: 11400000, guid: 573708bc73ad14e4b83e632514e9cda1, type: 2}
-  - {fileID: 11400000, guid: 6e261514053042949b9acdc348d0354f, type: 2}
-  - {fileID: 11400000, guid: 73088bb3eadce3a49bb976058e976d70, type: 2}
+  Transitions: []
+--- !u!195 &5218679835567950355
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8046205476498553649}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 1
+  m_BaseOffset: 0.5
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4

@@ -1,9 +1,14 @@
 using System;
 using System.Collections.Generic;
+using Unity.Profiling;
 using UnityEngine;
 
-public class UnitBrain : MonoBehaviour, IStateMachineConditionContext
+public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEventSink
 {
+    private static readonly ProfilerMarker TickMarker = new("Simulation.UnitBrain.Tick");
+    private static readonly ProfilerMarker InterpreterMarker = new("Simulation.UnitBrain.Interpreters");
+    private static readonly ProfilerMarker TaskMarker = new("Simulation.UnitBrain.Task");
+
     [Header("Definition-Driven FSM")]
     public StateMachineDefinition MachineDefinition;
 
@@ -16,6 +21,10 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext
     [Tooltip("Migration glue mapping legacy BehaviourState assets to StateDefinition IDs.")]
     public List<LegacyStateIdMapping> LegacyStateMappings = new();
 
+    [Header("Simulation Tick")]
+    [SerializeField, Min(0.001f)] private float simulationTickIntervalSeconds = 0.1f;
+    [SerializeField, Min(1)] private int maxTicksPerFrame = 5;
+
     [Tooltip("Fallback state used only during migration when no mapping exists.")]
     public BehaviourState LegacyInitialState;
 
@@ -27,13 +36,20 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext
     public List<BehaviourTransition> Transitions;
 
     private readonly Dictionary<string, float> lastEventTimeByName = new();
+    private readonly HashSet<string> loggedMissingTaskIds = new(StringComparer.Ordinal);
+    private readonly InterpreterSetPool interpreterPool = new();
 
     private StateMachineRuntime runtime;
     private BehaviourState current;
     private TaskRunner taskRunner;
     private UnitRuntimeContext runtimeContext;
+    private InterpreterSet interpreters;
+    private UnitNeedsState needsState = new(100f, 100f, 100f, 100f, 0f);
+    private string activeActionId;
+    private float tickAccumulator;
 
     public BehaviourState CurrentState => current;
+    public UnitRuntimeContext RuntimeContext => runtimeContext;
 
     private void Start()
     {
@@ -46,46 +62,106 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext
             return;
         }
 
+        RefreshRuntimePipeline(UnitRuntimeInvalidationReason.ProfileChanged);
+
         current = runtime.GetInitialRuntimeState();
         current?.OnEnter(this);
-
-        runtimeContext = UnitRuntimeContextResolver.Resolve(UnitDefinition, definitionResolver: null);
-
-        EmitEvent("OnOrderGather");
+        EnsureStateTaskBinding(current);
     }
 
     private void Update()
     {
+        if (!enabled)
+            return;
+
+        tickAccumulator += Time.deltaTime;
+        var executedTicks = 0;
+
+        while (tickAccumulator >= simulationTickIntervalSeconds && executedTicks < maxTicksPerFrame)
+        {
+            TickSimulation();
+            tickAccumulator -= simulationTickIntervalSeconds;
+            executedTicks++;
+        }
+
+        if (executedTicks == maxTicksPerFrame && tickAccumulator >= simulationTickIntervalSeconds)
+            tickAccumulator = 0f;
+    }
+
+    private void TickSimulation()
+    {
+        using var tickScope = TickMarker.Auto();
+
+        EnsureStateTaskBinding(current);
+
+        using (InterpreterMarker.Auto())
+        {
+            if (interpreters?.Needs != null)
+                needsState = interpreters.Needs.Tick(needsState, simulationTickIntervalSeconds);
+
+            _ = interpreters?.AI?.ComputeDecisionScore();
+        }
+
         current?.Tick(this);
 
-        if (taskRunner != null && !taskRunner.IsComplete)
-            taskRunner.Tick();
+        using (TaskMarker.Auto())
+        {
+            if (taskRunner != null && !taskRunner.IsComplete)
+            {
+                taskRunner.SetRuntimeContext(runtimeContext);
+                taskRunner.Tick();
+            }
+        }
     }
 
     public void StartTask(TaskDefinition task)
     {
-        taskRunner = new TaskRunner(task, gameObject, runtimeContext);
+        StartTask(task, task?.Id);
     }
 
     public void EmitEvent(string evt)
     {
-        if (string.IsNullOrWhiteSpace(evt) || current == null || runtime == null)
+        EmitEvent(evt, null);
+    }
+
+    public void EmitEvent(string eventId, string payload)
+    {
+        if (string.IsNullOrWhiteSpace(eventId) || current == null || runtime == null)
             return;
 
-        lastEventTimeByName[evt] = Time.time;
+        lastEventTimeByName[eventId] = Time.time;
 
-        BehaviourState s = current;
-
-        while (s != null)
+        BehaviourState state = current;
+        while (state != null)
         {
-            if (s.HandleEvent(this, evt))
+            if (state.HandleEvent(this, eventId))
                 return;
 
-            s = runtime.GetParentState(s);
+            state = runtime.GetParentState(state);
         }
 
-        if (runtime.TryResolveTransition(current, evt, this, out BehaviourState target))
+        if (runtime.TryResolveTransition(current, eventId, this, out BehaviourState target))
             TransitionTo(target);
+    }
+
+    public void OnStatChanged()
+    {
+        RefreshRuntimePipeline(UnitRuntimeInvalidationReason.StatChanged);
+    }
+
+    public void OnEquipmentChanged()
+    {
+        RefreshRuntimePipeline(UnitRuntimeInvalidationReason.EquipmentChanged);
+    }
+
+    public void OnTechChanged()
+    {
+        RefreshRuntimePipeline(UnitRuntimeInvalidationReason.TechChanged);
+    }
+
+    public void OnProfileChanged()
+    {
+        RefreshRuntimePipeline(UnitRuntimeInvalidationReason.ProfileChanged);
     }
 
     public bool TryGetElapsedSecondsSinceEvent(string eventName, out float seconds)
@@ -98,6 +174,64 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext
 
         seconds = Mathf.Max(0f, Time.time - eventTime);
         return true;
+    }
+
+    private void RefreshRuntimePipeline(UnitRuntimeInvalidationReason reason)
+    {
+        if (UnitDefinition == null)
+            return;
+
+        UnitRuntimeContextResolver.Invalidate(UnitDefinition, reason);
+
+        if (runtimeContext != null)
+            UnitInterpreterRegistry.Unregister(runtimeContext);
+
+        runtimeContext = UnitRuntimeContextResolver.Resolve(UnitDefinition, definitionResolver: null);
+
+        if (interpreters != null)
+            interpreterPool.Return(interpreters);
+
+        interpreters = interpreterPool.Rent(runtimeContext);
+        UnitInterpreterRegistry.Register(runtimeContext, interpreters);
+
+        if (taskRunner != null && !taskRunner.IsComplete)
+            taskRunner.SetRuntimeContext(runtimeContext);
+    }
+
+    private void EnsureStateTaskBinding(BehaviourState state)
+    {
+        if (state == null || runtime == null)
+            return;
+
+        if (!runtime.TryGetActionId(state, out var actionId))
+        {
+            activeActionId = null;
+            return;
+        }
+
+        if (taskRunner != null && !taskRunner.IsComplete && string.Equals(activeActionId, actionId, StringComparison.Ordinal))
+            return;
+
+        if (TaskRegistry.Instance == null)
+            return;
+
+        if (!TaskRegistry.Instance.TryGet(actionId, out var taskDefinition) || taskDefinition == null)
+        {
+            if (loggedMissingTaskIds.Add(actionId))
+                Debug.LogWarning($"[UnitBrain] Missing task definition for actionId '{actionId}'.");
+            return;
+        }
+
+        StartTask(taskDefinition, actionId);
+    }
+
+    private void StartTask(TaskDefinition task, string actionId)
+    {
+        if (task == null)
+            return;
+
+        taskRunner = new TaskRunner(task, gameObject, runtimeContext, TaskSimulationServices.Defaults, this);
+        activeActionId = actionId?.Trim();
     }
 
     private void TransitionTo(BehaviourState target)
@@ -127,6 +261,8 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext
 
         for (int i = newIndex; i >= 0; i--)
             newChain[i].OnEnter(this);
+
+        EnsureStateTaskBinding(current);
     }
 }
 

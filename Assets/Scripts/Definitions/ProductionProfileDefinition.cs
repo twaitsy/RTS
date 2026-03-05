@@ -59,6 +59,7 @@ public class ProductionProfileDefinition : ScriptableObject, IIdentifiable, IDef
         unlockUnitIds ??= new();
         productionTime = Mathf.Max(0f, productionTime);
         maxQueueSize = Mathf.Max(1, maxQueueSize);
+        UnitRuntimeContextResolver.ClearCache();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
             Debug.LogError($"[Validation] Asset '{name}' (id: '{id}') has duplicate stat '{duplicateStatId}' in its base stat container.");

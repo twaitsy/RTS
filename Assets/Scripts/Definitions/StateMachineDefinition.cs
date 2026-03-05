@@ -16,8 +16,6 @@ public struct StateTransitionEntry
     public string toStateId;
     public string eventName;
     public string conditionId;
-    [Tooltip("Legacy fallback. Supports formats like event=Arrived;conditionId=logic.can.gather;minElapsed=0.25")]
-    public string conditionDescription;
 }
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/StateMachine")]

@@ -12,6 +12,12 @@ public static class MovementSystem
         if (actor == null)
             return;
 
+        if (UnitInterpreterRegistry.TryGet(context, out var interpreters) && interpreters.Movement != null)
+        {
+            interpreters.Movement.MoveTo(actor, target);
+            return;
+        }
+
         float fallbackSpeed = context?.MovementProfile?.MoveSpeedMultiplier ?? context?.LocomotionProfile?.Speed ?? DefaultMoveSpeed;
         float moveSpeed = context?.ResolveStat(CanonicalStatIds.Movement.MoveSpeed, fallbackSpeed) ?? fallbackSpeed;
 
@@ -27,9 +33,6 @@ public static class MovementSystem
 
     private static void MoveTo(GameObject actor, Vector3 target, float moveSpeed, float acceleration, float turnRate, float stoppingDistance)
     {
-        if (actor == null)
-            return;
-
         Transform t = actor.transform;
 
         Vector3 direction = target - t.position;

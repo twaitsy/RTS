@@ -9,12 +9,9 @@ public interface IStateMachineConditionContext
 
 public sealed class StateMachineRuntime
 {
-    private const string EventKey = "event";
-    private const string ConditionIdKey = "conditionId";
-    private const string MinElapsedKey = "minElapsed";
-
     private readonly Dictionary<string, BehaviourState> runtimeStateById = new();
     private readonly Dictionary<BehaviourState, string> runtimeIdByState = new();
+    private readonly Dictionary<string, string> actionIdByStateId = new();
     private readonly Dictionary<BehaviourState, BehaviourState> parentByState = new();
     private readonly Dictionary<string, List<RuntimeTransition>> transitionsByFromStateId = new();
 
@@ -48,6 +45,22 @@ public sealed class StateMachineRuntime
     }
 
     public BehaviourState GetInitialRuntimeState() => initialRuntimeState;
+
+    public bool TryGetActionId(BehaviourState state, out string actionId)
+    {
+        actionId = null;
+        if (state == null)
+            return false;
+
+        if (!runtimeIdByState.TryGetValue(state, out var stateId))
+            return false;
+
+        if (!actionIdByStateId.TryGetValue(stateId, out actionId))
+            return false;
+
+        actionId = actionId?.Trim();
+        return !string.IsNullOrWhiteSpace(actionId);
+    }
 
     public BehaviourState GetParentState(BehaviourState state)
     {
@@ -126,6 +139,7 @@ public sealed class StateMachineRuntime
     {
         runtimeStateById.Clear();
         runtimeIdByState.Clear();
+        actionIdByStateId.Clear();
         parentByState.Clear();
 
         var mappedById = new Dictionary<string, BehaviourState>();
@@ -143,6 +157,8 @@ public sealed class StateMachineRuntime
         {
             if (string.IsNullOrWhiteSpace(entry.stateId))
                 continue;
+
+            actionIdByStateId[entry.stateId] = entry.actionId?.Trim();
 
             if (!mappedById.TryGetValue(entry.stateId, out BehaviourState runtimeState) || runtimeState == null)
             {
@@ -247,19 +263,15 @@ public sealed class StateMachineRuntime
 
     private sealed class RuntimeTransition
     {
-        public string FromStateId { get; }
         public string ToStateId { get; }
         public string EventName { get; }
         public string ConditionId { get; }
-        public float? MinElapsedSecondsSinceEvent { get; }
 
-        private RuntimeTransition(string fromStateId, string toStateId, string eventName, string conditionId, float? minElapsedSecondsSinceEvent)
+        private RuntimeTransition(string toStateId, string eventName, string conditionId)
         {
-            FromStateId = fromStateId;
             ToStateId = toStateId;
             EventName = eventName;
             ConditionId = conditionId;
-            MinElapsedSecondsSinceEvent = minElapsedSecondsSinceEvent;
         }
 
         public bool Matches(string evt, IStateMachineConditionContext conditionContext)
@@ -276,55 +288,15 @@ public sealed class StateMachineRuntime
                     return false;
             }
 
-            if (MinElapsedSecondsSinceEvent.HasValue)
-            {
-                if (conditionContext == null || !conditionContext.TryGetElapsedSecondsSinceEvent(evt, out float elapsed))
-                    return false;
-
-                if (elapsed < MinElapsedSecondsSinceEvent.Value)
-                    return false;
-            }
-
             return true;
         }
 
         public static RuntimeTransition Parse(StateTransitionEntry entry)
         {
-            string evt = entry.eventName;
-            string conditionId = entry.conditionId;
-            float? minElapsed = null;
-            string conditionDescription = entry.conditionDescription;
-
-            if (string.IsNullOrWhiteSpace(evt) && !string.IsNullOrWhiteSpace(conditionDescription) && !conditionDescription.Contains(';'))
-                evt = conditionDescription;
-
-            if (!string.IsNullOrWhiteSpace(conditionDescription) && conditionDescription.Contains(';'))
-            {
-                var tokens = conditionDescription.Split(';');
-
-                foreach (var token in tokens)
-                {
-                    var trimmedToken = token.Trim();
-                    if (string.IsNullOrWhiteSpace(trimmedToken))
-                        continue;
-
-                    var split = trimmedToken.Split('=', 2);
-                    if (split.Length != 2)
-                        continue;
-
-                    var key = split[0].Trim();
-                    var value = split[1].Trim();
-
-                    if (key.Equals(EventKey, StringComparison.OrdinalIgnoreCase))
-                        evt = value;
-                    else if (key.Equals(ConditionIdKey, StringComparison.OrdinalIgnoreCase))
-                        conditionId = value;
-                    else if (key.Equals(MinElapsedKey, StringComparison.OrdinalIgnoreCase) && float.TryParse(value, out float parsed))
-                        minElapsed = parsed;
-                }
-            }
-
-            return new RuntimeTransition(entry.fromStateId, entry.toStateId, evt?.Trim(), conditionId, minElapsed);
+            return new RuntimeTransition(
+                entry.toStateId,
+                entry.eventName?.Trim(),
+                entry.conditionId?.Trim());
         }
     }
 
@@ -358,7 +330,6 @@ public sealed class StateMachineRuntime
                     return StandardConditionFunctions.Evaluate(node, this);
             }
         }
-
 
         public bool GetFlag(string key)
         {

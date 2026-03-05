@@ -59,6 +59,7 @@ public class MovementProfileDefinition : ScriptableObject, IIdentifiable, IDefin
         acceleration = Mathf.Max(0f, acceleration);
         turnRate = Mathf.Max(0f, turnRate);
         stoppingDistance = Mathf.Max(0f, stoppingDistance);
+        UnitRuntimeContextResolver.ClearCache();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
             Debug.LogError($"[Validation] Asset '{name}' (id: '{id}') has duplicate stat '{duplicateStatId}' in its base stat container.");

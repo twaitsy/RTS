@@ -48,6 +48,7 @@ public class BehaviourDefinition : ScriptableObject, IIdentifiable, IDefinitionM
         jobIds ??= new();
         decisionInterval = Mathf.Max(0f, decisionInterval);
         reactionTime = Mathf.Max(0f, reactionTime);
+        UnitRuntimeContextResolver.ClearCache();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
             Debug.LogError($"[Validation] Asset '{name}' (id: '{id}') has duplicate stat '{duplicateStatId}' in its base stat container.");

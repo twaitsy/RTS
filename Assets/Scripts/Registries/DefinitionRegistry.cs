@@ -55,9 +55,7 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
             }
 
             if (!lookup.TryAdd(def.Id, def))
-            {
                 Debug.LogError($"Duplicate ID detected in {GetType().Name}: {def.Id}");
-            }
         }
 
         lookupDirty = false;
@@ -133,7 +131,7 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
 
                     foreach (var target in rule.AllowedTargets)
                     {
-                        if (target.TargetExists != null && target.TargetExists(targetId))
+                        if (TryTargetExists(target, targetId))
                         {
                             map.AddReference(RegistryName, definition.Id, rule.FieldName, target.TargetName, targetId);
                             matchedTargetCount++;
@@ -147,6 +145,22 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
                         map.AddReference(RegistryName, definition.Id, rule.FieldName, target.TargetName, targetId);
                 }
             }
+        }
+    }
+
+    private bool TryTargetExists(ReferenceTargetRule target, string targetId)
+    {
+        if (target?.TargetExists == null)
+            return false;
+
+        try
+        {
+            return target.TargetExists(targetId);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[Validation] {RegistryName} target rule '{target.TargetName}' threw while resolving '{targetId}': {ex.Message}");
+            return false;
         }
     }
 

@@ -114,6 +114,7 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
             .RequireField(nameof(UnitDefinition.Id), definition => definition.Id)
             .RequireField(nameof(UnitDefinition.DisplayName), definition => definition.DisplayName)
             .RequireField(nameof(UnitDefinition.Stats), definition => definition.Stats)
+            .RequireField(nameof(UnitDefinition.SchemaModeId), definition => definition.SchemaModeId)
             .OptionalField(nameof(UnitDefinition.WeaponIds), definition => definition.WeaponIds)
             .OptionalField(nameof(UnitDefinition.ArmorProfileId), definition => definition.ArmorProfileId)
             .OptionalField(nameof(UnitDefinition.DefenseProfileId), definition => definition.DefenseProfileId)
@@ -131,37 +132,37 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
                 $"{nameof(UnitDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
                 definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.Stats.Entries, stat => stat.StatId),
                 false,
-                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance.TryGet(targetId, out _)))
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance != null && StatRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(
                 nameof(UnitDefinition.StatModifiers),
                 definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.StatModifiers, modifier => modifier.targetStatId),
                 false,
-                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.WeaponIds), definition => definition.WeaponIds, false, new ReferenceTargetRule(nameof(WeaponRegistry), targetId => WeaponRegistry.Instance.TryGet(targetId, out _)))
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance != null && StatRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.WeaponIds), definition => definition.WeaponIds, false, new ReferenceTargetRule(nameof(WeaponRegistry), targetId => WeaponRegistry.Instance != null && WeaponRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.ArmorProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.ArmorProfileId), false, new ReferenceTargetRule(nameof(ArmorProfileRegistry), targetId => ArmorProfileRegistry.Instance != null && ArmorProfileRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.DefenseProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.DefenseProfileId), false, new ReferenceTargetRule(nameof(DefenseProfileRegistry), targetId => DefenseProfileRegistry.Instance != null && DefenseProfileRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.MovementProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.MovementProfileId), false, new ReferenceTargetRule(nameof(MovementProfileRegistry), targetId => MovementProfileRegistry.Instance != null && MovementProfileRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.LocomotionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.LocomotionProfileId), false, new ReferenceTargetRule(nameof(LocomotionProfileRegistry), targetId => LocomotionProfileRegistry.Instance != null && LocomotionProfileRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.ProductionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.ProductionProfileId), false, new ReferenceTargetRule(nameof(ProductionProfileRegistry), targetId => ProductionProfileRegistry.Instance != null && ProductionProfileRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.RequiredBuildingIds), definition => definition.RequiredBuildingIds, false, new ReferenceTargetRule(nameof(BuildingRegistry), targetId => BuildingRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.RequiredTechIds), definition => definition.RequiredTechIds, false, new ReferenceTargetRule(nameof(TechRegistry), targetId => TechRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.RoleId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.RoleId), false, new ReferenceTargetRule(nameof(RoleRegistry), targetId => RoleRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.TraitIds), definition => definition.TraitIds, false, new ReferenceTargetRule(nameof(TraitRegistry), targetId => TraitRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.StartingSkillIds), definition => definition.StartingSkillIds, false, new ReferenceTargetRule(nameof(SkillRegistry), targetId => SkillRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.RequiredBuildingIds), definition => definition.RequiredBuildingIds, false, new ReferenceTargetRule(nameof(BuildingRegistry), targetId => BuildingRegistry.Instance != null && BuildingRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.RequiredTechIds), definition => definition.RequiredTechIds, false, new ReferenceTargetRule(nameof(TechRegistry), targetId => TechRegistry.Instance != null && TechRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.RoleId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.RoleId), false, new ReferenceTargetRule(nameof(RoleRegistry), targetId => RoleRegistry.Instance != null && RoleRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.TraitIds), definition => definition.TraitIds, false, new ReferenceTargetRule(nameof(TraitRegistry), targetId => TraitRegistry.Instance != null && TraitRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.StartingSkillIds), definition => definition.StartingSkillIds, false, new ReferenceTargetRule(nameof(SkillRegistry), targetId => SkillRegistry.Instance != null && SkillRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.NeedsProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.NeedsProfileId), false, new ReferenceTargetRule(nameof(NeedsProfileRegistry), targetId => NeedsProfileRegistry.Instance != null && NeedsProfileRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.MoodProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.MoodProfileId), false, new ReferenceTargetRule(nameof(MoodRegistry), targetId => MoodRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.MoodModifierIds), definition => definition.MoodModifierIds, false, new ReferenceTargetRule(nameof(MoodRegistry), targetId => MoodRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.StartingItemIds), definition => definition.StartingItemIds, false, new ReferenceTargetRule(nameof(ItemRegistry), targetId => ItemRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.JobProfileIds), definition => definition.JobProfileIds, false, new ReferenceTargetRule(nameof(JobRegistry), targetId => JobRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.JobIds), definition => definition.JobIds, false, new ReferenceTargetRule(nameof(JobRegistry), targetId => JobRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.AIBehaviorProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.AIBehaviorProfileId), false, new ReferenceTargetRule(nameof(BehaviourRegistry), targetId => BehaviourRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.AIGoalIds), definition => definition.AIGoalIds, false, new ReferenceTargetRule(nameof(AIGoalRegistry), targetId => AIGoalRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.AIPriorityId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.AIPriorityId), false, new ReferenceTargetRule(nameof(AIPriorityRegistry), targetId => AIPriorityRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.PerceptionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.PerceptionProfileId), false, new ReferenceTargetRule(nameof(AIPerceptionRegistry), targetId => AIPerceptionRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.MoodProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.MoodProfileId), false, new ReferenceTargetRule(nameof(MoodRegistry), targetId => MoodRegistry.Instance != null && MoodRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.MoodModifierIds), definition => definition.MoodModifierIds, false, new ReferenceTargetRule(nameof(MoodRegistry), targetId => MoodRegistry.Instance != null && MoodRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.StartingItemIds), definition => definition.StartingItemIds, false, new ReferenceTargetRule(nameof(ItemRegistry), targetId => ItemRegistry.Instance != null && ItemRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.JobProfileIds), definition => definition.JobProfileIds, false, new ReferenceTargetRule(nameof(JobRegistry), targetId => JobRegistry.Instance != null && JobRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.JobIds), definition => definition.JobIds, false, new ReferenceTargetRule(nameof(JobRegistry), targetId => JobRegistry.Instance != null && JobRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.AIBehaviorProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.AIBehaviorProfileId), false, new ReferenceTargetRule(nameof(BehaviourRegistry), targetId => BehaviourRegistry.Instance != null && BehaviourRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.AIGoalIds), definition => definition.AIGoalIds, false, new ReferenceTargetRule(nameof(AIGoalRegistry), targetId => AIGoalRegistry.Instance != null && AIGoalRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.AIPriorityId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.AIPriorityId), false, new ReferenceTargetRule(nameof(AIPriorityRegistry), targetId => AIPriorityRegistry.Instance != null && AIPriorityRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.PerceptionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.PerceptionProfileId), false, new ReferenceTargetRule(nameof(AIPerceptionRegistry), targetId => AIPerceptionRegistry.Instance != null && AIPerceptionRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.UnitCategoryId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.UnitCategoryId), false, new ReferenceTargetRule(nameof(UnitCategoryRegistry), targetId => UnitCategoryRegistry.Instance != null && UnitCategoryRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.DefaultFactionId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.DefaultFactionId), false, new ReferenceTargetRule(nameof(FactionRegistry), targetId => FactionRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.Costs), definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.Costs, amount => amount.ResourceId), false, new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.UpkeepCosts), definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.UpkeepCosts, amount => amount.ResourceId), false, new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.DefaultFactionId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.DefaultFactionId), false, new ReferenceTargetRule(nameof(FactionRegistry), targetId => FactionRegistry.Instance != null && FactionRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.Costs), definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.Costs, amount => amount.ResourceId), false, new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance != null && ResourceRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(nameof(UnitDefinition.UpkeepCosts), definition => RegistrySchema<UnitDefinition>.ReferenceCollection(definition.UpkeepCosts, amount => amount.ResourceId), false, new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance != null && ResourceRegistry.Instance.TryGet(targetId, out _)))
             .AddConstraint("UnitSchemaRequirements", ValidateRequiredStatSets)
             .AddConstraint("UnitSimulationRelationalConstraints", ValidateSimulationRelationalConstraints);
 
@@ -180,7 +181,10 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
 
         var schemaMode = ResolveSchemaMode(definition, out var modeSource);
         if (!RequiredSetNamesByMode.TryGetValue(schemaMode, out var requiredSetNames))
-            requiredSetNames = RequiredSetNamesByMode["baseline"];
+        {
+            yield return $"Unknown schema mode '{definition.SchemaModeId}'. Allowed values: {string.Join(", ", RequiredSetNamesByMode.Keys.OrderBy(value => value, StringComparer.OrdinalIgnoreCase))}.";
+            yield break;
+        }
 
         var missingStatsBySet = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
         foreach (var setName in requiredSetNames)
@@ -224,10 +228,9 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
             yield return $"Schema mode '{schemaMode}' ({modeSource}) is missing required profile links: {string.Join(", ", missingProfiles)}.";
         }
 
-        if (HasStat(definition, CanonicalStatIds.AI.PerceptionRadius))
-        {
-            yield return $"Use '{CanonicalStatIds.Perception.PerceptionRadius}' instead of '{CanonicalStatIds.AI.PerceptionRadius}' to keep perception stat namespace consistent.";
-        }
+        const string legacyPerceptionId = "ai.perceptionRadius";
+        if (HasStat(definition, legacyPerceptionId))
+            yield return $"Legacy stat id '{legacyPerceptionId}' is not allowed. Use '{CanonicalStatIds.Perception.PerceptionRadius}'.";
     }
 
     private static IEnumerable<string> ValidateSimulationRelationalConstraints(UnitDefinition definition)
@@ -244,21 +247,17 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         if (HasStatInRelationalGraph(definition, CanonicalStatIds.Needs.HungerRate) && string.IsNullOrWhiteSpace(definition.NeedsProfileId))
             yield return $"{nameof(UnitDefinition.NeedsProfileId)} is required when '{CanonicalStatIds.Needs.HungerRate}' is present.";
 
-<<<<<<< HEAD
         if (HasStatInRelationalGraph(definition, CanonicalStatIds.Perception.PerceptionRadius) && string.IsNullOrWhiteSpace(definition.PerceptionProfileId))
-=======
-        if (HasPerceptionRadiusStat(definition) && string.IsNullOrWhiteSpace(definition.PerceptionProfileId))
->>>>>>> origin/main
             yield return $"{nameof(UnitDefinition.PerceptionProfileId)} is required when '{CanonicalStatIds.Perception.PerceptionRadius}' is present.";
 
         if (HasCosts(definition) && string.IsNullOrWhiteSpace(definition.ProductionProfileId))
             yield return $"{nameof(UnitDefinition.ProductionProfileId)} is required when {nameof(UnitDefinition.Costs)} contains resource costs.";
 
         if (!string.IsNullOrWhiteSpace(definition.WeaponTypeId))
-            yield return $"{nameof(UnitDefinition.WeaponTypeId)} is legacy. Use {nameof(UnitDefinition.WeaponIds)} with canonical {nameof(WeaponRegistry)} links.";
+            yield return $"{nameof(UnitDefinition.WeaponTypeId)} is legacy and forbidden. Use {nameof(UnitDefinition.WeaponIds)} with canonical {nameof(WeaponRegistry)} links.";
 
         if (!string.IsNullOrWhiteSpace(definition.ArmorTypeId))
-            yield return $"{nameof(UnitDefinition.ArmorTypeId)} is legacy. Use {nameof(UnitDefinition.ArmorProfileId)} with canonical {nameof(ArmorProfileRegistry)} links.";
+            yield return $"{nameof(UnitDefinition.ArmorTypeId)} is legacy and forbidden. Use {nameof(UnitDefinition.ArmorProfileId)} with canonical {nameof(ArmorProfileRegistry)} links.";
 
         foreach (var requiredStatId in GetRoleRequiredStats(definition))
         {
@@ -273,121 +272,40 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         }
     }
 
-<<<<<<< HEAD
-    private static bool HasStatInRelationalGraph(UnitDefinition definition, string statId)
-=======
     private static string ResolveSchemaMode(UnitDefinition definition, out string modeSource)
     {
-        var explicitMode = TryGetExplicitSchemaMode(definition?.Metadata?.Tags);
-        if (!string.IsNullOrWhiteSpace(explicitMode))
+        var schemaMode = definition?.SchemaModeId?.Trim();
+        if (string.IsNullOrWhiteSpace(schemaMode))
         {
-            modeSource = "metadata tag";
-            return explicitMode;
+            modeSource = "missing";
+            return string.Empty;
         }
 
-        var tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        AddArchetypeTokens(tokens, definition?.Metadata?.Tags);
-        AddToken(tokens, definition?.UnitCategoryId);
-        AddToken(tokens, definition?.RoleId);
-
-        if (definition?.Metadata?.Tags != null)
-        {
-            foreach (var tag in definition.Metadata.Tags)
-                AddToken(tokens, tag);
-        }
-
-        if (ContainsAny(tokens, "worker", "builder", "gatherer", "harvester"))
-        {
-            modeSource = "category/role/tags heuristic";
-            return "worker";
-        }
-
-        if (ContainsAny(tokens, "civilian", "villager"))
-        {
-            modeSource = "category/role/tags heuristic";
-            return "civilian";
-        }
-
-        if (ContainsAny(tokens, "scout", "recon"))
-        {
-            modeSource = "category/role/tags heuristic";
-            return "scout";
-        }
-
-        if (ContainsAny(tokens, "combat", "military", "soldier", "guard", "warrior"))
-        {
-            modeSource = "category/role/tags heuristic";
-            return "combatant";
-        }
-
-        modeSource = "default";
-        return "baseline";
+        modeSource = "unit.schemaModeId";
+        return schemaMode;
     }
 
-    private static void AddArchetypeTokens(ISet<string> tokens, IReadOnlyList<string> tags)
-    {
-        if (tokens == null || tags == null)
-            return;
-
-        foreach (var tag in tags)
-        {
-            var trimmed = tag?.Trim();
-            if (string.IsNullOrWhiteSpace(trimmed))
-                continue;
-
-            if (trimmed.StartsWith("archetype:", StringComparison.OrdinalIgnoreCase))
-            {
-                var archetypeValue = trimmed.Substring("archetype:".Length).Trim();
-                AddToken(tokens, archetypeValue);
-            }
-        }
-    }
-
-    private static string TryGetExplicitSchemaMode(IReadOnlyList<string> tags)
-    {
-        if (tags == null)
-            return null;
-
-        foreach (var tag in tags)
-        {
-            var trimmed = tag?.Trim();
-            if (string.IsNullOrWhiteSpace(trimmed))
-                continue;
-
-            const string modePrefix = "schema.mode:";
-            if (trimmed.StartsWith(modePrefix, StringComparison.OrdinalIgnoreCase))
-            {
-                var mode = trimmed.Substring(modePrefix.Length).Trim();
-                if (RequiredSetNamesByMode.ContainsKey(mode))
-                    return mode;
-            }
-
-            const string shortPrefix = "schema:";
-            if (trimmed.StartsWith(shortPrefix, StringComparison.OrdinalIgnoreCase))
-            {
-                var mode = trimmed.Substring(shortPrefix.Length).Trim();
-                if (RequiredSetNamesByMode.ContainsKey(mode))
-                    return mode;
-            }
-        }
-
-        return null;
-    }
-
-    private static bool HasPerceptionRadiusStat(UnitDefinition definition)
-    {
-        return HasStat(definition, CanonicalStatIds.Perception.PerceptionRadius)
-            || HasStat(definition, CanonicalStatIds.AI.PerceptionRadius);
-    }
-
-    private static bool HasStat(UnitDefinition definition, string statId)
->>>>>>> origin/main
+    private static bool HasStatInRelationalGraph(UnitDefinition definition, string statId)
     {
         if (definition == null || string.IsNullOrWhiteSpace(statId))
             return false;
 
         var allStats = CollectRelationalStatIds(definition);
         return allStats.Contains(statId);
+    }
+
+    private static bool HasStat(UnitDefinition definition, string statId)
+    {
+        if (definition?.Stats?.Entries == null || string.IsNullOrWhiteSpace(statId))
+            return false;
+
+        for (int i = 0; i < definition.Stats.Entries.Count; i++)
+        {
+            if (string.Equals(definition.Stats.Entries[i].StatId, statId, StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
     }
 
     private static HashSet<string> CollectRelationalStatIds(UnitDefinition definition)
@@ -510,28 +428,6 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         return false;
     }
 
-    private static bool ContainsAny(HashSet<string> values, params string[] probes)
-    {
-        foreach (var value in values)
-        {
-            foreach (var probe in probes)
-            {
-                if (value.IndexOf(probe, StringComparison.OrdinalIgnoreCase) >= 0)
-                    return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static void AddToken(ISet<string> tokens, string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return;
-
-        tokens.Add(value.Trim());
-    }
-
     protected override IEnumerable<string> GetValidationDependencyErrors()
     {
         if (StatRegistry.Instance == null) yield return "Missing dependency: StatRegistry.Instance is null.";
@@ -559,3 +455,6 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         if (ResourceRegistry.Instance == null) yield return "Missing dependency: ResourceRegistry.Instance is null.";
     }
 }
+
+
+

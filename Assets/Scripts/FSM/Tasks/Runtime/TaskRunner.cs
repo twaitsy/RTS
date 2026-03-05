@@ -2,27 +2,45 @@ using UnityEngine;
 
 public class TaskRunner
 {
-    private TaskDefinition task;
-    private TaskContext context;
+    private readonly TaskDefinition task;
+    private readonly TaskContext context;
     private int stepIndex;
 
     public bool IsComplete { get; private set; }
+    public string TaskId => task?.Id;
 
-    public TaskRunner(TaskDefinition task, GameObject actor, UnitRuntimeContext runtimeContext = null)
+    public TaskRunner(
+        TaskDefinition task,
+        GameObject actor,
+        UnitRuntimeContext runtimeContext = null,
+        TaskSimulationServices services = null,
+        ITaskEventSink eventSink = null)
     {
         this.task = task;
-        this.context = new TaskContext
+        context = new TaskContext
         {
             Actor = actor,
             RuntimeContext = runtimeContext,
+            Services = services ?? TaskSimulationServices.Defaults,
+            EventSink = eventSink,
         };
-        this.stepIndex = 0;
-        this.IsComplete = false;
+        stepIndex = 0;
+        IsComplete = false;
+    }
+
+    public void SetRuntimeContext(UnitRuntimeContext runtimeContext)
+    {
+        context.RuntimeContext = runtimeContext;
+    }
+
+    public void Stop()
+    {
+        IsComplete = true;
     }
 
     public void Tick()
     {
-        if (IsComplete || task.Steps.Count == 0)
+        if (IsComplete || task == null || task.Steps.Count == 0)
             return;
 
         if (stepIndex < 0 || stepIndex >= task.Steps.Count)
@@ -34,16 +52,19 @@ public class TaskRunner
 
         var step = task.Steps[stepIndex];
         var result = step.Execute(context);
+        context.ApplyResult(result);
 
         switch (result.StepFlow)
         {
             case TaskStepResult.Flow.StayOnStep:
+                context.FlushQueuedEvents();
                 return;
 
             case TaskStepResult.Flow.AdvanceStep:
                 stepIndex++;
                 if (stepIndex >= task.Steps.Count)
                     IsComplete = true;
+                context.FlushQueuedEvents();
                 return;
 
             case TaskStepResult.Flow.JumpToStep:
@@ -51,15 +72,18 @@ public class TaskRunner
                 {
                     Debug.LogWarning($"TaskRunner: Jump target {result.NextStepIndex} is out of range for task '{task.name}'. Terminating task.");
                     IsComplete = true;
+                    context.FlushQueuedEvents();
                     return;
                 }
 
                 stepIndex = result.NextStepIndex;
+                context.FlushQueuedEvents();
                 return;
 
             case TaskStepResult.Flow.FailTask:
             default:
                 IsComplete = true;
+                context.FlushQueuedEvents();
                 return;
         }
     }

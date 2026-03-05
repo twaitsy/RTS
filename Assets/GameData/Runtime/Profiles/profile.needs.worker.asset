@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8b689f73180ba0753a7010241d7857f, type: 3}
+  m_Name: profile.needs.worker
+  m_EditorClassIdentifier: Assembly-CSharp::NeedsProfileDefinition
+  id: profile.needs.worker
+  metadata:
+    category: 9
+    tags: []
+    version: 1.0.0
+    schemaHash: 
+    lastModifiedUtc: 2026-03-05T00:00:00.0000000Z
+    author: 
+  isIdFinalized: 1
+  finalizedId: profile.needs.worker
+  displayName: Worker Needs
+  stats:
+    entries: []
+  statModifiers: []
+  civilianDefinitionId: 
+  needs: []
+  hungerCurve: 1
+  thirstCurve: 1
+  fatigueCurve: 1
+  moraleCurve: 1
+  stressCurve: 1
+  socialNeedCurve: 1
+  criticalNeedThreshold: 0.2

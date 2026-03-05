@@ -2,8 +2,6 @@ using UnityEngine;
 
 public static class AISensingSystem
 {
-    private const float DefaultPerceptionRadius = 0f;
-
     public static bool IsTargetPerceivable(
         Vector3 observerPosition,
         Vector3 targetPosition,
@@ -12,9 +10,12 @@ public static class AISensingSystem
         float emittedNoise = 1f,
         Vector3? observerForward = null)
     {
+        if (UnitInterpreterRegistry.TryGet(context, out var interpreters) && interpreters.Perception != null)
+            return interpreters.Perception.IsTargetPerceivable(observerPosition, targetPosition, targetStealth, emittedNoise, observerForward);
+
         var profile = context?.PerceptionProfile;
 
-        float profileRadius = profile?.HearingRadius ?? DefaultPerceptionRadius;
+        float profileRadius = profile?.HearingRadius ?? 0f;
         float perceptionRadius = context?.ResolveStat(CanonicalStatIds.Perception.PerceptionRadius, profileRadius) ?? profileRadius;
         float hearingRadius = context?.ResolveStat(CanonicalStatIds.Perception.HearingRadius, profile?.HearingRadius ?? 0f) ?? 0f;
         float visionArc = context?.ResolveStat(CanonicalStatIds.Perception.VisionArc, profile?.VisionArc ?? 360f) ?? 360f;

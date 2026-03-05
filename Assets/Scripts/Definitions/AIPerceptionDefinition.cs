@@ -57,6 +57,7 @@ public class AIPerceptionDefinition : ScriptableObject, IIdentifiable, IDefiniti
         alertnessDecay = Mathf.Max(0f, alertnessDecay);
         memoryDuration = Mathf.Max(0f, memoryDuration);
         lineOfSightFalloff = Mathf.Max(0f, lineOfSightFalloff);
+        UnitRuntimeContextResolver.ClearCache();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

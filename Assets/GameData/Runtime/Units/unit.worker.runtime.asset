@@ -1,0 +1,118 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 976fd1bb3f27fdb4fb6da2a6925c1d0e, type: 3}
+  m_Name: unit.worker.runtime
+  m_EditorClassIdentifier: Assembly-CSharp::UnitDefinition
+  id: unit.worker.runtime
+  metadata:
+    category: 4
+    tags: []
+    version: 1.0.0
+    schemaHash: 
+    lastModifiedUtc: 2026-03-05T00:00:00.0000000Z
+    author: 
+  isIdFinalized: 1
+  finalizedId: unit.worker.runtime
+  displayName: Worker Runtime Unit
+  icon: {fileID: 0}
+  stats:
+    entries:
+    - statId: movement.moveSpeed
+      value: 50
+    - statId: movement.acceleration
+      value: 10
+    - statId: movement.turnRate
+      value: 360
+    - statId: needs.hungerRate
+      value: 0.2
+    - statId: needs.thirstRate
+      value: 0.25
+    - statId: needs.fatigueRate
+      value: 0.15
+    - statId: needs.moraleDecayRate
+      value: 0.05
+    - statId: needs.stressGainRate
+      value: 0.04
+    - statId: perception.perceptionRadius
+      value: 10
+    - statId: perception.hearingRadius
+      value: 8
+    - statId: perception.memoryDuration
+      value: 4
+    - statId: perception.visionArc
+      value: 120
+    - statId: production.workSpeed
+      value: 1.2
+    - statId: production.buildSpeed
+      value: 1
+    - statId: production.gatherRate
+      value: 1
+    - statId: production.carryCapacity
+      value: 4
+    - statId: ai.aggression
+      value: 0.2
+    - statId: ai.courage
+      value: 0.5
+    - statId: ai.obedience
+      value: 0.8
+    - statId: ai.alertness
+      value: 0.4
+    - statId: economy.populationCost
+      value: 1
+    - statId: economy.upkeepRate
+      value: 0.1
+    - statId: lifecycle.maxLevel
+      value: 10
+    - statId: lifecycle.xpPerKill
+      value: 1
+    - statId: combat.health
+      value: 100
+    - statId: combat.attackDamage
+      value: 4
+    - statId: combat.attackSpeed
+      value: 0.5
+    - statId: combat.attackRange
+      value: 1
+  statModifiers: []
+  weaponIds: []
+  weaponTypeId: 
+  armorProfileId: 
+  defenseProfileId: 
+  armorTypeId: 
+  movementProfileId: profile.movement.worker
+  locomotionProfileId: profile.locomotion.worker
+  schemaModeId: worker
+  unitCategoryId: 
+  roleId: 
+  traitIds: []
+  startingSkillIds: []
+  xpCurveId: 
+  levelCap: 10
+  needsProfileId: profile.needs.worker
+  moodProfileId: 
+  moodModifierIds: []
+  inventorySlots: 4
+  equipmentSlots: 2
+  startingItemIds: []
+  productionProfileId: profile.production.worker
+  requiredBuildingIds: []
+  requiredTechIds: []
+  jobProfileIds: []
+  jobIds: []
+  aiBehaviorProfileId: profile.behaviour.worker
+  aiGoalIds: []
+  aiPriorityId: 
+  perceptionProfileId: profile.perception.worker
+  costs: []
+  upkeepCosts: []
+  populationCost: 1
+  defaultFactionId: 

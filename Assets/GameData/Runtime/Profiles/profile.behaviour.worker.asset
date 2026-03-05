@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28585941447e58f4cbd3617982ec1f65, type: 3}
+  m_Name: profile.behaviour.worker
+  m_EditorClassIdentifier: Assembly-CSharp::BehaviourDefinition
+  id: profile.behaviour.worker
+  metadata:
+    category: 3
+    tags: []
+    version: 1.0.0
+    schemaHash: 
+    lastModifiedUtc: 2026-03-05T00:00:00.0000000Z
+    author: 
+  isIdFinalized: 1
+  finalizedId: profile.behaviour.worker
+  displayName: Worker Behaviour
+  priority: 1
+  stats:
+    entries: []
+  statModifiers: []
+  jobIds: []
+  decisionInterval: 0.25
+  reactionTime: 0.1
+  preferredMoodId: 

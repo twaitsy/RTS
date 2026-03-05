@@ -65,7 +65,7 @@ public static class RegistrySchemaValidator
                     var matchedTargets = 0;
                     foreach (var target in rule.AllowedTargets)
                     {
-                        if (target.TargetExists != null && target.TargetExists(id))
+                        if (TryTargetExists(target, id, hostAssetName(definition), hostId(definition), rule.FieldName, reportError))
                             matchedTargets++;
                     }
 
@@ -84,6 +84,28 @@ public static class RegistrySchemaValidator
 
             if (rule.IsRequired && !hasAnyReference)
                 reportError($"[Validation] Asset '{hostAssetName(definition)}' (id: '{hostId(definition)}') field '{rule.FieldName}' requires at least one reference.");
+        }
+    }
+
+    private static bool TryTargetExists(
+        ReferenceTargetRule target,
+        string id,
+        string assetName,
+        string assetId,
+        string fieldName,
+        Action<string> reportError)
+    {
+        if (target?.TargetExists == null)
+            return false;
+
+        try
+        {
+            return target.TargetExists(id);
+        }
+        catch (Exception ex)
+        {
+            reportError($"[Validation] Asset '{assetName}' (id: '{assetId}') field '{fieldName}' target '{target.TargetName}' threw '{ex.GetType().Name}' for id '{id}': {ex.Message}");
+            return false;
         }
     }
 

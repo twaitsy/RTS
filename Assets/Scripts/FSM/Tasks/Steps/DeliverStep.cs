@@ -5,37 +5,30 @@ public class DeliverStep : TaskStepDefinition
 {
     private const float ARRIVAL_THRESHOLD = 0.1f;
 
+    [SerializeField] private string deliveredEventId;
+    [SerializeField] private string failedEventId;
+
     public override TaskStepResult Execute(TaskContext context)
     {
         if (context == null || context.Actor == null)
-        {
-            Debug.LogError("DeliverStep: Context or Actor is null.");
-            return TaskStepResult.FailTask();
-        }
+            return TaskStepResult.FailTask("DeliverStep: Context or Actor is null.", failedEventId);
 
-        // Find nearest drop-off point
-        DropoffReceiver dropoff = DropoffLocator.FindNearest(context.Actor.transform.position);
-
-        if (dropoff == null)
-        {
-            Debug.LogWarning($"{context.Actor.name} could not find a drop-off point.");
-            return TaskStepResult.FailTask();
-        }
+        if (context.Target is not DropoffReceiver dropoff)
+            return TaskStepResult.FailTask("DeliverStep: Target is not a drop-off receiver.", failedEventId);
 
         Vector3 actorPos = context.Actor.transform.position;
         Vector3 dropoffPos = dropoff.transform.position;
         float sqrDist = (dropoffPos - actorPos).sqrMagnitude;
 
         if (sqrDist > ARRIVAL_THRESHOLD * ARRIVAL_THRESHOLD)
-        {
-            MovementSystem.MoveTo(context.Actor, dropoffPos, context.RuntimeContext);
-            return TaskStepResult.StayOnStep();
-        }
+            return TaskStepResult.FailTask("DeliverStep: Actor is not at drop-off target.", failedEventId);
 
-        // Transfer items once in range
+        if (context.InventoryCount <= 0)
+            return TaskStepResult.FailTask("DeliverStep: Inventory is empty.", failedEventId);
+
         dropoff.Receive(context.InventoryCount);
         context.InventoryCount = 0;
 
-        return TaskStepResult.AdvanceStep();
+        return TaskStepResult.AdvanceStep(deliveredEventId);
     }
 }

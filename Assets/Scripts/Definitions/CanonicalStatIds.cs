@@ -6,82 +6,12 @@ using System.Collections.Generic;
 // </auto-generated>
 public static class CanonicalStatIds
 {
-    public static class Movement
-    {
-        public const string MoveSpeed = "movement.moveSpeed";
-        public const string Acceleration = "movement.acceleration";
-        public const string TurnRate = "movement.turnRate";
-        public const string TurnSpeed = "movement.turnSpeed";
-    }
-
-    public static class Combat
-    {
-        public const string Health = "combat.health";
-        public const string HealthRegen = "combat.healthRegen";
-        public const string AttackDamage = "combat.attackDamage";
-        public const string BaseDamage = "combat.baseDamage";
-        public const string AttackSpeed = "combat.attackSpeed";
-        public const string AttackRange = "combat.attackRange";
-        public const string CritChance = "combat.critChance";
-        public const string CritMultiplier = "combat.critMultiplier";
-        public const string Armor = "combat.armor";
-        public const string MagicResist = "combat.magicResist";
-        public const string BlockChance = "combat.blockChance";
-        public const string DodgeChance = "combat.dodgeChance";
-    }
-
-    public static class Needs
-    {
-        public const string HungerRate = "needs.hungerRate";
-        public const string ThirstRate = "needs.thirstRate";
-        public const string FatigueRate = "needs.fatigueRate";
-        public const string MoraleDecayRate = "needs.moraleDecayRate";
-        public const string StressGainRate = "needs.stressGainRate";
-    }
-
-    public static class Perception
-    {
-        public const string PerceptionRadius = "perception.radius";
-        public const string HearingRadius = "perception.hearingRadius";
-        public const string VisionArc = "perception.visionArc";
-        public const string MemoryDuration = "perception.memoryDuration";
-    }
-
-    public static class Production
-    {
-        public const string WorkSpeed = "production.workSpeed";
-        public const string CarryCapacity = "production.carryCapacity";
-        public const string GatherRate = "production.gatherRate";
-        public const string BuildSpeed = "production.buildSpeed";
-        public const string StorageCapacity = "production.storageCapacity";
-    }
-
     public static class AI
     {
         public const string Aggression = "ai.aggression";
+        public const string Alertness = "ai.alertness";
         public const string Courage = "ai.courage";
         public const string Obedience = "ai.obedience";
-        public const string Alertness = "ai.alertness";
-        public const string PerceptionRadius = "ai.perceptionRadius";
-    }
-
-    public static class Economy
-    {
-        public const string UpkeepRate = "economy.upkeepRate";
-        public const string PopulationCost = "economy.populationCost";
-    }
-
-    public static class Lifecycle
-    {
-        public const string XPPerKill = "lifecycle.xpPerKill";
-        public const string XPToLevel = "lifecycle.xpToLevel";
-        public const string MaxLevel = "lifecycle.maxLevel";
-    }
-
-    public static class Core
-    {
-        public const string MaxHealth = "core.maxHealth";
-        public const string VisionRange = "core.visionRange";
     }
 
     public static class Building
@@ -117,32 +47,154 @@ public static class CanonicalStatIds
         public const string UpgradeTimeReduction = "building.upgradeTimeReduction";
     }
 
+    public static class Combat
+    {
+        public const string Armor = "combat.armor";
+        public const string AttackDamage = "combat.attackDamage";
+        public const string AttackRange = "combat.attackRange";
+        public const string AttackSpeed = "combat.attackSpeed";
+        public const string BaseDamage = "combat.baseDamage";
+        public const string BlockChance = "combat.blockChance";
+        public const string CritChance = "combat.critChance";
+        public const string CritMultiplier = "combat.critMultiplier";
+        public const string DodgeChance = "combat.dodgeChance";
+        public const string Health = "combat.health";
+        public const string HealthRegen = "combat.healthRegen";
+        public const string MagicResist = "combat.magicResist";
+    }
+
+    public static class Core
+    {
+        public const string MaxHealth = "core.maxHealth";
+        public const string VisionRange = "core.visionRange";
+    }
+
+    public static class Economy
+    {
+        public const string PopulationCost = "economy.populationCost";
+        public const string UpkeepRate = "economy.upkeepRate";
+    }
+
     public static class Item
     {
         public const string Weight = "item.weight";
+    }
+
+    public static class Lifecycle
+    {
+        public const string MaxLevel = "lifecycle.maxLevel";
+        public const string XpPerKill = "lifecycle.xpPerKill";
+        public const string XPPerKill = XpPerKill;
+        public const string XpToLevel = "lifecycle.xpToLevel";
+        public const string XPToLevel = XpToLevel;
+    }
+
+    public static class Movement
+    {
+        public const string Acceleration = "movement.acceleration";
+        public const string MoveSpeed = "movement.moveSpeed";
+        public const string TurnRate = "movement.turnRate";
+    }
+
+    public static class Needs
+    {
+        public const string FatigueRate = "needs.fatigueRate";
+        public const string HungerRate = "needs.hungerRate";
+        public const string MoraleDecayRate = "needs.moraleDecayRate";
+        public const string StressGainRate = "needs.stressGainRate";
+        public const string ThirstRate = "needs.thirstRate";
+    }
+
+    public static class Perception
+    {
+        public const string HearingRadius = "perception.hearingRadius";
+        public const string MemoryDuration = "perception.memoryDuration";
+        public const string PerceptionRadius = "perception.perceptionRadius";
+        public const string VisionArc = "perception.visionArc";
+    }
+
+    public static class Production
+    {
+        public const string BuildSpeed = "production.buildSpeed";
+        public const string CarryCapacity = "production.carryCapacity";
+        public const string GatherRate = "production.gatherRate";
+        public const string StorageCapacity = "production.storageCapacity";
+        public const string WorkSpeed = "production.workSpeed";
     }
 
     public static IReadOnlyList<string> Catalog => _catalog;
 
     private static readonly string[] _catalog =
     {
-        Movement.MoveSpeed, Movement.Acceleration, Movement.TurnRate, Movement.TurnSpeed,
-        Combat.Health, Combat.HealthRegen, Combat.AttackDamage, Combat.BaseDamage, Combat.AttackSpeed, Combat.AttackRange,
-        Combat.CritChance, Combat.CritMultiplier, Combat.Armor, Combat.MagicResist, Combat.BlockChance, Combat.DodgeChance,
-        Needs.HungerRate, Needs.ThirstRate, Needs.FatigueRate, Needs.MoraleDecayRate, Needs.StressGainRate,
-        Perception.PerceptionRadius, Perception.HearingRadius, Perception.VisionArc, Perception.MemoryDuration,
-        Production.WorkSpeed, Production.CarryCapacity, Production.GatherRate, Production.BuildSpeed, Production.StorageCapacity,
-        AI.Aggression, AI.Courage, AI.Obedience, AI.Alertness, AI.PerceptionRadius,
-        Economy.UpkeepRate, Economy.PopulationCost,
-        Lifecycle.XPPerKill, Lifecycle.XPToLevel, Lifecycle.MaxLevel,
-        Core.MaxHealth, Core.VisionRange,
-        Building.Armor, Building.BuildRadius, Building.BuildTime, Building.CaptureResistance, Building.ComfortBonus,
-        Building.ConstructionTime, Building.DecayTime, Building.DetectionRange, Building.EnergyConsumption,
-        Building.EnergyProduction, Building.Footprint, Building.GarrisonCapacity, Building.HitPoints,
-        Building.HousingCapacity, Building.IsProduction, Building.PopulationSupport, Building.PowerRadius,
-        Building.ProductionSpeedMultiplier, Building.RallyPointCount, Building.RepairRate, Building.ResourceRadius,
-        Building.ShieldPoints, Building.SightRange, Building.SupplyProvided, Building.SupplyUsed,
-        Building.TrainQueueSize, Building.TurretSlots, Building.UpgradeSlots, Building.UpgradeTimeReduction,
-        Item.Weight,
+        "ai.aggression",
+        "ai.alertness",
+        "ai.courage",
+        "ai.obedience",
+        "building.armor",
+        "building.buildRadius",
+        "building.buildTime",
+        "building.captureResistance",
+        "building.comfortBonus",
+        "building.constructionTime",
+        "building.decayTime",
+        "building.detectionRange",
+        "building.energyConsumption",
+        "building.energyProduction",
+        "building.footprint",
+        "building.garrisonCapacity",
+        "building.hitPoints",
+        "building.housingCapacity",
+        "building.is.production",
+        "building.populationSupport",
+        "building.powerRadius",
+        "building.productionSpeedMultiplier",
+        "building.rallyPointCount",
+        "building.repairRate",
+        "building.resourceRadius",
+        "building.shieldPoints",
+        "building.sightRange",
+        "building.supplyProvided",
+        "building.supplyUsed",
+        "building.trainQueueSize",
+        "building.turretSlots",
+        "building.upgradeSlots",
+        "building.upgradeTimeReduction",
+        "combat.armor",
+        "combat.attackDamage",
+        "combat.attackRange",
+        "combat.attackSpeed",
+        "combat.baseDamage",
+        "combat.blockChance",
+        "combat.critChance",
+        "combat.critMultiplier",
+        "combat.dodgeChance",
+        "combat.health",
+        "combat.healthRegen",
+        "combat.magicResist",
+        "core.maxHealth",
+        "core.visionRange",
+        "economy.populationCost",
+        "economy.upkeepRate",
+        "item.weight",
+        "lifecycle.maxLevel",
+        "lifecycle.xpPerKill",
+        "lifecycle.xpToLevel",
+        "movement.acceleration",
+        "movement.moveSpeed",
+        "movement.turnRate",
+        "needs.fatigueRate",
+        "needs.hungerRate",
+        "needs.moraleDecayRate",
+        "needs.stressGainRate",
+        "needs.thirstRate",
+        "perception.hearingRadius",
+        "perception.memoryDuration",
+        "perception.perceptionRadius",
+        "perception.visionArc",
+        "production.buildSpeed",
+        "production.carryCapacity",
+        "production.gatherRate",
+        "production.storageCapacity",
+        "production.workSpeed",
     };
 }

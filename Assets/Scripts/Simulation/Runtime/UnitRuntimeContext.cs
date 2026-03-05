@@ -1,6 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
+
+public enum UnitRuntimeInvalidationReason
+{
+    StatChanged,
+    EquipmentChanged,
+    TechChanged,
+    ProfileChanged,
+}
 
 public sealed class UnitRuntimeContext
 {
@@ -23,7 +32,8 @@ public sealed class UnitRuntimeContext
         RoleDefinition role,
         IReadOnlyList<JobDefinition> jobProfiles,
         IReadOnlyList<SerializedStatContainer> containers,
-        IReadOnlyDictionary<string, StatModifierRollup> rollups)
+        IReadOnlyDictionary<string, StatModifierRollup> rollups,
+        DerivedRuntimeSnapshot derived)
     {
         Unit = unit;
         Weapons = weapons ?? Array.Empty<WeaponDefinition>();
@@ -39,6 +49,7 @@ public sealed class UnitRuntimeContext
         UnitCategory = unitCategory;
         Role = role;
         JobProfiles = jobProfiles ?? Array.Empty<JobDefinition>();
+        Derived = derived;
 
         statContainers = new List<SerializedStatContainer>();
         if (containers != null)
@@ -67,6 +78,7 @@ public sealed class UnitRuntimeContext
     public UnitCategoryDefinition UnitCategory { get; }
     public RoleDefinition Role { get; }
     public IReadOnlyList<JobDefinition> JobProfiles { get; }
+    public DerivedRuntimeSnapshot Derived { get; }
 
     public float ResolveStat(string statId, float defaultValue)
     {
@@ -123,11 +135,209 @@ public sealed class UnitRuntimeDefinitionResolver
 
 public static class UnitRuntimeContextResolver
 {
+    private sealed class ContextCacheEntry
+    {
+        public string Signature;
+        public UnitRuntimeContext Context;
+    }
+
+    private sealed class ProfileCacheEntry
+    {
+        public string Signature;
+        public ResolvedProfiles Profiles;
+        public IReadOnlyList<SerializedStatContainer> Containers;
+    }
+
+    private sealed class RollupCacheEntry
+    {
+        public string Signature;
+        public IReadOnlyDictionary<string, StatModifierRollup> Rollups;
+    }
+
+    private sealed class DerivedCacheEntry
+    {
+        public string Signature;
+        public DerivedRuntimeSnapshot Snapshot;
+    }
+
+    private sealed class ResolvedProfiles
+    {
+        public IReadOnlyList<WeaponDefinition> Weapons;
+        public ArmorProfileDefinition ArmorProfile;
+        public DefenseProfileDefinition DefenseProfile;
+        public MovementProfileDefinition MovementProfile;
+        public LocomotionProfileDefinition LocomotionProfile;
+        public NeedsProfileDefinition NeedsProfile;
+        public MoodDefinition MoodProfile;
+        public BehaviourDefinition BehaviourProfile;
+        public AIPerceptionDefinition PerceptionProfile;
+        public ProductionProfileDefinition ProductionProfile;
+        public UnitCategoryDefinition UnitCategory;
+        public RoleDefinition Role;
+        public IReadOnlyList<JobDefinition> JobProfiles;
+    }
+
+    private static readonly Dictionary<int, ContextCacheEntry> ContextCache = new();
+    private static readonly Dictionary<int, ProfileCacheEntry> ProfileCache = new();
+    private static readonly Dictionary<int, RollupCacheEntry> RollupCache = new();
+    private static readonly Dictionary<int, DerivedCacheEntry> DerivedCache = new();
+
     public static UnitRuntimeContext Resolve(UnitDefinition unit, UnitRuntimeDefinitionResolver definitionResolver)
     {
         if (unit == null)
             return null;
 
+        if (definitionResolver != null)
+            return ResolveUncached(unit, definitionResolver);
+
+        var key = unit.GetInstanceID();
+        var signature = BuildSignature(unit);
+
+        if (ContextCache.TryGetValue(key, out var cachedContext) &&
+            string.Equals(cachedContext.Signature, signature, StringComparison.Ordinal) &&
+            cachedContext.Context != null)
+        {
+            return cachedContext.Context;
+        }
+
+        var (profiles, containers) = ResolveProfilesAndContainersCached(key, signature, unit, definitionResolver);
+        var rollups = ResolveRollupsCached(key, signature, unit, profiles);
+        var derived = ResolveDerivedCached(key, signature, unit, profiles, containers, rollups);
+
+        var context = BuildContext(unit, profiles, containers, rollups, derived);
+        ContextCache[key] = new ContextCacheEntry
+        {
+            Signature = signature,
+            Context = context,
+        };
+
+        return context;
+    }
+
+    public static void Invalidate(UnitDefinition unit)
+    {
+        Invalidate(unit, UnitRuntimeInvalidationReason.ProfileChanged);
+    }
+
+    public static void Invalidate(UnitDefinition unit, UnitRuntimeInvalidationReason reason)
+    {
+        if (unit == null)
+            return;
+
+        var key = unit.GetInstanceID();
+        ContextCache.Remove(key);
+        ProfileCache.Remove(key);
+        RollupCache.Remove(key);
+        DerivedCache.Remove(key);
+    }
+
+    public static void ClearCache()
+    {
+        ContextCache.Clear();
+        ProfileCache.Clear();
+        RollupCache.Clear();
+        DerivedCache.Clear();
+        UnitInterpreterRegistry.Clear();
+    }
+
+    private static UnitRuntimeContext ResolveUncached(UnitDefinition unit, UnitRuntimeDefinitionResolver definitionResolver)
+    {
+        var (profiles, containers) = ResolveProfilesAndContainersUncached(unit, definitionResolver);
+        var rollups = CanonicalStatResolver.BuildRollups(CollectModifiers(unit, profiles));
+        var preliminary = BuildContext(unit, profiles, containers, rollups, default);
+        var derived = DerivedComputationModule.ComputeSnapshot(preliminary);
+        return BuildContext(unit, profiles, containers, rollups, derived);
+    }
+
+    private static (ResolvedProfiles Profiles, IReadOnlyList<SerializedStatContainer> Containers) ResolveProfilesAndContainersCached(
+        int key,
+        string signature,
+        UnitDefinition unit,
+        UnitRuntimeDefinitionResolver definitionResolver)
+    {
+        if (ProfileCache.TryGetValue(key, out var entry) && string.Equals(entry.Signature, signature, StringComparison.Ordinal) && entry.Profiles != null)
+            return (entry.Profiles, entry.Containers ?? Array.Empty<SerializedStatContainer>());
+
+        var (profiles, containers) = ResolveProfilesAndContainersUncached(unit, definitionResolver);
+        ProfileCache[key] = new ProfileCacheEntry
+        {
+            Signature = signature,
+            Profiles = profiles,
+            Containers = containers,
+        };
+
+        return (profiles, containers);
+    }
+
+    private static IReadOnlyDictionary<string, StatModifierRollup> ResolveRollupsCached(int key, string signature, UnitDefinition unit, ResolvedProfiles profiles)
+    {
+        if (RollupCache.TryGetValue(key, out var entry) && string.Equals(entry.Signature, signature, StringComparison.Ordinal) && entry.Rollups != null)
+            return entry.Rollups;
+
+        var rollups = CanonicalStatResolver.BuildRollups(CollectModifiers(unit, profiles));
+        RollupCache[key] = new RollupCacheEntry
+        {
+            Signature = signature,
+            Rollups = rollups,
+        };
+
+        return rollups;
+    }
+
+    private static DerivedRuntimeSnapshot ResolveDerivedCached(
+        int key,
+        string signature,
+        UnitDefinition unit,
+        ResolvedProfiles profiles,
+        IReadOnlyList<SerializedStatContainer> containers,
+        IReadOnlyDictionary<string, StatModifierRollup> rollups)
+    {
+        if (DerivedCache.TryGetValue(key, out var entry) && string.Equals(entry.Signature, signature, StringComparison.Ordinal))
+            return entry.Snapshot;
+
+        var preliminary = BuildContext(unit, profiles, containers, rollups, default);
+        var snapshot = DerivedComputationModule.ComputeSnapshot(preliminary);
+
+        DerivedCache[key] = new DerivedCacheEntry
+        {
+            Signature = signature,
+            Snapshot = snapshot,
+        };
+
+        return snapshot;
+    }
+
+    private static UnitRuntimeContext BuildContext(
+        UnitDefinition unit,
+        ResolvedProfiles profiles,
+        IReadOnlyList<SerializedStatContainer> containers,
+        IReadOnlyDictionary<string, StatModifierRollup> rollups,
+        DerivedRuntimeSnapshot derived)
+    {
+        return new UnitRuntimeContext(
+            unit,
+            profiles.Weapons,
+            profiles.ArmorProfile,
+            profiles.DefenseProfile,
+            profiles.MovementProfile,
+            profiles.LocomotionProfile,
+            profiles.NeedsProfile,
+            profiles.MoodProfile,
+            profiles.BehaviourProfile,
+            profiles.PerceptionProfile,
+            profiles.ProductionProfile,
+            profiles.UnitCategory,
+            profiles.Role,
+            profiles.JobProfiles,
+            containers,
+            rollups,
+            derived);
+    }
+
+    private static (ResolvedProfiles Profiles, IReadOnlyList<SerializedStatContainer> Containers) ResolveProfilesAndContainersUncached(
+        UnitDefinition unit,
+        UnitRuntimeDefinitionResolver definitionResolver)
+    {
         var weaponRegistry = definitionResolver?.WeaponRegistry ?? WeaponRegistry.Instance;
         var armorProfileRegistry = definitionResolver?.ArmorProfileRegistry ?? ArmorProfileRegistry.Instance;
         var defenseProfileRegistry = definitionResolver?.DefenseProfileRegistry ?? DefenseProfileRegistry.Instance;
@@ -142,72 +352,104 @@ public static class UnitRuntimeContextResolver
         var roleRegistry = definitionResolver?.RoleRegistry ?? RoleRegistry.Instance;
         var jobRegistry = definitionResolver?.JobRegistry ?? JobRegistry.Instance;
 
-        var weapons = ResolveWeapons(unit, weaponRegistry);
-        var armorProfile = ResolveDefinition(unit.ArmorProfileId, armorProfileRegistry);
-        var defenseProfile = ResolveDefinition(unit.DefenseProfileId, defenseProfileRegistry);
-        var movementProfile = ResolveDefinition(unit.MovementProfileId, movementProfileRegistry);
-        var locomotionProfile = ResolveDefinition(unit.LocomotionProfileId, locomotionProfileRegistry);
-        var needsProfile = ResolveDefinition(unit.NeedsProfileId, needsProfileRegistry);
-        var moodProfile = ResolveDefinition(unit.MoodProfileId, moodRegistry);
-        var behaviourProfile = ResolveDefinition(unit.AIBehaviorProfileId, behaviourRegistry);
-        var perceptionProfile = ResolveDefinition(unit.PerceptionProfileId, perceptionRegistry);
-        var productionProfile = ResolveDefinition(unit.ProductionProfileId, productionProfileRegistry);
-        var unitCategory = ResolveDefinition(unit.UnitCategoryId, unitCategoryRegistry);
-        var role = ResolveDefinition(unit.RoleId, roleRegistry);
-        var jobProfiles = ResolveJobs(unit, jobRegistry);
+        var profiles = new ResolvedProfiles
+        {
+            Weapons = ResolveWeapons(unit, weaponRegistry),
+            ArmorProfile = ResolveDefinition(unit.ArmorProfileId, armorProfileRegistry),
+            DefenseProfile = ResolveDefinition(unit.DefenseProfileId, defenseProfileRegistry),
+            MovementProfile = ResolveDefinition(unit.MovementProfileId, movementProfileRegistry),
+            LocomotionProfile = ResolveDefinition(unit.LocomotionProfileId, locomotionProfileRegistry),
+            NeedsProfile = ResolveDefinition(unit.NeedsProfileId, needsProfileRegistry),
+            MoodProfile = ResolveDefinition(unit.MoodProfileId, moodRegistry),
+            BehaviourProfile = ResolveDefinition(unit.AIBehaviorProfileId, behaviourRegistry),
+            PerceptionProfile = ResolveDefinition(unit.PerceptionProfileId, perceptionRegistry),
+            ProductionProfile = ResolveDefinition(unit.ProductionProfileId, productionProfileRegistry),
+            UnitCategory = ResolveDefinition(unit.UnitCategoryId, unitCategoryRegistry),
+            Role = ResolveDefinition(unit.RoleId, roleRegistry),
+            JobProfiles = ResolveJobs(unit, jobRegistry),
+        };
 
         var containers = new List<SerializedStatContainer>
         {
             unit.Stats,
-            armorProfile?.Stats,
-            defenseProfile?.Stats,
-            movementProfile?.Stats,
-            locomotionProfile?.Stats,
-            needsProfile?.Stats,
-            moodProfile?.Stats,
-            behaviourProfile?.Stats,
-            perceptionProfile?.Stats,
-            productionProfile?.Stats,
+            profiles.ArmorProfile?.Stats,
+            profiles.DefenseProfile?.Stats,
+            profiles.MovementProfile?.Stats,
+            profiles.LocomotionProfile?.Stats,
+            profiles.NeedsProfile?.Stats,
+            profiles.MoodProfile?.Stats,
+            profiles.BehaviourProfile?.Stats,
+            profiles.PerceptionProfile?.Stats,
+            profiles.ProductionProfile?.Stats,
         };
 
-        for (int i = 0; i < weapons.Count; i++)
-            containers.Add(weapons[i]?.Stats);
+        for (int i = 0; i < profiles.Weapons.Count; i++)
+            containers.Add(profiles.Weapons[i]?.Stats);
 
-        for (int i = 0; i < jobProfiles.Count; i++)
-            containers.Add(jobProfiles[i]?.Stats);
+        for (int i = 0; i < profiles.JobProfiles.Count; i++)
+            containers.Add(profiles.JobProfiles[i]?.Stats);
 
-        var rollups = CanonicalStatResolver.BuildRollups(CollectModifiers(
-            unit,
-            weapons,
-            armorProfile,
-            defenseProfile,
-            movementProfile,
-            locomotionProfile,
-            needsProfile,
-            moodProfile,
-            behaviourProfile,
-            perceptionProfile,
-            productionProfile,
-            role,
-            jobProfiles));
+        return (profiles, containers);
+    }
 
-        return new UnitRuntimeContext(
-            unit,
-            weapons,
-            armorProfile,
-            defenseProfile,
-            movementProfile,
-            locomotionProfile,
-            needsProfile,
-            moodProfile,
-            behaviourProfile,
-            perceptionProfile,
-            productionProfile,
-            unitCategory,
-            role,
-            jobProfiles,
-            containers,
-            rollups);
+    private static string BuildSignature(UnitDefinition unit)
+    {
+        var sb = new StringBuilder(512);
+        sb.Append(unit.Id).Append('|');
+        sb.Append(unit.SchemaModeId).Append('|');
+        sb.Append(unit.ArmorProfileId).Append('|');
+        sb.Append(unit.DefenseProfileId).Append('|');
+        sb.Append(unit.MovementProfileId).Append('|');
+        sb.Append(unit.LocomotionProfileId).Append('|');
+        sb.Append(unit.NeedsProfileId).Append('|');
+        sb.Append(unit.MoodProfileId).Append('|');
+        sb.Append(unit.AIBehaviorProfileId).Append('|');
+        sb.Append(unit.PerceptionProfileId).Append('|');
+        sb.Append(unit.ProductionProfileId).Append('|');
+        sb.Append(unit.UnitCategoryId).Append('|');
+        sb.Append(unit.RoleId).Append('|');
+        AppendList(sb, unit.WeaponIds);
+        AppendList(sb, unit.JobProfileIds);
+        AppendList(sb, unit.JobIds);
+        AppendStats(sb, unit.Stats);
+        AppendModifiers(sb, unit.StatModifiers);
+        return sb.ToString();
+    }
+
+    private static void AppendList(StringBuilder builder, IReadOnlyList<string> values)
+    {
+        builder.Append("[");
+        if (values != null)
+        {
+            for (int i = 0; i < values.Count; i++)
+                builder.Append(values[i]).Append(';');
+        }
+
+        builder.Append(']');
+    }
+
+    private static void AppendStats(StringBuilder builder, SerializedStatContainer stats)
+    {
+        builder.Append("{stats:");
+        if (stats?.Entries != null)
+        {
+            for (int i = 0; i < stats.Entries.Count; i++)
+                builder.Append(stats.Entries[i].StatId).Append('=').Append(stats.Entries[i].Value).Append(';');
+        }
+
+        builder.Append('}');
+    }
+
+    private static void AppendModifiers(StringBuilder builder, IReadOnlyList<StatModifier> modifiers)
+    {
+        builder.Append("{mods:");
+        if (modifiers != null)
+        {
+            for (int i = 0; i < modifiers.Count; i++)
+                builder.Append(modifiers[i].targetStatId).Append('=').Append(modifiers[i].operation).Append(':').Append(modifiers[i].value).Append(';');
+        }
+
+        builder.Append('}');
     }
 
     private static IReadOnlyList<WeaponDefinition> ResolveWeapons(UnitDefinition unit, WeaponRegistry registry)
@@ -266,20 +508,7 @@ public static class UnitRuntimeContextResolver
         return jobs;
     }
 
-    private static IEnumerable<StatModifier> CollectModifiers(
-        UnitDefinition unit,
-        IReadOnlyList<WeaponDefinition> weapons,
-        ArmorProfileDefinition armorProfile,
-        DefenseProfileDefinition defenseProfile,
-        MovementProfileDefinition movementProfile,
-        LocomotionProfileDefinition locomotionProfile,
-        NeedsProfileDefinition needsProfile,
-        MoodDefinition moodProfile,
-        BehaviourDefinition behaviourProfile,
-        AIPerceptionDefinition perceptionProfile,
-        ProductionProfileDefinition productionProfile,
-        RoleDefinition role,
-        IReadOnlyList<JobDefinition> jobs)
+    private static IEnumerable<StatModifier> CollectModifiers(UnitDefinition unit, ResolvedProfiles profiles)
     {
         if (unit?.StatModifiers != null)
         {
@@ -287,71 +516,71 @@ public static class UnitRuntimeContextResolver
                 yield return unit.StatModifiers[i];
         }
 
-        if (armorProfile?.StatModifiers != null)
+        if (profiles.ArmorProfile?.StatModifiers != null)
         {
-            for (int i = 0; i < armorProfile.StatModifiers.Count; i++)
-                yield return armorProfile.StatModifiers[i];
+            for (int i = 0; i < profiles.ArmorProfile.StatModifiers.Count; i++)
+                yield return profiles.ArmorProfile.StatModifiers[i];
         }
 
-        if (defenseProfile?.StatModifiers != null)
+        if (profiles.DefenseProfile?.StatModifiers != null)
         {
-            for (int i = 0; i < defenseProfile.StatModifiers.Count; i++)
-                yield return defenseProfile.StatModifiers[i];
+            for (int i = 0; i < profiles.DefenseProfile.StatModifiers.Count; i++)
+                yield return profiles.DefenseProfile.StatModifiers[i];
         }
 
-        if (movementProfile?.StatModifiers != null)
+        if (profiles.MovementProfile?.StatModifiers != null)
         {
-            for (int i = 0; i < movementProfile.StatModifiers.Count; i++)
-                yield return movementProfile.StatModifiers[i];
+            for (int i = 0; i < profiles.MovementProfile.StatModifiers.Count; i++)
+                yield return profiles.MovementProfile.StatModifiers[i];
         }
 
-        if (locomotionProfile?.StatModifiers != null)
+        if (profiles.LocomotionProfile?.StatModifiers != null)
         {
-            for (int i = 0; i < locomotionProfile.StatModifiers.Count; i++)
-                yield return locomotionProfile.StatModifiers[i];
+            for (int i = 0; i < profiles.LocomotionProfile.StatModifiers.Count; i++)
+                yield return profiles.LocomotionProfile.StatModifiers[i];
         }
 
-        if (needsProfile?.StatModifiers != null)
+        if (profiles.NeedsProfile?.StatModifiers != null)
         {
-            for (int i = 0; i < needsProfile.StatModifiers.Count; i++)
-                yield return needsProfile.StatModifiers[i];
+            for (int i = 0; i < profiles.NeedsProfile.StatModifiers.Count; i++)
+                yield return profiles.NeedsProfile.StatModifiers[i];
         }
 
-        if (moodProfile?.StatModifiers != null)
+        if (profiles.MoodProfile?.StatModifiers != null)
         {
-            for (int i = 0; i < moodProfile.StatModifiers.Count; i++)
-                yield return moodProfile.StatModifiers[i];
+            for (int i = 0; i < profiles.MoodProfile.StatModifiers.Count; i++)
+                yield return profiles.MoodProfile.StatModifiers[i];
         }
 
-        if (behaviourProfile?.StatModifiers != null)
+        if (profiles.BehaviourProfile?.StatModifiers != null)
         {
-            for (int i = 0; i < behaviourProfile.StatModifiers.Count; i++)
-                yield return behaviourProfile.StatModifiers[i];
+            for (int i = 0; i < profiles.BehaviourProfile.StatModifiers.Count; i++)
+                yield return profiles.BehaviourProfile.StatModifiers[i];
         }
 
-        if (perceptionProfile?.StatModifiers != null)
+        if (profiles.PerceptionProfile?.StatModifiers != null)
         {
-            for (int i = 0; i < perceptionProfile.StatModifiers.Count; i++)
-                yield return perceptionProfile.StatModifiers[i];
+            for (int i = 0; i < profiles.PerceptionProfile.StatModifiers.Count; i++)
+                yield return profiles.PerceptionProfile.StatModifiers[i];
         }
 
-        if (productionProfile?.StatModifiers != null)
+        if (profiles.ProductionProfile?.StatModifiers != null)
         {
-            for (int i = 0; i < productionProfile.StatModifiers.Count; i++)
-                yield return productionProfile.StatModifiers[i];
+            for (int i = 0; i < profiles.ProductionProfile.StatModifiers.Count; i++)
+                yield return profiles.ProductionProfile.StatModifiers[i];
         }
 
-        if (role?.StatModifiers != null)
+        if (profiles.Role?.StatModifiers != null)
         {
-            for (int i = 0; i < role.StatModifiers.Count; i++)
-                yield return role.StatModifiers[i];
+            for (int i = 0; i < profiles.Role.StatModifiers.Count; i++)
+                yield return profiles.Role.StatModifiers[i];
         }
 
-        if (weapons != null)
+        if (profiles.Weapons != null)
         {
-            for (int i = 0; i < weapons.Count; i++)
+            for (int i = 0; i < profiles.Weapons.Count; i++)
             {
-                var weapon = weapons[i];
+                var weapon = profiles.Weapons[i];
                 if (weapon?.StatModifiers == null)
                     continue;
 
@@ -360,12 +589,12 @@ public static class UnitRuntimeContextResolver
             }
         }
 
-        if (jobs == null)
+        if (profiles.JobProfiles == null)
             yield break;
 
-        for (int i = 0; i < jobs.Count; i++)
+        for (int i = 0; i < profiles.JobProfiles.Count; i++)
         {
-            var job = jobs[i];
+            var job = profiles.JobProfiles[i];
             if (job?.StatModifiers == null)
                 continue;
 

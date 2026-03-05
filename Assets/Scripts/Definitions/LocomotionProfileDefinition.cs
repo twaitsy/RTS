@@ -48,6 +48,7 @@ public class LocomotionProfileDefinition : ScriptableObject, IIdentifiable, IDef
         stats ??= new();
         statModifiers ??= new();
         speed = Mathf.Max(0f, speed);
+        UnitRuntimeContextResolver.ClearCache();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
             Debug.LogError($"[Validation] Asset '{name}' (id: '{id}') has duplicate stat '{duplicateStatId}' in its base stat container.");

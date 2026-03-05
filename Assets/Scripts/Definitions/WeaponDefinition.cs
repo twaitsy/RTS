@@ -53,6 +53,7 @@ public class WeaponDefinition : ScriptableObject, IIdentifiable, IDefinitionMeta
         damage = Mathf.Max(0f, damage);
         attackSpeed = Mathf.Max(0f, attackSpeed);
         range = Mathf.Max(0f, range);
+        UnitRuntimeContextResolver.ClearCache();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {
