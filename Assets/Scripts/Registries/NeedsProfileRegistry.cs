@@ -24,22 +24,68 @@ public class NeedsProfileRegistry : DefinitionRegistry<NeedsProfileDefinition>
     {
         return schema ??= new RegistrySchema<NeedsProfileDefinition>()
             .RequireField(nameof(NeedsProfileDefinition.Id), definition => definition.Id)
+            .RequireField(nameof(NeedsProfileDefinition.Metadata), definition => definition.Metadata)
             .OptionalField(nameof(NeedsProfileDefinition.CivilianDefinitionId), definition => definition.CivilianDefinitionId)
             .OptionalField(nameof(NeedsProfileDefinition.Needs), definition => definition.Needs)
             .AddReference(
                 nameof(NeedsProfileDefinition.CivilianDefinitionId),
                 definition => RegistrySchema<NeedsProfileDefinition>.SingleReference(definition.CivilianDefinitionId),
                 false,
-                new ReferenceTargetRule(nameof(CivilianRegistry), targetId => CivilianRegistry.Instance.TryGet(targetId, out _)))
+                new ReferenceTargetRule(nameof(CivilianRegistry), targetId => CivilianRegistry.Instance != null && CivilianRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(
                 nameof(NeedsProfileDefinition.Needs) + ".needId",
                 definition => RegistrySchema<NeedsProfileDefinition>.ReferenceCollection(definition.Needs, need => need.needId),
                 false,
-                new ReferenceTargetRule(nameof(NeedRegistry), targetId => NeedRegistry.Instance.TryGet(targetId, out _)));
+                new ReferenceTargetRule(nameof(NeedRegistry), targetId => NeedRegistry.Instance != null && NeedRegistry.Instance.TryGet(targetId, out _)))
+            .AddConstraint("NeedsProfileConstraints", ValidateConstraints);
     }
 
     protected override void ValidateDefinitions(List<NeedsProfileDefinition> defs, System.Action<string> reportError)
     {
+    }
+
+    private static IEnumerable<string> ValidateConstraints(NeedsProfileDefinition definition)
+    {
+        if (definition.HungerCurve <= 0f)
+            yield return $"{nameof(NeedsProfileDefinition.HungerCurve)} must be greater than 0.";
+        if (definition.ThirstCurve <= 0f)
+            yield return $"{nameof(NeedsProfileDefinition.ThirstCurve)} must be greater than 0.";
+        if (definition.FatigueCurve <= 0f)
+            yield return $"{nameof(NeedsProfileDefinition.FatigueCurve)} must be greater than 0.";
+        if (definition.MoraleCurve <= 0f)
+            yield return $"{nameof(NeedsProfileDefinition.MoraleCurve)} must be greater than 0.";
+        if (definition.StressCurve <= 0f)
+            yield return $"{nameof(NeedsProfileDefinition.StressCurve)} must be greater than 0.";
+        if (definition.SocialNeedCurve <= 0f)
+            yield return $"{nameof(NeedsProfileDefinition.SocialNeedCurve)} must be greater than 0.";
+
+        var seenNeedIds = new HashSet<string>();
+        var needs = definition.Needs;
+
+        if (needs == null)
+            yield break;
+
+        for (var index = 0; index < needs.Count; index++)
+        {
+            var entry = needs[index];
+            if (string.IsNullOrWhiteSpace(entry.needId))
+            {
+                yield return $"{nameof(NeedsProfileDefinition.Needs)}[{index}].needId must not be empty.";
+                continue;
+            }
+
+            if (!seenNeedIds.Add(entry.needId))
+                yield return $"{nameof(NeedsProfileDefinition.Needs)} contains duplicate need id '{entry.needId}'.";
+
+            if (entry.maxValue < 0f)
+                yield return $"{nameof(NeedsProfileDefinition.Needs)}[{index}].{nameof(CivilianNeedEntry.maxValue)} must be greater than or equal to 0.";
+            if (entry.startValue < 0f)
+                yield return $"{nameof(NeedsProfileDefinition.Needs)}[{index}].{nameof(CivilianNeedEntry.startValue)} must be greater than or equal to 0.";
+            if (entry.startValue > entry.maxValue)
+                yield return $"{nameof(NeedsProfileDefinition.Needs)}[{index}].{nameof(CivilianNeedEntry.startValue)} must be less than or equal to {nameof(CivilianNeedEntry.maxValue)}.";
+            if (entry.decayMultiplier < 0f)
+                yield return $"{nameof(NeedsProfileDefinition.Needs)}[{index}].{nameof(CivilianNeedEntry.decayMultiplier)} must be greater than or equal to 0.";
+        }
     }
 
     protected override IEnumerable<string> GetValidationDependencyErrors()
