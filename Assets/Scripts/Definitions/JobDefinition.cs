@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/Job")]
@@ -21,6 +22,9 @@ public class JobDefinition : ScriptableObject, IIdentifiable, IDefinitionMetadat
     [SerializeField] private float baseWorkTime;
     public float BaseWorkTime => baseWorkTime;
 
+    [SerializeField] private List<string> allowedActionIds = new();
+    public IReadOnlyList<string> AllowedActionIds => allowedActionIds;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
@@ -28,6 +32,7 @@ public class JobDefinition : ScriptableObject, IIdentifiable, IDefinitionMetadat
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
 
         stats ??= new();
+        allowedActionIds ??= new();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/Mood")]
 public class MoodDefinition : ScriptableObject, IIdentifiable, IDefinitionMetadataProvider
@@ -18,6 +19,12 @@ public class MoodDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [SerializeField] private SerializedStatContainer stats = new();
     public SerializedStatContainer Stats => stats;
 
+    [SerializeField] private float moraleStability = 1f;
+    public float MoraleStability => moraleStability;
+
+    [SerializeField] private List<string> personalityTraits = new();
+    public IReadOnlyList<string> PersonalityTraits => personalityTraits;
+
     [SerializeField] private Sprite icon;
     public Sprite Icon => icon;
 
@@ -28,6 +35,7 @@ public class MoodDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
 
         stats ??= new();
+        personalityTraits ??= new();
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

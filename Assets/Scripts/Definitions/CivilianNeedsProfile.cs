@@ -19,6 +19,24 @@ public class CivilianNeedsProfile : ScriptableObject, IIdentifiable, IDefinition
     [SerializeField] private List<CivilianNeedEntry> needs = new();
     public IReadOnlyList<CivilianNeedEntry> Needs => needs;
 
+    [SerializeField] private float hungerCurve = 1f;
+    public float HungerCurve => hungerCurve;
+
+    [SerializeField] private float thirstCurve = 1f;
+    public float ThirstCurve => thirstCurve;
+
+    [SerializeField] private float fatigueCurve = 1f;
+    public float FatigueCurve => fatigueCurve;
+
+    [SerializeField] private float moraleCurve = 1f;
+    public float MoraleCurve => moraleCurve;
+
+    [SerializeField] private float stressCurve = 1f;
+    public float StressCurve => stressCurve;
+
+    [SerializeField] private float socialNeedCurve = 1f;
+    public float SocialNeedCurve => socialNeedCurve;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
