@@ -13,6 +13,15 @@ public class NeedsProfileDefinition : ScriptableObject, IIdentifiable, IDefiniti
     [SerializeField, HideInInspector] private bool isIdFinalized;
     [SerializeField, HideInInspector] private string finalizedId;
 
+    [SerializeField] private string displayName;
+    public string DisplayName => displayName;
+
+    [SerializeField] private SerializedStatContainer stats = new();
+    public SerializedStatContainer Stats => stats;
+
+    [SerializeField] private List<StatModifier> statModifiers = new();
+    public IReadOnlyList<StatModifier> StatModifiers => statModifiers;
+
     [SerializeField] private string civilianDefinitionId;
     public string CivilianDefinitionId => civilianDefinitionId;
 
@@ -37,12 +46,27 @@ public class NeedsProfileDefinition : ScriptableObject, IIdentifiable, IDefiniti
     [SerializeField] private float socialNeedCurve = 1f;
     public float SocialNeedCurve => socialNeedCurve;
 
+    [SerializeField] private float criticalNeedThreshold = 0.2f;
+    public float CriticalNeedThreshold => criticalNeedThreshold;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
         DefinitionMetadataUtility.EnsureMetadata(ref metadata, DefinitionCategory.Social);
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
+        stats ??= new();
+        statModifiers ??= new();
         needs ??= new();
+        hungerCurve = Mathf.Max(0f, hungerCurve);
+        thirstCurve = Mathf.Max(0f, thirstCurve);
+        fatigueCurve = Mathf.Max(0f, fatigueCurve);
+        moraleCurve = Mathf.Max(0f, moraleCurve);
+        stressCurve = Mathf.Max(0f, stressCurve);
+        socialNeedCurve = Mathf.Max(0f, socialNeedCurve);
+        criticalNeedThreshold = Mathf.Clamp01(criticalNeedThreshold);
+
+        foreach (var duplicateStatId in stats.FindDuplicateStatIds())
+            Debug.LogError($"[Validation] Asset '{name}' (id: '{id}') has duplicate stat '{duplicateStatId}' in its base stat container.");
     }
 #endif
 }

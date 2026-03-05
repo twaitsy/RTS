@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/AIPerception")]
@@ -18,6 +19,9 @@ public class AIPerceptionDefinition : ScriptableObject, IIdentifiable, IDefiniti
     [SerializeField] private SerializedStatContainer stats = new();
     public SerializedStatContainer Stats => stats;
 
+    [SerializeField] private List<StatModifier> statModifiers = new();
+    public IReadOnlyList<StatModifier> StatModifiers => statModifiers;
+
     [SerializeField] private float visionArc = 120f;
     public float VisionArc => visionArc;
 
@@ -33,6 +37,9 @@ public class AIPerceptionDefinition : ScriptableObject, IIdentifiable, IDefiniti
     [SerializeField] private float memoryDuration = 6f;
     public float MemoryDuration => memoryDuration;
 
+    [SerializeField] private float lineOfSightFalloff = 1f;
+    public float LineOfSightFalloff => lineOfSightFalloff;
+
     [SerializeField] private Sprite icon;
     public Sprite Icon => icon;
 
@@ -43,6 +50,13 @@ public class AIPerceptionDefinition : ScriptableObject, IIdentifiable, IDefiniti
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
 
         stats ??= new();
+        statModifiers ??= new();
+        visionArc = Mathf.Clamp(visionArc, 0f, 360f);
+        hearingRadius = Mathf.Max(0f, hearingRadius);
+        stealthDetection = Mathf.Clamp01(stealthDetection);
+        alertnessDecay = Mathf.Max(0f, alertnessDecay);
+        memoryDuration = Mathf.Max(0f, memoryDuration);
+        lineOfSightFalloff = Mathf.Max(0f, lineOfSightFalloff);
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

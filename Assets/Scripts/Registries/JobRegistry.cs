@@ -27,10 +27,17 @@ public class JobRegistry : DefinitionRegistry<JobDefinition>
             .RequireField(nameof(JobDefinition.DisplayName), definition => definition.DisplayName)
             .RequireField(nameof(JobDefinition.Metadata), definition => definition.Metadata)
             .RequireField(nameof(JobDefinition.Stats), definition => definition.Stats)
+            .OptionalField(nameof(JobDefinition.StatModifiers), definition => definition.StatModifiers)
             .OptionalField(nameof(JobDefinition.AllowedActionIds), definition => definition.AllowedActionIds)
+            .OptionalField(nameof(JobDefinition.PreferredNeedIds), definition => definition.PreferredNeedIds)
             .AddReference(
                 $"{nameof(JobDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
                 definition => RegistrySchema<JobDefinition>.ReferenceCollection(definition.Stats.Entries, entry => entry.StatId),
+                false,
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance != null && StatRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(JobDefinition.StatModifiers),
+                definition => RegistrySchema<JobDefinition>.ReferenceCollection(definition.StatModifiers, modifier => modifier.targetStatId),
                 false,
                 new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance != null && StatRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(
@@ -38,6 +45,11 @@ public class JobRegistry : DefinitionRegistry<JobDefinition>
                 definition => RegistrySchema<JobDefinition>.ReferenceCollection(definition.AllowedActionIds, id => id),
                 false,
                 new ReferenceTargetRule(nameof(CommandRegistry), targetId => CommandRegistry.Instance != null && CommandRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(JobDefinition.PreferredNeedIds),
+                definition => RegistrySchema<JobDefinition>.ReferenceCollection(definition.PreferredNeedIds, id => id),
+                false,
+                new ReferenceTargetRule(nameof(NeedRegistry), targetId => NeedRegistry.Instance != null && NeedRegistry.Instance.TryGet(targetId, out _)))
             .AddConstraint(
                 "JobConstraints",
                 definition =>
@@ -45,6 +57,8 @@ public class JobRegistry : DefinitionRegistry<JobDefinition>
                     var errors = new List<string>();
                     if (definition.BaseWorkTime < 0f)
                         errors.Add($"{nameof(JobDefinition.BaseWorkTime)} must be greater than or equal to 0.");
+                    if (definition.WorkPriority < 0)
+                        errors.Add($"{nameof(JobDefinition.WorkPriority)} must be greater than or equal to 0.");
 
                     var seenActionIds = new HashSet<string>();
                     var actionIds = definition.AllowedActionIds;
@@ -74,5 +88,7 @@ public class JobRegistry : DefinitionRegistry<JobDefinition>
             yield return "Missing dependency: StatRegistry.Instance is null.";
         if (CommandRegistry.Instance == null)
             yield return "Missing dependency: CommandRegistry.Instance is null.";
+        if (NeedRegistry.Instance == null)
+            yield return "Missing dependency: NeedRegistry.Instance is null.";
     }
 }

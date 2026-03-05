@@ -1,41 +1,56 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public static class MovementSystem
 {
     private const float DefaultMoveSpeed = 2f;
+    private const float DefaultAcceleration = 8f;
+    private const float DefaultTurnRate = 360f;
+    private static readonly System.Collections.Generic.Dictionary<int, float> velocityByActorId = new();
 
     public static void MoveTo(GameObject actor, Vector3 target, UnitRuntimeContext context)
     {
-        MoveTo(actor, target, context?.ResolveStat(CanonicalStatIds.Movement.MoveSpeed, DefaultMoveSpeed) ?? DefaultMoveSpeed);
+        if (actor == null)
+            return;
+
+        float fallbackSpeed = context?.MovementProfile?.MoveSpeedMultiplier ?? context?.LocomotionProfile?.Speed ?? DefaultMoveSpeed;
+        float moveSpeed = context?.ResolveStat(CanonicalStatIds.Movement.MoveSpeed, fallbackSpeed) ?? fallbackSpeed;
+
+        float fallbackAcceleration = context?.MovementProfile?.Acceleration ?? DefaultAcceleration;
+        float acceleration = context?.ResolveStat(CanonicalStatIds.Movement.Acceleration, fallbackAcceleration) ?? fallbackAcceleration;
+
+        float fallbackTurnRate = context?.MovementProfile?.TurnRate ?? DefaultTurnRate;
+        float turnRate = context?.ResolveStat(CanonicalStatIds.Movement.TurnRate, fallbackTurnRate) ?? fallbackTurnRate;
+
+        float stoppingDistance = context?.MovementProfile?.StoppingDistance ?? 0f;
+        MoveTo(actor, target, moveSpeed, acceleration, turnRate, stoppingDistance);
     }
 
-    public static void MoveTo(
-        GameObject actor,
-        Vector3 target,
-        SerializedStatContainer stats = null,
-        IEnumerable<StatModifier> modifiers = null)
+    private static void MoveTo(GameObject actor, Vector3 target, float moveSpeed, float acceleration, float turnRate, float stoppingDistance)
     {
-        float moveSpeed = CanonicalStatResolver.ResolveStatValue(
-            stats,
-            modifiers,
-            CanonicalStatIds.Movement.MoveSpeed,
-            DefaultMoveSpeed);
+        if (actor == null)
+            return;
 
-        MoveTo(actor, target, moveSpeed);
-    }
-
-    private static void MoveTo(GameObject actor, Vector3 target, float moveSpeed)
-    {
         Transform t = actor.transform;
 
         Vector3 direction = target - t.position;
         float distance = direction.magnitude;
 
-        if (distance <= 0f)
+        if (distance <= Mathf.Max(0f, stoppingDistance))
             return;
 
-        Vector3 step = direction.normalized * moveSpeed * Time.deltaTime;
+        if (direction.sqrMagnitude > 0.0001f)
+        {
+            Vector3 forward = Vector3.RotateTowards(t.forward, direction.normalized, Mathf.Deg2Rad * turnRate * Time.deltaTime, 0f);
+            if (forward.sqrMagnitude > 0.0001f)
+                t.forward = forward;
+        }
+
+        var actorId = actor.GetInstanceID();
+        velocityByActorId.TryGetValue(actorId, out var currentSpeed);
+        var nextSpeed = Mathf.MoveTowards(currentSpeed, moveSpeed, Mathf.Max(0f, acceleration) * Time.deltaTime);
+        velocityByActorId[actorId] = nextSpeed;
+
+        Vector3 step = direction.normalized * nextSpeed * Time.deltaTime;
 
         if (step.magnitude > distance)
             step = direction;

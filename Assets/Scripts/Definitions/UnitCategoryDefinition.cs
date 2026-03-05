@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "DataDrivenRTS/Definitions/UnitCategory")]
@@ -24,12 +25,16 @@ public class UnitCategoryDefinition : ScriptableObject, IIdentifiable, IDefiniti
     [SerializeField] private int sortOrder;
     public int SortOrder => sortOrder;
 
+    [SerializeField] private List<string> requiredStatIds = new();
+    public IReadOnlyList<string> RequiredStatIds => requiredStatIds;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
         DefinitionMetadataUtility.EnsureMetadata(ref metadata, DefinitionCategory.Unit);
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
         sortOrder = Mathf.Max(0, sortOrder);
+        requiredStatIds ??= new();
     }
 #endif
 }

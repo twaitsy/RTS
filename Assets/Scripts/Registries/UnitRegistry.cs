@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -42,8 +43,6 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
             .OptionalField(nameof(UnitDefinition.WeaponIds), definition => definition.WeaponIds)
             .OptionalField(nameof(UnitDefinition.ArmorProfileId), definition => definition.ArmorProfileId)
             .OptionalField(nameof(UnitDefinition.DefenseProfileId), definition => definition.DefenseProfileId)
-            .OptionalField(nameof(UnitDefinition.WeaponTypeId), definition => definition.WeaponTypeId)
-            .OptionalField(nameof(UnitDefinition.ArmorTypeId), definition => definition.ArmorTypeId)
             .OptionalField(nameof(UnitDefinition.MovementProfileId), definition => definition.MovementProfileId)
             .OptionalField(nameof(UnitDefinition.LocomotionProfileId), definition => definition.LocomotionProfileId)
             .OptionalField(nameof(UnitDefinition.ProductionProfileId), definition => definition.ProductionProfileId)
@@ -67,8 +66,6 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
             .AddReference(nameof(UnitDefinition.WeaponIds), definition => definition.WeaponIds, false, new ReferenceTargetRule(nameof(WeaponRegistry), targetId => WeaponRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.ArmorProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.ArmorProfileId), false, new ReferenceTargetRule(nameof(ArmorProfileRegistry), targetId => ArmorProfileRegistry.Instance != null && ArmorProfileRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.DefenseProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.DefenseProfileId), false, new ReferenceTargetRule(nameof(DefenseProfileRegistry), targetId => DefenseProfileRegistry.Instance != null && DefenseProfileRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.WeaponTypeId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.WeaponTypeId), false, new ReferenceTargetRule(nameof(WeaponTypeRegistry), targetId => WeaponTypeRegistry.Instance.TryGet(targetId, out _)))
-            .AddReference(nameof(UnitDefinition.ArmorTypeId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.ArmorTypeId), false, new ReferenceTargetRule(nameof(ArmorTypeRegistry), targetId => ArmorTypeRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.MovementProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.MovementProfileId), false, new ReferenceTargetRule(nameof(MovementProfileRegistry), targetId => MovementProfileRegistry.Instance != null && MovementProfileRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.LocomotionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.LocomotionProfileId), false, new ReferenceTargetRule(nameof(LocomotionProfileRegistry), targetId => LocomotionProfileRegistry.Instance != null && LocomotionProfileRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(nameof(UnitDefinition.ProductionProfileId), definition => RegistrySchema<UnitDefinition>.SingleReference(definition.ProductionProfileId), false, new ReferenceTargetRule(nameof(ProductionProfileRegistry), targetId => ProductionProfileRegistry.Instance != null && ProductionProfileRegistry.Instance.TryGet(targetId, out _)))
@@ -106,25 +103,153 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         if (definition == null)
             yield break;
 
-        if (HasStat(definition, CanonicalStatIds.Combat.AttackSpeed) && (definition.WeaponIds == null || definition.WeaponIds.Count == 0))
+        if (HasStatInRelationalGraph(definition, CanonicalStatIds.Combat.AttackSpeed) && (definition.WeaponIds == null || definition.WeaponIds.Count == 0))
             yield return $"{nameof(UnitDefinition.WeaponIds)} is required when '{CanonicalStatIds.Combat.AttackSpeed}' is present.";
 
-        if (HasStat(definition, CanonicalStatIds.Movement.MoveSpeed) && string.IsNullOrWhiteSpace(definition.MovementProfileId))
+        if (HasStatInRelationalGraph(definition, CanonicalStatIds.Movement.MoveSpeed) && string.IsNullOrWhiteSpace(definition.MovementProfileId))
             yield return $"{nameof(UnitDefinition.MovementProfileId)} is required when '{CanonicalStatIds.Movement.MoveSpeed}' is present.";
 
-        if (HasStat(definition, CanonicalStatIds.Needs.HungerRate) && string.IsNullOrWhiteSpace(definition.NeedsProfileId))
+        if (HasStatInRelationalGraph(definition, CanonicalStatIds.Needs.HungerRate) && string.IsNullOrWhiteSpace(definition.NeedsProfileId))
             yield return $"{nameof(UnitDefinition.NeedsProfileId)} is required when '{CanonicalStatIds.Needs.HungerRate}' is present.";
 
-        if (HasStat(definition, CanonicalStatIds.Perception.PerceptionRadius) && string.IsNullOrWhiteSpace(definition.PerceptionProfileId))
+        if (HasStatInRelationalGraph(definition, CanonicalStatIds.Perception.PerceptionRadius) && string.IsNullOrWhiteSpace(definition.PerceptionProfileId))
             yield return $"{nameof(UnitDefinition.PerceptionProfileId)} is required when '{CanonicalStatIds.Perception.PerceptionRadius}' is present.";
 
         if (HasCosts(definition) && string.IsNullOrWhiteSpace(definition.ProductionProfileId))
             yield return $"{nameof(UnitDefinition.ProductionProfileId)} is required when {nameof(UnitDefinition.Costs)} contains resource costs.";
+
+        if (!string.IsNullOrWhiteSpace(definition.WeaponTypeId))
+            yield return $"{nameof(UnitDefinition.WeaponTypeId)} is legacy. Use {nameof(UnitDefinition.WeaponIds)} with canonical {nameof(WeaponRegistry)} links.";
+
+        if (!string.IsNullOrWhiteSpace(definition.ArmorTypeId))
+            yield return $"{nameof(UnitDefinition.ArmorTypeId)} is legacy. Use {nameof(UnitDefinition.ArmorProfileId)} with canonical {nameof(ArmorProfileRegistry)} links.";
+
+        foreach (var requiredStatId in GetRoleRequiredStats(definition))
+        {
+            if (!HasStatInRelationalGraph(definition, requiredStatId))
+                yield return $"Missing role-required stat '{requiredStatId}' for role '{definition.RoleId}'.";
+        }
+
+        foreach (var requiredStatId in GetCategoryRequiredStats(definition))
+        {
+            if (!HasStatInRelationalGraph(definition, requiredStatId))
+                yield return $"Missing archetype-required stat '{requiredStatId}' for category '{definition.UnitCategoryId}'.";
+        }
     }
 
-    private static bool HasStat(UnitDefinition definition, string statId)
+    private static bool HasStatInRelationalGraph(UnitDefinition definition, string statId)
     {
-        return definition?.Stats != null && definition.Stats.TryGetValue(statId, out _);
+        if (definition == null || string.IsNullOrWhiteSpace(statId))
+            return false;
+
+        var allStats = CollectRelationalStatIds(definition);
+        return allStats.Contains(statId);
+    }
+
+    private static HashSet<string> CollectRelationalStatIds(UnitDefinition definition)
+    {
+        var statIds = new HashSet<string>(StringComparer.Ordinal);
+        if (definition == null)
+            return statIds;
+
+        AddStats(statIds, definition.Stats);
+
+        if (definition.WeaponIds != null && WeaponRegistry.Instance != null)
+        {
+            for (int i = 0; i < definition.WeaponIds.Count; i++)
+            {
+                var weaponId = definition.WeaponIds[i];
+                if (string.IsNullOrWhiteSpace(weaponId))
+                    continue;
+
+                if (WeaponRegistry.Instance.TryGet(weaponId, out var weapon))
+                    AddStats(statIds, weapon?.Stats);
+            }
+        }
+
+        if (ArmorProfileRegistry.Instance != null && ArmorProfileRegistry.Instance.TryGet(definition.ArmorProfileId, out var armorProfile))
+            AddStats(statIds, armorProfile?.Stats);
+        if (DefenseProfileRegistry.Instance != null && DefenseProfileRegistry.Instance.TryGet(definition.DefenseProfileId, out var defenseProfile))
+            AddStats(statIds, defenseProfile?.Stats);
+        if (MovementProfileRegistry.Instance != null && MovementProfileRegistry.Instance.TryGet(definition.MovementProfileId, out var movementProfile))
+            AddStats(statIds, movementProfile?.Stats);
+        if (LocomotionProfileRegistry.Instance != null && LocomotionProfileRegistry.Instance.TryGet(definition.LocomotionProfileId, out var locomotionProfile))
+            AddStats(statIds, locomotionProfile?.Stats);
+        if (NeedsProfileRegistry.Instance != null && NeedsProfileRegistry.Instance.TryGet(definition.NeedsProfileId, out var needsProfile))
+            AddStats(statIds, needsProfile?.Stats);
+        if (MoodRegistry.Instance != null && MoodRegistry.Instance.TryGet(definition.MoodProfileId, out var moodProfile))
+            AddStats(statIds, moodProfile?.Stats);
+        if (BehaviourRegistry.Instance != null && BehaviourRegistry.Instance.TryGet(definition.AIBehaviorProfileId, out var behaviourProfile))
+            AddStats(statIds, behaviourProfile?.Stats);
+        if (AIPerceptionRegistry.Instance != null && AIPerceptionRegistry.Instance.TryGet(definition.PerceptionProfileId, out var perceptionProfile))
+            AddStats(statIds, perceptionProfile?.Stats);
+        if (ProductionProfileRegistry.Instance != null && ProductionProfileRegistry.Instance.TryGet(definition.ProductionProfileId, out var productionProfile))
+            AddStats(statIds, productionProfile?.Stats);
+
+        AddJobStats(definition.JobProfileIds, statIds);
+        AddJobStats(definition.JobIds, statIds);
+        return statIds;
+    }
+
+    private static void AddJobStats(IReadOnlyList<string> jobIds, HashSet<string> statIds)
+    {
+        if (jobIds == null || JobRegistry.Instance == null)
+            return;
+
+        for (int i = 0; i < jobIds.Count; i++)
+        {
+            var jobId = jobIds[i];
+            if (string.IsNullOrWhiteSpace(jobId))
+                continue;
+
+            if (JobRegistry.Instance.TryGet(jobId, out var job))
+                AddStats(statIds, job?.Stats);
+        }
+    }
+
+    private static void AddStats(HashSet<string> statIds, SerializedStatContainer stats)
+    {
+        if (stats?.Entries == null)
+            return;
+
+        for (int i = 0; i < stats.Entries.Count; i++)
+        {
+            var statId = stats.Entries[i].StatId;
+            if (!string.IsNullOrWhiteSpace(statId))
+                statIds.Add(statId);
+        }
+    }
+
+    private static IEnumerable<string> GetRoleRequiredStats(UnitDefinition definition)
+    {
+        if (definition == null || string.IsNullOrWhiteSpace(definition.RoleId) || RoleRegistry.Instance == null)
+            yield break;
+
+        if (!RoleRegistry.Instance.TryGet(definition.RoleId, out var role) || role?.RequiredStatIds == null)
+            yield break;
+
+        for (int i = 0; i < role.RequiredStatIds.Count; i++)
+        {
+            var statId = role.RequiredStatIds[i];
+            if (!string.IsNullOrWhiteSpace(statId))
+                yield return statId;
+        }
+    }
+
+    private static IEnumerable<string> GetCategoryRequiredStats(UnitDefinition definition)
+    {
+        if (definition == null || string.IsNullOrWhiteSpace(definition.UnitCategoryId) || UnitCategoryRegistry.Instance == null)
+            yield break;
+
+        if (!UnitCategoryRegistry.Instance.TryGet(definition.UnitCategoryId, out var category) || category?.RequiredStatIds == null)
+            yield break;
+
+        for (int i = 0; i < category.RequiredStatIds.Count; i++)
+        {
+            var statId = category.RequiredStatIds[i];
+            if (!string.IsNullOrWhiteSpace(statId))
+                yield return statId;
+        }
     }
 
     private static bool HasCosts(UnitDefinition definition)
@@ -146,9 +271,7 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         if (StatRegistry.Instance == null) yield return "Missing dependency: StatRegistry.Instance is null.";
         if (WeaponRegistry.Instance == null) yield return "Missing dependency: WeaponRegistry.Instance is null.";
         if (DefenseProfileRegistry.Instance == null) yield return "Missing dependency: DefenseProfileRegistry.Instance is null.";
-        if (WeaponTypeRegistry.Instance == null) yield return "Missing dependency: WeaponTypeRegistry.Instance is null.";
         if (ArmorProfileRegistry.Instance == null) yield return "Missing dependency: ArmorProfileRegistry.Instance is null.";
-        if (ArmorTypeRegistry.Instance == null) yield return "Missing dependency: ArmorTypeRegistry.Instance is null.";
         if (MovementProfileRegistry.Instance == null) yield return "Missing dependency: MovementProfileRegistry.Instance is null.";
         if (LocomotionProfileRegistry.Instance == null) yield return "Missing dependency: LocomotionProfileRegistry.Instance is null.";
         if (ProductionProfileRegistry.Instance == null) yield return "Missing dependency: ProductionProfileRegistry.Instance is null.";

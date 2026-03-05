@@ -42,7 +42,7 @@ public class MoveToStep : TaskStepDefinition
         if (sqrDist < ARRIVAL_THRESHOLD * ARRIVAL_THRESHOLD)
             return TaskStepResult.AdvanceStep();
 
-        MovementSystem.MoveTo(context.Actor, targetPos);
+        MovementSystem.MoveTo(context.Actor, targetPos, context.RuntimeContext);
         return TaskStepResult.StayOnStep();
     }
 }

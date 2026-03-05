@@ -7,6 +7,9 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext
     [Header("Definition-Driven FSM")]
     public StateMachineDefinition MachineDefinition;
 
+    [Header("Simulation Runtime")]
+    public UnitDefinition UnitDefinition;
+
     [Tooltip("Optional: load machine from StateMachineRegistry by ID when MachineDefinition is unset.")]
     public string MachineDefinitionId;
 
@@ -28,6 +31,7 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext
     private StateMachineRuntime runtime;
     private BehaviourState current;
     private TaskRunner taskRunner;
+    private UnitRuntimeContext runtimeContext;
 
     public BehaviourState CurrentState => current;
 
@@ -45,6 +49,8 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext
         current = runtime.GetInitialRuntimeState();
         current?.OnEnter(this);
 
+        runtimeContext = UnitRuntimeContextResolver.Resolve(UnitDefinition, definitionResolver: null);
+
         EmitEvent("OnOrderGather");
     }
 
@@ -58,7 +64,7 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext
 
     public void StartTask(TaskDefinition task)
     {
-        taskRunner = new TaskRunner(task, gameObject);
+        taskRunner = new TaskRunner(task, gameObject, runtimeContext);
     }
 
     public void EmitEvent(string evt)

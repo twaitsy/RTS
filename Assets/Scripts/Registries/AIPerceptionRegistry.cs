@@ -27,9 +27,15 @@ public class AIPerceptionRegistry : DefinitionRegistry<AIPerceptionDefinition>
             .RequireField(nameof(AIPerceptionDefinition.DisplayName), definition => definition.DisplayName)
             .RequireField(nameof(AIPerceptionDefinition.Metadata), definition => definition.Metadata)
             .RequireField(nameof(AIPerceptionDefinition.Stats), definition => definition.Stats)
+            .OptionalField(nameof(AIPerceptionDefinition.StatModifiers), definition => definition.StatModifiers)
             .AddReference(
                 $"{nameof(AIPerceptionDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
                 definition => RegistrySchema<AIPerceptionDefinition>.ReferenceCollection(definition.Stats.Entries, entry => entry.StatId),
+                false,
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance != null && StatRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(AIPerceptionDefinition.StatModifiers),
+                definition => RegistrySchema<AIPerceptionDefinition>.ReferenceCollection(definition.StatModifiers, modifier => modifier.targetStatId),
                 false,
                 new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance != null && StatRegistry.Instance.TryGet(targetId, out _)))
             .AddConstraint(
@@ -48,6 +54,8 @@ public class AIPerceptionRegistry : DefinitionRegistry<AIPerceptionDefinition>
                         errors.Add($"{nameof(AIPerceptionDefinition.AlertnessDecay)} must be greater than or equal to 0.");
                     if (definition.MemoryDuration < 0f)
                         errors.Add($"{nameof(AIPerceptionDefinition.MemoryDuration)} must be greater than or equal to 0.");
+                    if (definition.LineOfSightFalloff < 0f)
+                        errors.Add($"{nameof(AIPerceptionDefinition.LineOfSightFalloff)} must be greater than or equal to 0.");
 
                     return errors;
                 });

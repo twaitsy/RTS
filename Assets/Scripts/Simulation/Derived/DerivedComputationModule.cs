@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public static class DerivedComputationModule
@@ -62,8 +60,10 @@ public static class DerivedComputationModule
         float moraleDecay = Mathf.Max(0f, context.ResolveStat(CanonicalStatIds.Needs.MoraleDecayRate, 0f));
         float stressGain = Mathf.Max(0f, context.ResolveStat(CanonicalStatIds.Needs.StressGainRate, 0f));
         float decayFactor = context.NeedsProfile?.MoraleCurve ?? 1f;
+        float moodStability = context.MoodProfile?.MoraleStability ?? 1f;
+        float recovery = context.MoodProfile?.StressRecoveryRate ?? 0f;
 
-        return 1f / (1f + (moraleDecay + stressGain) * decayFactor);
+        return moodStability / Mathf.Max(0.0001f, 1f + ((moraleDecay + stressGain - recovery) * decayFactor));
     }
 
     public static float ComputeJobProficiency(UnitRuntimeContext context)
@@ -79,15 +79,6 @@ public static class DerivedComputationModule
         return (productionWorkSpeed + buildSpeed + profileThroughput) / 3f;
     }
 
-    public static float ComputeProductionThroughput(ProductionDefinition productionDefinition)
-    {
-        if (productionDefinition == null || productionDefinition.ProductionTime <= 0f)
-            return 0f;
-
-        var workSpeed = GetBaseStatValue(productionDefinition.Stats, CanonicalStatIds.Production.WorkSpeed, 1f);
-        return Mathf.Max(0f, workSpeed / productionDefinition.ProductionTime);
-    }
-
     public static float ComputeProductionThroughput(UnitRuntimeContext context)
     {
         if (context?.Unit == null)
@@ -101,21 +92,6 @@ public static class DerivedComputationModule
         return workSpeed / profileProductionTime;
     }
 
-    public static float ComputeResourceEfficiency(ProductionDefinition productionDefinition, string resourceId)
-    {
-        if (productionDefinition == null || string.IsNullOrWhiteSpace(resourceId))
-            return 0f;
-
-        var targetCost = productionDefinition.Costs?
-            .Where(cost => StringComparer.Ordinal.Equals(cost.ResourceId, resourceId))
-            .Sum(cost => Math.Max(0, cost.Amount)) ?? 0;
-
-        if (targetCost <= 0)
-            return 0f;
-
-        return ComputeProductionThroughput(productionDefinition) / targetCost;
-    }
-
     public static IReadOnlyDictionary<string, StatModifierRollup> ComputeStatModifierRollups(IEnumerable<StatModifier> modifiers)
     {
         return CanonicalStatResolver.BuildRollups(modifiers);
@@ -123,37 +99,24 @@ public static class DerivedComputationModule
 
     private static float ComputeWeaponDps(UnitRuntimeContext context, WeaponDefinition weapon)
     {
-        float baseDamage = context.ResolveStat(CanonicalStatIds.Combat.BaseDamage, 0f);
+        float baseDamage = context.ResolveStat(CanonicalStatIds.Combat.BaseDamage, weapon?.Damage ?? 0f);
         float attackDamage = context.ResolveStat(CanonicalStatIds.Combat.AttackDamage, baseDamage);
-        float attackSpeed = Mathf.Max(0f, context.ResolveStat(CanonicalStatIds.Combat.AttackSpeed, 0f));
+        float attackSpeed = Mathf.Max(0f, context.ResolveStat(CanonicalStatIds.Combat.AttackSpeed, weapon?.AttackSpeed ?? 0f));
         float critChance = Mathf.Clamp01(context.ResolveStat(CanonicalStatIds.Combat.CritChance, 0f));
         float critMultiplier = Mathf.Max(1f, context.ResolveStat(CanonicalStatIds.Combat.CritMultiplier, 1f));
+        float range = Mathf.Max(0f, context.ResolveStat(CanonicalStatIds.Combat.AttackRange, weapon?.Range ?? 0f));
 
         if (weapon != null)
         {
-            baseDamage = GetBaseStatValue(weapon.Stats, CanonicalStatIds.Combat.BaseDamage, baseDamage);
-            attackDamage = GetBaseStatValue(weapon.Stats, CanonicalStatIds.Combat.AttackDamage, attackDamage);
-            attackSpeed = GetBaseStatValue(weapon.Stats, CanonicalStatIds.Combat.AttackSpeed, attackSpeed);
-            critChance = Mathf.Clamp01(GetBaseStatValue(weapon.Stats, CanonicalStatIds.Combat.CritChance, critChance));
-            critMultiplier = Mathf.Max(1f, GetBaseStatValue(weapon.Stats, CanonicalStatIds.Combat.CritMultiplier, critMultiplier));
+            baseDamage = Mathf.Max(baseDamage, weapon.Damage);
+            attackDamage = Mathf.Max(attackDamage, weapon.Damage);
+            attackSpeed = Mathf.Max(attackSpeed, weapon.AttackSpeed);
+            range = Mathf.Max(range, weapon.Range);
         }
 
         float expectedDamage = Mathf.Max(0f, attackDamage) * (1f + critChance * (critMultiplier - 1f));
-        return expectedDamage * Mathf.Max(0f, attackSpeed);
-    }
-
-    private static float GetBaseStatValue(SerializedStatContainer stats, string statId, float defaultValue)
-    {
-        if (stats?.Entries == null || string.IsNullOrWhiteSpace(statId))
-            return defaultValue;
-
-        foreach (var stat in stats.Entries)
-        {
-            if (StringComparer.Ordinal.Equals(stat.StatId, statId))
-                return stat.Value;
-        }
-
-        return defaultValue;
+        float rangeFactor = 1f + Mathf.Min(range, 10f) * 0.02f;
+        return expectedDamage * Mathf.Max(0f, attackSpeed) * rangeFactor;
     }
 }
 

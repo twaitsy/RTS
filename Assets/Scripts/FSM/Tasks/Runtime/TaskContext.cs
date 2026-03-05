@@ -6,6 +6,7 @@ public class TaskContext
     public object Target; // Resource node, drop-off, etc.
     public float WorkTimer;
     public int InventoryCount;
+    public UnitRuntimeContext RuntimeContext;
 
     // Expand later with: needs, tools, reservations, etc.
 }

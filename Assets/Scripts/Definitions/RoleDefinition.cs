@@ -28,6 +28,9 @@ public class RoleDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [SerializeField] private List<RoleNeedMultiplier> needMultipliers = new();
     public IReadOnlyList<RoleNeedMultiplier> NeedMultipliers => needMultipliers;
 
+    [SerializeField] private List<string> requiredStatIds = new();
+    public IReadOnlyList<string> RequiredStatIds => requiredStatIds;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
@@ -35,6 +38,10 @@ public class RoleDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
 
         statModifiers ??= new();
+        behaviourIds ??= new();
+        jobIds ??= new();
+        needMultipliers ??= new();
+        requiredStatIds ??= new();
     }
 #endif
 }

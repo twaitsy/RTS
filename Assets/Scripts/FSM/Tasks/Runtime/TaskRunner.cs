@@ -8,10 +8,14 @@ public class TaskRunner
 
     public bool IsComplete { get; private set; }
 
-    public TaskRunner(TaskDefinition task, GameObject actor)
+    public TaskRunner(TaskDefinition task, GameObject actor, UnitRuntimeContext runtimeContext = null)
     {
         this.task = task;
-        this.context = new TaskContext { Actor = actor };
+        this.context = new TaskContext
+        {
+            Actor = actor,
+            RuntimeContext = runtimeContext,
+        };
         this.stepIndex = 0;
         this.IsComplete = false;
     }

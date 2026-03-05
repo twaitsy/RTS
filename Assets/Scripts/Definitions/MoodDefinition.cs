@@ -19,8 +19,17 @@ public class MoodDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
     [SerializeField] private SerializedStatContainer stats = new();
     public SerializedStatContainer Stats => stats;
 
+    [SerializeField] private List<StatModifier> statModifiers = new();
+    public IReadOnlyList<StatModifier> StatModifiers => statModifiers;
+
     [SerializeField] private float moraleStability = 1f;
     public float MoraleStability => moraleStability;
+
+    [SerializeField] private float stressRecoveryRate = 0.25f;
+    public float StressRecoveryRate => stressRecoveryRate;
+
+    [SerializeField] private float panicThreshold = 0.2f;
+    public float PanicThreshold => panicThreshold;
 
     [SerializeField] private List<string> personalityTraits = new();
     public IReadOnlyList<string> PersonalityTraits => personalityTraits;
@@ -35,7 +44,11 @@ public class MoodDefinition : ScriptableObject, IIdentifiable, IDefinitionMetada
         DefinitionIdLifecycle.ValidateOnValidate(this, ref id, ref isIdFinalized, ref finalizedId);
 
         stats ??= new();
+        statModifiers ??= new();
         personalityTraits ??= new();
+        moraleStability = Mathf.Max(0f, moraleStability);
+        stressRecoveryRate = Mathf.Max(0f, stressRecoveryRate);
+        panicThreshold = Mathf.Clamp01(panicThreshold);
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

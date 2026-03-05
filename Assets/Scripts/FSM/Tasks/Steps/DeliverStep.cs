@@ -28,7 +28,7 @@ public class DeliverStep : TaskStepDefinition
 
         if (sqrDist > ARRIVAL_THRESHOLD * ARRIVAL_THRESHOLD)
         {
-            MovementSystem.MoveTo(context.Actor, dropoffPos);
+            MovementSystem.MoveTo(context.Actor, dropoffPos, context.RuntimeContext);
             return TaskStepResult.StayOnStep();
         }
 

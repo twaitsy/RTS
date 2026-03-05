@@ -25,8 +25,21 @@ public class NeedsProfileRegistry : DefinitionRegistry<NeedsProfileDefinition>
         return schema ??= new RegistrySchema<NeedsProfileDefinition>()
             .RequireField(nameof(NeedsProfileDefinition.Id), definition => definition.Id)
             .RequireField(nameof(NeedsProfileDefinition.Metadata), definition => definition.Metadata)
+            .OptionalField(nameof(NeedsProfileDefinition.DisplayName), definition => definition.DisplayName)
+            .RequireField(nameof(NeedsProfileDefinition.Stats), definition => definition.Stats)
+            .OptionalField(nameof(NeedsProfileDefinition.StatModifiers), definition => definition.StatModifiers)
             .OptionalField(nameof(NeedsProfileDefinition.CivilianDefinitionId), definition => definition.CivilianDefinitionId)
             .OptionalField(nameof(NeedsProfileDefinition.Needs), definition => definition.Needs)
+            .AddReference(
+                $"{nameof(NeedsProfileDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
+                definition => RegistrySchema<NeedsProfileDefinition>.ReferenceCollection(definition.Stats.Entries, entry => entry.StatId),
+                false,
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance != null && StatRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(NeedsProfileDefinition.StatModifiers),
+                definition => RegistrySchema<NeedsProfileDefinition>.ReferenceCollection(definition.StatModifiers, modifier => modifier.targetStatId),
+                false,
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance != null && StatRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(
                 nameof(NeedsProfileDefinition.CivilianDefinitionId),
                 definition => RegistrySchema<NeedsProfileDefinition>.SingleReference(definition.CivilianDefinitionId),
@@ -58,6 +71,8 @@ public class NeedsProfileRegistry : DefinitionRegistry<NeedsProfileDefinition>
             yield return $"{nameof(NeedsProfileDefinition.StressCurve)} must be greater than 0.";
         if (definition.SocialNeedCurve <= 0f)
             yield return $"{nameof(NeedsProfileDefinition.SocialNeedCurve)} must be greater than 0.";
+        if (definition.CriticalNeedThreshold < 0f || definition.CriticalNeedThreshold > 1f)
+            yield return $"{nameof(NeedsProfileDefinition.CriticalNeedThreshold)} must be between 0 and 1.";
 
         var seenNeedIds = new HashSet<string>();
         var needs = definition.Needs;
@@ -90,6 +105,8 @@ public class NeedsProfileRegistry : DefinitionRegistry<NeedsProfileDefinition>
 
     protected override IEnumerable<string> GetValidationDependencyErrors()
     {
+        if (StatRegistry.Instance == null)
+            yield return "Missing dependency: StatRegistry.Instance is null.";
         if (CivilianRegistry.Instance == null)
             yield return "Missing dependency: CivilianRegistry.Instance is null.";
         if (NeedRegistry.Instance == null)

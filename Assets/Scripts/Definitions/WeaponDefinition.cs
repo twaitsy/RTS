@@ -20,6 +20,19 @@ public class WeaponDefinition : ScriptableObject, IIdentifiable, IDefinitionMeta
     [SerializeField] private Sprite icon;
     public Sprite Icon => icon;
 
+    [Header("Weapon Profile")]
+    [SerializeField] private float damage = 10f;
+    public float Damage => damage;
+
+    [SerializeField] private float attackSpeed = 1f;
+    public float AttackSpeed => attackSpeed;
+
+    [SerializeField] private float range = 1f;
+    public float Range => range;
+
+    [SerializeField] private string projectileId;
+    public string ProjectileId => projectileId;
+
     [FormerlySerializedAs("baseStats")]
     [SerializeField] private SerializedStatContainer stats = new();
     public SerializedStatContainer Stats => stats;
@@ -37,6 +50,9 @@ public class WeaponDefinition : ScriptableObject, IIdentifiable, IDefinitionMeta
 
         stats ??= new();
         statModifiers ??= new();
+        damage = Mathf.Max(0f, damage);
+        attackSpeed = Mathf.Max(0f, attackSpeed);
+        range = Mathf.Max(0f, range);
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

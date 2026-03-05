@@ -27,10 +27,16 @@ public class MoodRegistry : DefinitionRegistry<MoodDefinition>
             .RequireField(nameof(MoodDefinition.DisplayName), definition => definition.DisplayName)
             .RequireField(nameof(MoodDefinition.Metadata), definition => definition.Metadata)
             .RequireField(nameof(MoodDefinition.Stats), definition => definition.Stats)
+            .OptionalField(nameof(MoodDefinition.StatModifiers), definition => definition.StatModifiers)
             .OptionalField(nameof(MoodDefinition.PersonalityTraits), definition => definition.PersonalityTraits)
             .AddReference(
                 $"{nameof(MoodDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
                 definition => RegistrySchema<MoodDefinition>.ReferenceCollection(definition.Stats.Entries, entry => entry.StatId),
+                false,
+                new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance != null && StatRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(MoodDefinition.StatModifiers),
+                definition => RegistrySchema<MoodDefinition>.ReferenceCollection(definition.StatModifiers, modifier => modifier.targetStatId),
                 false,
                 new ReferenceTargetRule(nameof(StatRegistry), targetId => StatRegistry.Instance != null && StatRegistry.Instance.TryGet(targetId, out _)))
             .AddReference(
@@ -45,6 +51,10 @@ public class MoodRegistry : DefinitionRegistry<MoodDefinition>
                     var errors = new List<string>();
                     if (definition.MoraleStability < 0f)
                         errors.Add($"{nameof(MoodDefinition.MoraleStability)} must be greater than or equal to 0.");
+                    if (definition.StressRecoveryRate < 0f)
+                        errors.Add($"{nameof(MoodDefinition.StressRecoveryRate)} must be greater than or equal to 0.");
+                    if (definition.PanicThreshold < 0f || definition.PanicThreshold > 1f)
+                        errors.Add($"{nameof(MoodDefinition.PanicThreshold)} must be between 0 and 1.");
 
                     var seenTraitIds = new HashSet<string>();
                     var traitIds = definition.PersonalityTraits;
