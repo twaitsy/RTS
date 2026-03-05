@@ -186,18 +186,31 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         if (!RequiredSetNamesByMode.TryGetValue(schemaMode, out var requiredSetNames))
             requiredSetNames = RequiredSetNamesByMode["baseline"];
 
-        var missingStatIds = new List<string>();
+        var missingStatsBySet = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
         foreach (var setName in requiredSetNames)
         {
             if (!RequiredStatSetsByName.TryGetValue(setName, out var requiredStats))
                 continue;
 
-            missingStatIds.AddRange(requiredStats.Where(statId => !HasStat(definition, statId)));
+            foreach (var missingStatId in requiredStats.Where(statId => !HasStat(definition, statId)))
+            {
+                if (!missingStatsBySet.TryGetValue(setName, out var missingInSet))
+                {
+                    missingInSet = new List<string>();
+                    missingStatsBySet[setName] = missingInSet;
+                }
+
+                missingInSet.Add(missingStatId);
+            }
         }
 
-        if (missingStatIds.Count > 0)
+        if (missingStatsBySet.Count > 0)
         {
-            yield return $"Schema mode '{schemaMode}' ({modeSource}) is missing required stat IDs: {string.Join(", ", missingStatIds.Distinct(StringComparer.Ordinal))}.";
+            var setSummaries = missingStatsBySet
+                .Select(pair => $"{pair.Key} => [{string.Join(", ", pair.Value.Distinct(StringComparer.Ordinal))}]")
+                .OrderBy(summary => summary, StringComparer.OrdinalIgnoreCase);
+
+            yield return $"Schema mode '{schemaMode}' ({modeSource}) is missing required stat IDs by set: {string.Join("; ", setSummaries)}.";
         }
 
         var missingProfiles = new List<string>();
@@ -252,6 +265,7 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
         }
 
         var tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        AddArchetypeTokens(tokens, definition?.Metadata?.Tags);
         AddToken(tokens, definition?.UnitCategoryId);
         AddToken(tokens, definition?.RoleId);
 
@@ -287,6 +301,25 @@ public class UnitRegistry : DefinitionRegistry<UnitDefinition>
 
         modeSource = "default";
         return "baseline";
+    }
+
+    private static void AddArchetypeTokens(ISet<string> tokens, IReadOnlyList<string> tags)
+    {
+        if (tokens == null || tags == null)
+            return;
+
+        foreach (var tag in tags)
+        {
+            var trimmed = tag?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed))
+                continue;
+
+            if (trimmed.StartsWith("archetype:", StringComparison.OrdinalIgnoreCase))
+            {
+                var archetypeValue = trimmed.Substring("archetype:".Length).Trim();
+                AddToken(tokens, archetypeValue);
+            }
+        }
     }
 
     private static string TryGetExplicitSchemaMode(IReadOnlyList<string> tags)
