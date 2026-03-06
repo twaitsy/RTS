@@ -266,14 +266,30 @@ public static class RegistrySyncUtility
     private class RegistryChangeTracker
     {
         private readonly Dictionary<string, Dictionary<string, DefinitionSnapshot>> previous;
+        private readonly Dictionary<string, RegistryTypeSnapshot> currentByType = new(StringComparer.Ordinal);
         private readonly List<string> logs = new();
         public RegistrySnapshot CurrentSnapshot { get; } = new();
 
         public RegistryChangeTracker(RegistrySnapshot previousSnapshot)
         {
-            previous = previousSnapshot.Types.ToDictionary(
-                item => item.TypeName,
-                item => item.Definitions.ToDictionary(def => def.Guid, def => def));
+            previous = new Dictionary<string, Dictionary<string, DefinitionSnapshot>>(StringComparer.Ordinal);
+
+            foreach (var typeSnapshot in previousSnapshot.Types)
+            {
+                if (string.IsNullOrWhiteSpace(typeSnapshot.TypeName))
+                    continue;
+
+                var definitionsByGuid = new Dictionary<string, DefinitionSnapshot>(StringComparer.Ordinal);
+                foreach (var definition in typeSnapshot.Definitions)
+                {
+                    if (string.IsNullOrWhiteSpace(definition.Guid))
+                        continue;
+
+                    definitionsByGuid[definition.Guid] = definition;
+                }
+
+                previous[typeSnapshot.TypeName] = definitionsByGuid;
+            }
         }
 
         public void Track(string typeName, List<DefinitionEntry> entries)
@@ -289,11 +305,22 @@ public static class RegistrySyncUtility
                 });
             }
 
+            if (currentByType.TryGetValue(typeName, out var existingType))
+                CurrentSnapshot.Types.Remove(existingType);
+
+            currentByType[typeName] = currentType;
             CurrentSnapshot.Types.Add(currentType);
 
             previous.TryGetValue(typeName, out var oldByGuid);
             oldByGuid ??= new Dictionary<string, DefinitionSnapshot>();
-            var currentByGuid = currentType.Definitions.ToDictionary(item => item.Guid, item => item);
+            var currentByGuid = new Dictionary<string, DefinitionSnapshot>(StringComparer.Ordinal);
+            foreach (var definition in currentType.Definitions)
+            {
+                if (string.IsNullOrWhiteSpace(definition.Guid))
+                    continue;
+
+                currentByGuid[definition.Guid] = definition;
+            }
 
             foreach (var added in currentByGuid.Values.Where(item => !oldByGuid.ContainsKey(item.Guid)))
                 logs.Add($"[RegistrySync] Added {typeName}: {added.Id} ({added.Path})");
