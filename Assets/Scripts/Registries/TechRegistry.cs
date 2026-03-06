@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class TechRegistry : DefinitionRegistry<TechDefinition>
 {
-    private static readonly HashSet<StatDomain> AnyDomain = new();
     private static RegistrySchema<TechDefinition> schema;
 
     public static TechRegistry Instance { get; private set; }
@@ -69,23 +68,6 @@ public class TechRegistry : DefinitionRegistry<TechDefinition>
                 new ReferenceTargetRule(nameof(StatModifierRegistry), targetId => StatModifierRegistry.Instance.TryGet(targetId, out _)));
 
         return schema;
-    }
-
-    protected override void ValidateDefinitions(List<TechDefinition> defs, System.Action<string> reportError)
-    {
-        StatModifierLinkValidator.ValidateHostStatModifierLinks(
-            defs,
-            definition => definition.Id,
-            definition => definition.StatModifierIds,
-            definition => definition.name,
-            _ => true,
-            modifierId => StatModifierRegistry.Instance.TryGet(modifierId, out _),
-            modifierId => StatModifierRegistry.Instance.Get(modifierId),
-            statId => StatRegistry.Instance.TryGet(statId, out _),
-            statId => StatRegistry.Instance.Get(statId),
-            AnyDomain,
-            "any domain",
-            reportError);
     }
 
     protected override IEnumerable<string> GetValidationDependencyErrors()

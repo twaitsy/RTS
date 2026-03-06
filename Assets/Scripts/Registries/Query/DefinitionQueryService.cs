@@ -9,18 +9,12 @@ public sealed class DefinitionQueryService
     private readonly TechRegistry techRegistry;
     private readonly ProductionRegistry productionRegistry;
 
-#if UNITY_EDITOR
-    private readonly DefinitionReferenceMap referenceMap;
-#endif
 
     public DefinitionQueryService(
         UnitRegistry unitRegistry,
         BuildingRegistry buildingRegistry,
         TechRegistry techRegistry,
         ProductionRegistry productionRegistry
-#if UNITY_EDITOR
-        , DefinitionReferenceMap referenceMap
-#endif
     )
     {
         this.unitRegistry = unitRegistry;
@@ -28,9 +22,6 @@ public sealed class DefinitionQueryService
         this.techRegistry = techRegistry;
         this.productionRegistry = productionRegistry;
 
-#if UNITY_EDITOR
-        this.referenceMap = referenceMap;
-#endif
     }
 
     // ---------------------------------------------------------
@@ -74,36 +65,6 @@ public sealed class DefinitionQueryService
             }
         }
 
-#if UNITY_EDITOR
-        if (referenceMap != null)
-        {
-            foreach (var inbound in referenceMap.GetIncoming(nameof(ResourceRegistry), normalizedResourceId))
-            {
-                if (StringComparer.Ordinal.Equals(inbound.SourceType, nameof(BuildingRegistry)) &&
-                    buildingRegistry.TryGet(inbound.SourceId, out var building))
-                {
-                    resultById[building.Id] = building;
-                    continue;
-                }
-
-                if (!StringComparer.Ordinal.Equals(inbound.SourceType, nameof(ProductionRegistry)))
-                    continue;
-
-                if (productionRegistry == null ||
-                    !productionRegistry.TryGet(inbound.SourceId, out var production))
-                    continue;
-
-                if (string.IsNullOrWhiteSpace(production.BuildingId))
-                    continue;
-
-                if (!IsLikelyProductionOutputField(inbound.Field))
-                    continue;
-
-                if (buildingRegistry.TryGet(production.BuildingId, out var producerBuilding))
-                    resultById[producerBuilding.Id] = producerBuilding;
-            }
-        }
-#endif
 
         return resultById.Values.ToList();
     }
@@ -141,32 +102,6 @@ public sealed class DefinitionQueryService
                 result[tech.Id] = tech;
         }
 
-#if UNITY_EDITOR
-        if (referenceMap != null)
-        {
-            foreach (var inbound in referenceMap.GetIncoming(nameof(StatRegistry), normalizedStatId))
-            {
-                if (StringComparer.Ordinal.Equals(inbound.SourceType, nameof(TechRegistry)) &&
-                    techRegistry.TryGet(inbound.SourceId, out var directTech))
-                {
-                    result[directTech.Id] = directTech;
-                    continue;
-                }
-
-                if (!StringComparer.Ordinal.Equals(inbound.SourceType, nameof(StatModifierRegistry)))
-                    continue;
-
-                foreach (var modifierInbound in referenceMap.GetIncoming(nameof(StatModifierRegistry), inbound.SourceId))
-                {
-                    if (!StringComparer.Ordinal.Equals(modifierInbound.SourceType, nameof(TechRegistry)))
-                        continue;
-
-                    if (techRegistry.TryGet(modifierInbound.SourceId, out var linkedTech))
-                        result[linkedTech.Id] = linkedTech;
-                }
-            }
-        }
-#endif
 
         return result.Values.ToList();
     }
@@ -174,16 +109,6 @@ public sealed class DefinitionQueryService
     // ---------------------------------------------------------
     // HELPERS
     // ---------------------------------------------------------
-
-    private static bool IsLikelyProductionOutputField(string field)
-    {
-        if (string.IsNullOrWhiteSpace(field))
-            return false;
-
-        return field.IndexOf("output", StringComparison.OrdinalIgnoreCase) >= 0 ||
-               field.IndexOf("produce", StringComparison.OrdinalIgnoreCase) >= 0 ||
-               field.IndexOf("yield", StringComparison.OrdinalIgnoreCase) >= 0;
-    }
 }
 
 internal static class DefinitionQueryMetadataMatcher
