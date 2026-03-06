@@ -6,6 +6,10 @@ public class BuildingRuntime : MonoBehaviour
 {
     [SerializeField] private BuildingDefinition definition;
 
+    [Header("Scene Interaction Points")]
+    [SerializeField] private List<Transform> interactionPoints = new();
+    public IReadOnlyList<Transform> InteractionPoints => interactionPoints;
+
     private readonly Dictionary<string, int> storedByResourceId = new(StringComparer.Ordinal);
 
     public BuildingDefinition Definition => definition;
@@ -13,20 +17,10 @@ public class BuildingRuntime : MonoBehaviour
     public int StorageCapacity => definition != null ? Mathf.Max(0, definition.StorageCapacity) : int.MaxValue;
     public int CurrentStored { get; private set; }
 
-    public void SetDefinition(BuildingDefinition nextDefinition)
-    {
-        definition = nextDefinition;
-    }
+    private void OnEnable() => DropoffLocator.Register(this);
+    private void OnDisable() => DropoffLocator.Unregister(this);
 
-    private void OnEnable()
-    {
-        DropoffLocator.Register(this);
-    }
-
-    private void OnDisable()
-    {
-        DropoffLocator.Unregister(this);
-    }
+    public void SetDefinition(BuildingDefinition nextDefinition) => definition = nextDefinition;
 
     public bool TryReceiveDelivery(string resourceTypeId, int amount, out int acceptedAmount, out string failureReason)
     {
@@ -67,14 +61,16 @@ public class BuildingRuntime : MonoBehaviour
         bool allowPartial = definition == null || definition.AllowPartialDelivery;
         if (!allowPartial && amount > freeSpace)
         {
-            failureReason = $"Building '{name}' cannot partially accept delivery (requested={amount}, free={freeSpace}).";
+            failureReason = $"Building '{name}' cannot partially accept delivery.";
             return false;
         }
 
         acceptedAmount = allowPartial ? Mathf.Min(amount, freeSpace) : amount;
         CurrentStored += acceptedAmount;
+
         storedByResourceId.TryGetValue(resourceTypeId, out int currentAmount);
         storedByResourceId[resourceTypeId] = currentAmount + acceptedAmount;
+
         return true;
     }
 
@@ -97,5 +93,52 @@ public class BuildingRuntime : MonoBehaviour
         }
 
         return false;
+    }
+
+    public float InteractionRadius => definition != null ? definition.InteractionRadius : 1.5f;
+
+    public Vector3 GetBestInteractionWorldPosition(Vector3 actorPos)
+    {
+        // 1. Prefer definition points
+        if (definition != null && definition.InteractionPoints != null && definition.InteractionPoints.Count > 0)
+        {
+            Vector3 best = transform.TransformPoint(definition.InteractionPoints[0]);
+            float bestDist = (best - actorPos).sqrMagnitude;
+
+            for (int i = 1; i < definition.InteractionPoints.Count; i++)
+            {
+                Vector3 wp = transform.TransformPoint(definition.InteractionPoints[i]);
+                float d = (wp - actorPos).sqrMagnitude;
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    best = wp;
+                }
+            }
+
+            return best;
+        }
+
+        // 2. Fall back to scene points
+        if (interactionPoints != null && interactionPoints.Count > 0)
+        {
+            Transform best = interactionPoints[0];
+            float bestDist = (best.position - actorPos).sqrMagnitude;
+
+            for (int i = 1; i < interactionPoints.Count; i++)
+            {
+                float d = (interactionPoints[i].position - actorPos).sqrMagnitude;
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    best = interactionPoints[i];
+                }
+            }
+
+            return best.position;
+        }
+
+        // 3. Fallback
+        return transform.position;
     }
 }

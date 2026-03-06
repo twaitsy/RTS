@@ -18,7 +18,7 @@ public class DefinitionValidationRunner : MonoBehaviour
         var runnerObject = new GameObject(nameof(DefinitionValidationRunner));
         DontDestroyOnLoad(runnerObject);
         runnerObject.hideFlags = HideFlags.HideAndDontSave;
-        runnerObject.AddComponent<DefinitionValidationRunner>();
+      //  runnerObject.AddComponent<DefinitionValidationRunner>();
 #endif
     }
 

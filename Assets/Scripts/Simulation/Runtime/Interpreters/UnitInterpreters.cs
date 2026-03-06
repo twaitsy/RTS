@@ -141,14 +141,20 @@ public sealed class MovementInterpreter : IMovementInterpreter
     public bool TryGetRemainingDistance(GameObject actor, out float remainingDistance)
     {
         remainingDistance = float.MaxValue;
+
         if (actor == null)
             return false;
 
         var agent = actor.GetComponent<NavMeshAgent>();
-        if (agent == null || !agent.isOnNavMesh)
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh)
             return false;
 
+        // If the agent is still computing the path, we don't know yet.
         if (agent.pathPending)
+            return false;
+
+        // Critical fix: if there is no path, remainingDistance is meaningless (often 0).
+        if (!agent.hasPath)
             return false;
 
         remainingDistance = agent.remainingDistance;

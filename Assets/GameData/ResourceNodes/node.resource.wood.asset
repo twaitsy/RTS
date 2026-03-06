@@ -30,3 +30,6 @@ MonoBehaviour:
   depletionMode: 1
   interactionRadius: 1.5
   throughputMultiplier: 1
+  interactionPoints:
+  - {x: 2.88, y: 0, z: 0}
+  - {x: -2.5900002, y: 0, z: 0.84}

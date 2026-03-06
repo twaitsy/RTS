@@ -203,14 +203,13 @@ public static class DefinitionValidationEditorBridge
                 field: rule.FieldName,
                 suggestedFix: "Add at least one valid reference id."));
         }
-
         foreach (var rule in schema.ConstraintRules)
         {
             IEnumerable<string> errors;
 
             try
             {
-                errors = rule.Validate?.Invoke(definition);
+                errors = rule.Validate(definition);
             }
             catch (Exception ex)
             {
@@ -242,7 +241,7 @@ public static class DefinitionValidationEditorBridge
                     suggestedFix: "Adjust definition data to satisfy the schema constraint."));
             }
         }
-    }
+        }
 
     private static List<RegistrySchemaContext> LoadRegistrySchemas()
     {

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -46,6 +47,9 @@ public class ResourceNodeDefinition : ScriptableObject, IIdentifiable, IDefiniti
     [SerializeField, Min(0.05f)] private float throughputMultiplier = 1f;
     public float ThroughputMultiplier => throughputMultiplier;
 
+    [SerializeField] private List<Vector3> interactionPoints = new();
+    public IReadOnlyList<Vector3> InteractionPoints => interactionPoints;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
@@ -57,6 +61,8 @@ public class ResourceNodeDefinition : ScriptableObject, IIdentifiable, IDefiniti
         gatherDifficulty = Mathf.Max(0.1f, gatherDifficulty);
         interactionRadius = Mathf.Max(0.1f, interactionRadius);
         throughputMultiplier = Mathf.Max(0.05f, throughputMultiplier);
+
+        interactionPoints ??= new List<Vector3>();
     }
 #endif
 }
