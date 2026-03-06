@@ -90,7 +90,7 @@ MonoBehaviour:
   armorTypeId: 
   movementProfileId: profile.movement.worker
   locomotionProfileId: profile.locomotion.worker
-  schemaModeId: worker
+  schemaModeId: baseline
   unitCategoryId: 
   roleId: 
   traitIds: []

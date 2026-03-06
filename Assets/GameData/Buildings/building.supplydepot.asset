@@ -34,3 +34,9 @@ MonoBehaviour:
     amount: 50
   stats:
     entries: []
+  supportsDropoff: 0
+  acceptedResourceTypeIds: []
+  storageCapacity: 500
+  allowPartialDelivery: 1
+  interactionRadius: 1.5
+  interactionPoints: []
