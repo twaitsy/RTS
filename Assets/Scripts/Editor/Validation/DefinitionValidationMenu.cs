@@ -39,7 +39,7 @@ public static class DefinitionValidationMenu
     // CI/batch-mode entry point for all editor validations.
     public static void ValidateAllForCI()
     {
-        var report = DefinitionValidationOrchestrator.RunValidationAndLog();
+        var report = DefinitionValidationOrchestrator.RunValidationAndLog(failOnBridgeMissing: true);
         if (report.HasErrors)
             throw new Exception($"Definition validation failed with {report.ErrorCount} issue(s).");
     }

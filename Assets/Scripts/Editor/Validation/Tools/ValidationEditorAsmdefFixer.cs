@@ -9,7 +9,7 @@ public static class ValidationEditorAsmdefFixer
     private const string ValidationEditorAsmdefPath =
         "Assets/Scripts/Editor/Validation/Validation.Editor.asmdef";
 
-    // Types the validation system depends on
+    // Runtime types that editor validation scripts may depend on (bridge loading is direct and no longer asmdef-name based).
     private static readonly string[] RequiredRuntimeTypes =
     {
         "BuildingCategoryDefinition",
@@ -25,7 +25,7 @@ public static class ValidationEditorAsmdefFixer
         "ITaskEventSink"
     };
 
-    [MenuItem("Tools/Validation/Fix Validation.Editor.asmdef References")]
+    [MenuItem("Tools/Validation/Sync Validation.Editor.asmdef References")]
     private static void FixAsmdef()
     {
         if (!File.Exists(ValidationEditorAsmdefPath))
@@ -72,7 +72,7 @@ public static class ValidationEditorAsmdefFixer
         File.WriteAllText(ValidationEditorAsmdefPath, JsonUtility.ToJson(asmdef, true));
         AssetDatabase.Refresh();
 
-        Debug.Log("Validation.Editor.asmdef updated successfully.");
+        Debug.Log("Validation.Editor.asmdef references synced. This is optional maintenance for compile-time dependencies.");
     }
 
     private static string FindOwningAsmdef(string scriptPath, List<string> allAsmdefs)
