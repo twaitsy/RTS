@@ -10,18 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a9f0608031f771458510f4e36fcfd23, type: 3}
-  m_Name: state.worker.moveToResource
+  m_Name: state.worker.gathering
   m_EditorClassIdentifier: Assembly-CSharp::StateDefinition
-  id: state.worker.moveToResource
+  id: state.worker.gathering
   metadata:
-    category: 0
+    category: 4
     tags: []
     version: 1.0.0
     schemaHash: 
     lastModifiedUtc: 2026-03-05T00:00:00.0000000Z
     author: 
   isIdFinalized: 1
-  finalizedId: state.worker.moveToResource
-  displayName: Worker Move To Resource
+  finalizedId: state.worker.gathering
+  displayName: Worker Gathering
   icon: {fileID: 0}
-  parentStateId: state.worker.idle
+  parentStateId: state.worker.moveToResource
+  behaviour: {fileID: 11400000, guid: 0272749f3b4e4f8d81cd74e4620cd53d, type: 2}

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e286eacee8724834ea1023f9702a1149, type: 3}
   m_Name: step.worker.gather
   m_EditorClassIdentifier: Assembly-CSharp::WorkStep
-  duration: 2
+  duration: 0.1
   gatherAmount: 1
   resourceTypeId: resource.wood
   completedEventId: task.gather.completed

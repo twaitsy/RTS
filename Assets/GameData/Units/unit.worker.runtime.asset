@@ -27,7 +27,7 @@ MonoBehaviour:
   stats:
     entries:
     - statId: movement.moveSpeed
-      value: 50
+      value: 5
     - statId: movement.acceleration
       value: 10
     - statId: movement.turnRate

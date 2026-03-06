@@ -144,6 +144,7 @@ public sealed class StateMachineRuntime
 
         var mappedById = new Dictionary<string, BehaviourState>();
 
+        // 1) Legacy mappings (old path)
         foreach (var mapping in legacyStateMappings)
         {
             if (mapping.state == null || string.IsNullOrWhiteSpace(mapping.stateDefinitionId))
@@ -153,6 +154,27 @@ public sealed class StateMachineRuntime
                 Debug.LogWarning($"Duplicate legacy mapping for state ID '{mapping.stateDefinitionId}'.");
         }
 
+        // 2) Definition-driven mappings (new path)
+        var stateDefinitionById = new Dictionary<string, StateDefinition>();
+
+        if (StateRegistry.Instance != null)
+        {
+            foreach (var stateDefinition in StateRegistry.Instance.GetDefinitions())
+            {
+                if (stateDefinition == null || string.IsNullOrWhiteSpace(stateDefinition.Id))
+                    continue;
+
+                stateDefinitionById.TryAdd(stateDefinition.Id, stateDefinition);
+
+                // If the definition has a Behaviour, use it as a runtime mapping.
+                if (stateDefinition.Behaviour != null)
+                {
+                    mappedById[stateDefinition.Id] = stateDefinition.Behaviour;
+                }
+            }
+        }
+
+        // 3) Build runtime state + action lookups from machine definition
         foreach (var entry in machineDefinition.States)
         {
             if (string.IsNullOrWhiteSpace(entry.stateId))
@@ -173,19 +195,7 @@ public sealed class StateMachineRuntime
                 Debug.LogWarning($"BehaviourState '{runtimeState.name}' mapped to multiple state IDs.");
         }
 
-        var stateDefinitionById = new Dictionary<string, StateDefinition>();
-
-        if (StateRegistry.Instance != null)
-        {
-            foreach (var stateDefinition in StateRegistry.Instance.GetDefinitions())
-            {
-                if (stateDefinition == null || string.IsNullOrWhiteSpace(stateDefinition.Id))
-                    continue;
-
-                stateDefinitionById.TryAdd(stateDefinition.Id, stateDefinition);
-            }
-        }
-
+        // 4) Parent mapping (unchanged)
         foreach (var pair in runtimeStateById)
         {
             var stateId = pair.Key;

@@ -18,18 +18,11 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
     [Tooltip("Optional: load machine from StateMachineRegistry by ID when MachineDefinition is unset.")]
     public string MachineDefinitionId;
 
-    [Tooltip("Migration glue mapping legacy BehaviourState assets to StateDefinition IDs.")]
-    public List<LegacyStateIdMapping> LegacyStateMappings = new();
-
     [Header("Simulation Tick")]
     [SerializeField, Min(0.001f)] private float simulationTickIntervalSeconds = 0.1f;
     [SerializeField, Min(1)] private int maxTicksPerFrame = 5;
 
-    [Tooltip("Fallback state used only during migration when no mapping exists.")]
-    public BehaviourState LegacyInitialState;
-
     private readonly Dictionary<string, float> lastEventTimeByName = new();
-    private readonly HashSet<string> loggedMissingTaskIds = new(StringComparer.Ordinal);
 
     private StateMachineRuntime runtime;
     private BehaviourState current;
@@ -45,6 +38,11 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
     public BehaviourState CurrentState => current;
     public UnitRuntimeContext RuntimeContext => runtimeContext;
 
+    public void StartCurrentStateTask()
+    {
+        EnsureStateTaskBinding(CurrentState);
+    }
+
     private void Start()
     {
         unitRuntime = GetComponent<UnitRuntime>();
@@ -58,8 +56,15 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
 
         runtime = new StateMachineRuntime();
 
-        // Removed obsolete InitialState argument
-        if (!runtime.Initialize(MachineDefinition, MachineDefinitionId, LegacyStateMappings, LegacyInitialState))
+        // Definition-driven only: pass empty legacy mapping + null legacy initial
+        bool initialized = runtime.Initialize(
+            MachineDefinition,
+            MachineDefinitionId,
+            new List<LegacyStateIdMapping>(),
+            null
+        );
+
+        if (!initialized)
         {
             Debug.LogError($"{nameof(UnitBrain)} on '{name}' failed to initialize FSM runtime.");
             enabled = false;
@@ -139,6 +144,7 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
         if (string.IsNullOrWhiteSpace(eventId) || current == null || runtime == null)
             return;
 
+        // For time-based conditions
         lastEventTimeByName[eventId] = Time.time;
 
         BehaviourState state = current;
@@ -154,25 +160,10 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
             TransitionTo(target);
     }
 
-    public void OnStatChanged()
-    {
-        RefreshRuntimePipeline(UnitRuntimeInvalidationReason.StatChanged);
-    }
-
-    public void OnEquipmentChanged()
-    {
-        RefreshRuntimePipeline(UnitRuntimeInvalidationReason.EquipmentChanged);
-    }
-
-    public void OnTechChanged()
-    {
-        RefreshRuntimePipeline(UnitRuntimeInvalidationReason.TechChanged);
-    }
-
-    public void OnProfileChanged()
-    {
-        RefreshRuntimePipeline(UnitRuntimeInvalidationReason.ProfileChanged);
-    }
+    public void OnStatChanged() => RefreshRuntimePipeline(UnitRuntimeInvalidationReason.StatChanged);
+    public void OnEquipmentChanged() => RefreshRuntimePipeline(UnitRuntimeInvalidationReason.EquipmentChanged);
+    public void OnTechChanged() => RefreshRuntimePipeline(UnitRuntimeInvalidationReason.TechChanged);
+    public void OnProfileChanged() => RefreshRuntimePipeline(UnitRuntimeInvalidationReason.ProfileChanged);
 
     public bool TryGetElapsedSecondsSinceEvent(string eventName, out float seconds)
     {
@@ -217,7 +208,8 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
             return;
         }
 
-        if (taskRunner != null && !taskRunner.IsComplete && string.Equals(activeActionId, actionId, StringComparison.Ordinal))
+        if (taskRunner != null && !taskRunner.IsComplete &&
+            string.Equals(activeActionId, actionId, StringComparison.Ordinal))
             return;
 
         if (TaskRegistry.Instance == null)
@@ -225,8 +217,7 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
 
         if (!TaskRegistry.Instance.TryGet(actionId, out var taskDefinition) || taskDefinition == null)
         {
-            if (loggedMissingTaskIds.Add(actionId))
-                Debug.LogWarning($"[UnitBrain] Missing task definition for actionId '{actionId}'.");
+            Debug.LogWarning($"[UnitBrain] Missing task definition for actionId '{actionId}'.");
             return;
         }
 
@@ -238,7 +229,14 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
         if (task == null)
             return;
 
-        taskRunner = new TaskRunner(task, gameObject, runtimeContext, TaskSimulationServices.Defaults, this, taskBlackboard);
+        taskRunner = new TaskRunner(
+            task,
+            gameObject,
+            runtimeContext,
+            TaskSimulationServices.Defaults,
+            this,
+            taskBlackboard);
+
         activeActionId = actionId?.Trim();
     }
 
@@ -246,6 +244,7 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
     {
         runtimeContext = context;
         interpreters = set;
+
         if (taskRunner != null && !taskRunner.IsComplete)
             taskRunner.SetRuntimeContext(context);
     }
@@ -279,6 +278,11 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
             newChain[i].OnEnter(this);
 
         EnsureStateTaskBinding(current);
+    }
+
+    public bool EvaluateCondition(string conditionId)
+    {
+        throw new NotImplementedException();
     }
 }
 

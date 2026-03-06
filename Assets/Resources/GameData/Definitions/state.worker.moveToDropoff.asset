@@ -10,18 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a9f0608031f771458510f4e36fcfd23, type: 3}
-  m_Name: state.worker.idle
+  m_Name: state.worker.moveToDropoff
   m_EditorClassIdentifier: Assembly-CSharp::StateDefinition
-  id: state.worker.idle
+  id: state.worker.moveToDropoff
   metadata:
-    category: 0
+    category: 4
     tags: []
     version: 1.0.0
     schemaHash: 
     lastModifiedUtc: 2026-03-05T00:00:00.0000000Z
     author: 
   isIdFinalized: 1
-  finalizedId: state.worker.idle
-  displayName: Worker Idle
+  finalizedId: state.worker.moveToDropoff
+  displayName: Worker Move To Dropoff
   icon: {fileID: 0}
-  parentStateId: 
+  parentStateId: state.worker.idle
+  behaviour: {fileID: 11400000, guid: 3a0f588a46494cc18459ff5085d10f8c, type: 2}

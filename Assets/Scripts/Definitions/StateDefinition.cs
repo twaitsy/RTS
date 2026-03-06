@@ -21,6 +21,10 @@ public class StateDefinition : ScriptableObject, IIdentifiable, IDefinitionMetad
     [SerializeField] private string parentStateId;
     public string ParentStateId => parentStateId;
 
+    [Header("Behaviour Binding")]
+    [SerializeField] private BehaviourState behaviour;
+    public BehaviourState Behaviour => behaviour;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
