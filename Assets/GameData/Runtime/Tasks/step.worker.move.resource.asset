@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 598e54157052a25489442b16d526d652, type: 3}
   m_Name: step.worker.move.resource
   m_EditorClassIdentifier: Assembly-CSharp::MoveToStep
+  targetType: 1
   arrivedEventId: task.move.arrived.resource
   failedEventId: task.failed

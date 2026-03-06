@@ -7,15 +7,18 @@ public static class MovementSystem
     private const float DefaultTurnRate = 360f;
     private static readonly System.Collections.Generic.Dictionary<int, float> velocityByActorId = new();
 
-    public static void MoveTo(GameObject actor, Vector3 target, UnitRuntimeContext context)
+    public static bool MoveTo(GameObject actor, Vector3 target, UnitRuntimeContext context, out string failureReason)
     {
+        failureReason = null;
         if (actor == null)
-            return;
+        {
+            failureReason = "Actor is null.";
+            return false;
+        }
 
         if (UnitInterpreterRegistry.TryGet(context, out var interpreters) && interpreters.Movement != null)
         {
-            interpreters.Movement.MoveTo(actor, target);
-            return;
+            return interpreters.Movement.TryMoveTo(actor, target, out failureReason);
         }
 
         float fallbackSpeed = context?.MovementProfile?.MoveSpeedMultiplier ?? context?.LocomotionProfile?.Speed ?? DefaultMoveSpeed;
@@ -29,6 +32,7 @@ public static class MovementSystem
 
         float stoppingDistance = context?.MovementProfile?.StoppingDistance ?? 0f;
         MoveTo(actor, target, moveSpeed, acceleration, turnRate, stoppingDistance);
+        return true;
     }
 
     private static void MoveTo(GameObject actor, Vector3 target, float moveSpeed, float acceleration, float turnRate, float stoppingDistance)

@@ -18,11 +18,11 @@ public class QueryDropoffStep : TaskStepDefinition
         if (dropoffLocator == null)
             return TaskStepResult.FailTask("QueryDropoffStep: Dropoff locator service is unavailable.", queryFailedEventId);
 
-        var dropoff = dropoffLocator.FindNearest(context.Actor.transform.position);
+        var dropoff = dropoffLocator.FindNearest(context.Actor.transform.position, context.CarriedResourceTypeId);
         if (dropoff == null)
             return TaskStepResult.FailTask($"QueryDropoffStep: No drop-off found for actor '{context.Actor.name}'.", queryFailedEventId);
 
-        context.Target = dropoff;
+        context.DropoffTarget = dropoff;
         return TaskStepResult.AdvanceStep(querySucceededEventId);
     }
 }

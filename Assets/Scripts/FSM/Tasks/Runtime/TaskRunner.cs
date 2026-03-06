@@ -1,7 +1,10 @@
 using UnityEngine;
+using Unity.Profiling;
 
 public class TaskRunner
 {
+    private static readonly ProfilerMarker TickMarker = new("Simulation.TaskRunner.Tick");
+
     private readonly TaskDefinition task;
     private readonly TaskContext context;
     private int stepIndex;
@@ -14,7 +17,8 @@ public class TaskRunner
         GameObject actor,
         UnitRuntimeContext runtimeContext = null,
         TaskSimulationServices services = null,
-        ITaskEventSink eventSink = null)
+        ITaskEventSink eventSink = null,
+        TaskBlackboard blackboard = null)
     {
         this.task = task;
         context = new TaskContext
@@ -23,6 +27,7 @@ public class TaskRunner
             RuntimeContext = runtimeContext,
             Services = services ?? TaskSimulationServices.Defaults,
             EventSink = eventSink,
+            Blackboard = blackboard ?? new TaskBlackboard(),
         };
         stepIndex = 0;
         IsComplete = false;
@@ -40,6 +45,8 @@ public class TaskRunner
 
     public void Tick()
     {
+        using var scope = TickMarker.Auto();
+
         if (IsComplete || task == null || task.Steps.Count == 0)
             return;
 

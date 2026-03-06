@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using Unity.Profiling;
 
 public enum UnitRuntimeInvalidationReason
 {
@@ -135,6 +136,12 @@ public sealed class UnitRuntimeDefinitionResolver
 
 public static class UnitRuntimeContextResolver
 {
+    private static readonly ProfilerMarker ResolveMarker = new("Simulation.Context.Resolve");
+    private static readonly ProfilerMarker ContextCacheHitMarker = new("Simulation.Context.CacheHit.Context");
+    private static readonly ProfilerMarker ProfileCacheHitMarker = new("Simulation.Context.CacheHit.Profile");
+    private static readonly ProfilerMarker RollupCacheHitMarker = new("Simulation.Context.CacheHit.Rollup");
+    private static readonly ProfilerMarker DerivedCacheHitMarker = new("Simulation.Context.CacheHit.Derived");
+
     private sealed class ContextCacheEntry
     {
         public string Signature;
@@ -184,6 +191,8 @@ public static class UnitRuntimeContextResolver
 
     public static UnitRuntimeContext Resolve(UnitDefinition unit, UnitRuntimeDefinitionResolver definitionResolver)
     {
+        using var scope = ResolveMarker.Auto();
+
         if (unit == null)
             return null;
 
@@ -197,6 +206,7 @@ public static class UnitRuntimeContextResolver
             string.Equals(cachedContext.Signature, signature, StringComparison.Ordinal) &&
             cachedContext.Context != null)
         {
+            using var hit = ContextCacheHitMarker.Auto();
             return cachedContext.Context;
         }
 
@@ -256,7 +266,10 @@ public static class UnitRuntimeContextResolver
         UnitRuntimeDefinitionResolver definitionResolver)
     {
         if (ProfileCache.TryGetValue(key, out var entry) && string.Equals(entry.Signature, signature, StringComparison.Ordinal) && entry.Profiles != null)
+        {
+            using var hit = ProfileCacheHitMarker.Auto();
             return (entry.Profiles, entry.Containers ?? Array.Empty<SerializedStatContainer>());
+        }
 
         var (profiles, containers) = ResolveProfilesAndContainersUncached(unit, definitionResolver);
         ProfileCache[key] = new ProfileCacheEntry
@@ -272,7 +285,10 @@ public static class UnitRuntimeContextResolver
     private static IReadOnlyDictionary<string, StatModifierRollup> ResolveRollupsCached(int key, string signature, UnitDefinition unit, ResolvedProfiles profiles)
     {
         if (RollupCache.TryGetValue(key, out var entry) && string.Equals(entry.Signature, signature, StringComparison.Ordinal) && entry.Rollups != null)
+        {
+            using var hit = RollupCacheHitMarker.Auto();
             return entry.Rollups;
+        }
 
         var rollups = CanonicalStatResolver.BuildRollups(CollectModifiers(unit, profiles));
         RollupCache[key] = new RollupCacheEntry
@@ -293,7 +309,10 @@ public static class UnitRuntimeContextResolver
         IReadOnlyDictionary<string, StatModifierRollup> rollups)
     {
         if (DerivedCache.TryGetValue(key, out var entry) && string.Equals(entry.Signature, signature, StringComparison.Ordinal))
+        {
+            using var hit = DerivedCacheHitMarker.Auto();
             return entry.Snapshot;
+        }
 
         var preliminary = BuildContext(unit, profiles, containers, rollups, default);
         var snapshot = DerivedComputationModule.ComputeSnapshot(preliminary);

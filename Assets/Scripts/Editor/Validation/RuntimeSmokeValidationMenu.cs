@@ -79,9 +79,9 @@ public static class RuntimeSmokeValidationMenu
         resourceObject.transform.position = new Vector3(0.2f, 0f, 0f);
         dropoffObject.transform.position = new Vector3(0.4f, 0f, 0f);
 
-        var resourceNode = resourceObject.AddComponent<ResourceNode>();
-        resourceNode.ResourceId = "resource.wood";
-        var dropoffReceiver = dropoffObject.AddComponent<DropoffReceiver>();
+        var resourceNode = resourceObject.AddComponent<ResourceNodeRuntime>();
+        resourceNode.SetFallbackResourceType("resource.wood");
+        var dropoffReceiver = dropoffObject.AddComponent<BuildingRuntime>();
 
         var unit = ScriptableObject.CreateInstance<UnitDefinition>();
         var unitSerialized = new SerializedObject(unit);
@@ -180,6 +180,7 @@ public static class RuntimeSmokeValidationMenu
         });
         var moveToResource = CreateStep<MoveToStep>(step =>
         {
+            step.FindProperty("targetType").intValue = (int)TaskTargetType.ResourceNode;
             step.FindProperty("arrivedEventId").stringValue = "task.move.arrived.resource";
             step.FindProperty("failedEventId").stringValue = "task.failed";
         });
@@ -187,6 +188,7 @@ public static class RuntimeSmokeValidationMenu
         {
             step.FindProperty("duration").floatValue = 0.1f;
             step.FindProperty("gatherAmount").intValue = 1;
+            step.FindProperty("resourceTypeId").stringValue = "resource.wood";
             step.FindProperty("completedEventId").stringValue = "task.gather.completed";
             step.FindProperty("failedEventId").stringValue = "task.failed";
         });
@@ -197,6 +199,7 @@ public static class RuntimeSmokeValidationMenu
         });
         var moveToDropoff = CreateStep<MoveToStep>(step =>
         {
+            step.FindProperty("targetType").intValue = (int)TaskTargetType.Dropoff;
             step.FindProperty("arrivedEventId").stringValue = "task.move.arrived.dropoff";
             step.FindProperty("failedEventId").stringValue = "task.failed";
         });

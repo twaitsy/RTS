@@ -24,10 +24,26 @@ public class ResourceNodeRegistry : DefinitionRegistry<ResourceNodeDefinition>
             defs,
             definition => definition.name,
             definition => definition.Id,
-            definition => definition.ResourceId,
-            nameof(ResourceNodeDefinition.ResourceId),
+            definition => definition.ResourceTypeId,
+            nameof(ResourceNodeDefinition.ResourceTypeId),
             targetId => ResourceRegistry.Instance.TryGet(targetId, out _),
             reportError);
+
+        for (int i = 0; i < defs.Count; i++)
+        {
+            var definition = defs[i];
+            if (definition == null)
+                continue;
+
+            if (definition.Amount <= 0)
+                reportError($"[Validation] Asset '{definition.name}' (id: '{definition.Id}') must have Amount > 0.");
+
+            if (definition.GatherDifficulty <= 0f)
+                reportError($"[Validation] Asset '{definition.name}' (id: '{definition.Id}') must have GatherDifficulty > 0.");
+
+            if (definition.InteractionRadius <= 0f)
+                reportError($"[Validation] Asset '{definition.name}' (id: '{definition.Id}') must have InteractionRadius > 0.");
+        }
     }
 
 
@@ -35,10 +51,10 @@ public class ResourceNodeRegistry : DefinitionRegistry<ResourceNodeDefinition>
     {
         foreach (var definition in defs)
         {
-            if (definition == null || string.IsNullOrWhiteSpace(definition.Id) || string.IsNullOrWhiteSpace(definition.ResourceId))
+            if (definition == null || string.IsNullOrWhiteSpace(definition.Id) || string.IsNullOrWhiteSpace(definition.ResourceTypeId))
                 continue;
 
-            map.AddReference(RegistryName, definition.Id, nameof(ResourceNodeDefinition.ResourceId), nameof(ResourceRegistry), definition.ResourceId);
+            map.AddReference(RegistryName, definition.Id, nameof(ResourceNodeDefinition.ResourceTypeId), nameof(ResourceRegistry), definition.ResourceTypeId);
         }
     }
 

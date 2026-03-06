@@ -14,5 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WorkStep
   duration: 2
   gatherAmount: 1
+  resourceTypeId: resource.wood
   completedEventId: task.gather.completed
   failedEventId: task.failed

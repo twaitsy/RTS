@@ -34,3 +34,11 @@ MonoBehaviour:
     amount: 120
   stats:
     entries: []
+  supportsDropoff: 1
+  acceptedResourceTypeIds:
+  - resource.wood
+  - resource.stone
+  storageCapacity: 500
+  allowPartialDelivery: 1
+  interactionRadius: 2
+  interactionPoints: []

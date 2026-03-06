@@ -25,15 +25,15 @@ MonoBehaviour:
   initialStateId: state.worker.idle
   states:
   - stateId: state.worker.idle
-    actionId: task.worker.gather.loop
+    actionId: task.worker.idle.query
   - stateId: state.worker.moveToResource
-    actionId: task.worker.gather.loop
+    actionId: task.worker.move.resource
   - stateId: state.worker.gathering
-    actionId: task.worker.gather.loop
+    actionId: task.worker.gathering
   - stateId: state.worker.moveToDropoff
-    actionId: task.worker.gather.loop
+    actionId: task.worker.move.dropoff
   - stateId: state.worker.delivering
-    actionId: task.worker.gather.loop
+    actionId: task.worker.delivering
   transitions:
   - fromStateId: state.worker.idle
     toStateId: state.worker.moveToResource

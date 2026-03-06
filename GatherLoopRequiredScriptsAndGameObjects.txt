@@ -1,0 +1,197 @@
+Gather Loop Required Scripts and GameObjects
+==========================================
+
+Purpose
+-------
+This file is the implementation checklist for a fully definition-driven worker gather loop:
+Worker -> Resource Node -> Dropoff Building -> Worker idle/loop.
+
+Status model
+------------
+- [EXISTS] Script/asset pattern already in the repo.
+- [CREATE] Required to match the canonical runtime architecture described for simulation-grade behavior.
+
+1) Required runtime scripts
+---------------------------
+
+Worker runtime + orchestration
+- [CREATE] Assets/Scripts/Simulation/Runtime/UnitRuntime.cs
+  - MonoBehaviour attached to worker prefab.
+  - Owns UnitDefinition reference.
+  - Resolves UnitRuntimeContext using UnitRuntimeContextResolver.
+  - Owns interpreter lifecycle (or delegates to UnitInterpreterRegistry).
+  - Exposes context invalidation entry points (equipment/tech/profile/stat).
+- [EXISTS] Assets/Scripts/FSM/UnitBrain.cs
+  - State machine interpreter + task event sink.
+  - Reads StateMachineDefinition and actionId -> TaskDefinition mapping.
+  - Consumes canonical task events to transition states.
+
+Building runtime (single building script architecture)
+- [CREATE] Assets/Scripts/Simulation/Runtime/BuildingRuntime.cs
+  - MonoBehaviour attached to every building prefab.
+  - Owns BuildingDefinition reference.
+  - Activates building interpreters from authored capabilities.
+- [CREATE] Assets/Scripts/Simulation/Runtime/Interpreters/StorageInterpreter.cs
+  - Handles storage capacity, accepted resource IDs, slot accounting.
+- [CREATE] Assets/Scripts/Simulation/Runtime/Interpreters/DropoffInterpreter.cs
+  - Validates dropoff acceptance + capacity.
+  - Performs receive/handoff rules for deliveries.
+
+Resource node runtime
+- [CREATE] Assets/Scripts/Simulation/Runtime/ResourceNodeRuntime.cs
+  - MonoBehaviour attached to resource node prefab/instance.
+  - Owns ResourceNodeDefinition reference.
+  - Registers with locator by resource type.
+  - Applies gather difficulty/depletion/respawn rules.
+
+Task/FSM execution (already present)
+- [EXISTS] Assets/Scripts/FSM/Tasks/Runtime/TaskRunner.cs
+- [EXISTS] Assets/Scripts/FSM/Tasks/Runtime/TaskContext.cs
+- [EXISTS] Assets/Scripts/FSM/Tasks/Steps/QueryStep.cs
+- [EXISTS] Assets/Scripts/FSM/Tasks/Steps/MoveToStep.cs
+- [EXISTS] Assets/Scripts/FSM/Tasks/Steps/WorkStep.cs
+- [EXISTS] Assets/Scripts/FSM/Tasks/Steps/QueryDropoffStep.cs
+- [EXISTS] Assets/Scripts/FSM/Tasks/Steps/DeliverStep.cs
+- [EXISTS] Assets/Scripts/FSM/Runtime/StateMachineRuntime.cs
+
+Locator/scene adapters (current bridge layer)
+- [EXISTS] Assets/Scripts/ResourceNode.cs
+- [EXISTS] Assets/Scripts/FSM/Tasks/Runtime/Stubs/ResourceLocator.cs
+- [EXISTS] Assets/Scripts/FSM/Tasks/Runtime/Stubs/DropoffReceiver.cs
+- [EXISTS] Assets/Scripts/FSM/Tasks/Runtime/Stubs/DropoffLocator.cs
+
+2) Required definitions/assets
+------------------------------
+
+Unit definition (worker)
+- [EXISTS] UnitDefinition asset with SchemaModeId = worker.
+- Required canonical stats for gather loop:
+  - production.gatherRate
+  - production.carryCapacity
+  - production.workSpeed
+  - movement.moveSpeed
+  - movement.acceleration
+  - movement.turnRate
+- Strongly recommended links for worker schema validation:
+  - MovementProfileId
+  - NeedsProfileId
+  - PerceptionProfileId
+  - ProductionProfileId
+
+Resource node definition
+- [EXISTS] ResourceNodeDefinition asset
+  - resourceId (example: resource.wood)
+  - amount
+  - harvestTime
+  - respawnTime
+- [CREATE] Extend definition fields if needed for simulation-grade rules:
+  - gatherDifficulty
+  - interactionRadius
+  - depletionMode
+
+Building definition (dropoff)
+- [EXISTS] BuildingDefinition asset
+  - canonical building stats and prefab id link
+- [CREATE] Capability authoring fields for runtime interpreter activation:
+  - acceptedResourceIds
+  - storageCapacity
+  - hasDropoffSlot/dropoffSlots
+  - throughput or queue settings
+
+Task definition for worker loop
+- [EXISTS] TaskDefinition id: task.worker.gather.loop (or equivalent)
+- Required step order:
+  1. Query resource
+  2. Move to resource
+  3. Work (gather)
+  4. Query dropoff
+  5. Move to dropoff
+  6. Deliver
+
+State machine definition for worker loop
+- [EXISTS] StateMachineDefinition
+- Required states:
+  - state.worker.idle
+  - state.worker.moveToResource
+  - state.worker.gathering
+  - state.worker.moveToDropoff
+  - state.worker.delivering
+- Required transitions/events:
+  - idle -> moveToResource on task.query.succeeded
+  - moveToResource -> gathering on task.move.arrived.resource
+  - gathering -> moveToDropoff on task.gather.completed
+  - moveToDropoff -> delivering on task.move.arrived.dropoff
+  - delivering -> idle on task.deliver.completed
+
+3) Required scene GameObjects
+-----------------------------
+
+Bootstrap/registries object
+- GameObject: Def_Registries
+- Required components (minimum for this loop):
+  - TaskRegistry (contains gather loop task asset)
+  - StateMachineRegistry (contains worker gather machine asset)
+  - UnitRegistry (contains worker UnitDefinition)
+  - ResourceNodeRegistry (contains ResourceNodeDefinition)
+  - BuildingRegistry (contains dropoff BuildingDefinition)
+  - ResourceRegistry
+  - StatRegistry
+
+Worker prefab instance
+- GameObject: Worker_01
+- Required components:
+  - [CREATE] UnitRuntime
+  - UnitBrain
+  - (optional temporary bridge while BuildingRuntime is not in place): none
+- UnitBrain wiring:
+  - UnitDefinition -> worker unit definition asset
+  - MachineDefinition (or MachineDefinitionId) -> gather loop machine
+  - LegacyStateMappings for:
+    - state.worker.idle -> IdleState asset
+    - state.worker.moveToResource -> MoveToResourceState asset
+    - state.worker.gathering -> GatheringState asset
+    - state.worker.moveToDropoff -> MoveToDropoffState asset
+    - state.worker.delivering -> DeliveringState asset
+
+Resource node instance
+- GameObject: Resource_Wood_01
+- Required components:
+  - [CREATE] ResourceNodeRuntime (canonical target)
+  - [EXISTS] ResourceNode (current locator bridge; keep until ResourceNodeRuntime replaces it)
+- Required authored links:
+  - resource type = resource.wood
+  - ResourceNodeDefinition reference
+
+Dropoff building instance
+- GameObject: Building_Dropoff_01
+- Required components:
+  - [CREATE] BuildingRuntime (canonical target)
+  - [EXISTS] DropoffReceiver (temporary bridge for current DeliverStep)
+- Required authored links:
+  - BuildingDefinition configured to accept delivered resource type(s)
+
+4) Runtime event contract (canonical)
+-------------------------------------
+The loop must emit and consume these events exactly:
+- task.query.succeeded
+- task.move.arrived.resource
+- task.gather.completed
+- task.move.arrived.dropoff
+- task.deliver.completed
+- task.failed (failure path)
+
+5) Validation and smoke checks
+------------------------------
+- Run: Tools/Validation/Validate All Definitions
+- Run: Tools/Validation/Run Runtime Smoke Tests
+- Smoke pass criteria:
+  - Worker reaches delivery completion event.
+  - Event sequence includes all five canonical loop events.
+
+6) Recommended migration sequence
+---------------------------------
+1. Keep existing Query/Move/Work/Deliver task steps and event contract.
+2. Add UnitRuntime and migrate UnitBrain to consume UnitRuntime context source.
+3. Add ResourceNodeRuntime + BuildingRuntime and mirror bridge behavior.
+4. Replace DropoffReceiver/ResourceNode bridge dependencies in task steps with runtime interpreters.
+5. Keep data IDs and transition/event IDs unchanged to avoid FSM/task churn.

@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46f49ebbe565d414c851b3dad81fab09, type: 3}
   m_Name: step.worker.deliver
   m_EditorClassIdentifier: Assembly-CSharp::DeliverStep
+  requiredResourceTypeId: 
   deliveredEventId: task.deliver.completed
   failedEventId: task.failed

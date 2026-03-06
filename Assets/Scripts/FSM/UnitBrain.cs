@@ -37,13 +37,14 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
 
     private readonly Dictionary<string, float> lastEventTimeByName = new();
     private readonly HashSet<string> loggedMissingTaskIds = new(StringComparer.Ordinal);
-    private readonly InterpreterSetPool interpreterPool = new();
 
     private StateMachineRuntime runtime;
     private BehaviourState current;
     private TaskRunner taskRunner;
     private UnitRuntimeContext runtimeContext;
     private InterpreterSet interpreters;
+    private UnitRuntime unitRuntime;
+    private readonly TaskBlackboard taskBlackboard = new();
     private UnitNeedsState needsState = new(100f, 100f, 100f, 100f, 0f);
     private string activeActionId;
     private float tickAccumulator;
@@ -53,6 +54,15 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
 
     private void Start()
     {
+        unitRuntime = GetComponent<UnitRuntime>();
+        if (unitRuntime == null)
+            unitRuntime = gameObject.AddComponent<UnitRuntime>();
+
+        if (unitRuntime.UnitDefinition == null)
+            unitRuntime.UnitDefinition = UnitDefinition;
+
+        unitRuntime.RuntimeRefreshed += OnRuntimeRefreshed;
+
         runtime = new StateMachineRuntime();
 
         if (!runtime.Initialize(MachineDefinition, MachineDefinitionId, LegacyStateMappings, LegacyInitialState, InitialState))
@@ -67,6 +77,12 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
         current = runtime.GetInitialRuntimeState();
         current?.OnEnter(this);
         EnsureStateTaskBinding(current);
+    }
+
+    private void OnDestroy()
+    {
+        if (unitRuntime != null)
+            unitRuntime.RuntimeRefreshed -= OnRuntimeRefreshed;
     }
 
     private void Update()
@@ -178,21 +194,19 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
 
     private void RefreshRuntimePipeline(UnitRuntimeInvalidationReason reason)
     {
-        if (UnitDefinition == null)
-            return;
-
-        UnitRuntimeContextResolver.Invalidate(UnitDefinition, reason);
-
-        if (runtimeContext != null)
-            UnitInterpreterRegistry.Unregister(runtimeContext);
-
-        runtimeContext = UnitRuntimeContextResolver.Resolve(UnitDefinition, definitionResolver: null);
-
-        if (interpreters != null)
-            interpreterPool.Return(interpreters);
-
-        interpreters = interpreterPool.Rent(runtimeContext);
-        UnitInterpreterRegistry.Register(runtimeContext, interpreters);
+        if (unitRuntime != null)
+        {
+            unitRuntime.Refresh(reason);
+            runtimeContext = unitRuntime.Context;
+            interpreters = unitRuntime.Interpreters;
+        }
+        else if (UnitDefinition != null)
+        {
+            UnitRuntimeContextResolver.Invalidate(UnitDefinition, reason);
+            runtimeContext = UnitRuntimeContextResolver.Resolve(UnitDefinition, definitionResolver: null);
+            interpreters = InterpreterSet.Create(runtimeContext);
+            UnitInterpreterRegistry.Register(runtimeContext, interpreters);
+        }
 
         if (taskRunner != null && !taskRunner.IsComplete)
             taskRunner.SetRuntimeContext(runtimeContext);
@@ -230,8 +244,16 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
         if (task == null)
             return;
 
-        taskRunner = new TaskRunner(task, gameObject, runtimeContext, TaskSimulationServices.Defaults, this);
+        taskRunner = new TaskRunner(task, gameObject, runtimeContext, TaskSimulationServices.Defaults, this, taskBlackboard);
         activeActionId = actionId?.Trim();
+    }
+
+    private void OnRuntimeRefreshed(UnitRuntimeContext context, InterpreterSet set)
+    {
+        runtimeContext = context;
+        interpreters = set;
+        if (taskRunner != null && !taskRunner.IsComplete)
+            taskRunner.SetRuntimeContext(context);
     }
 
     private void TransitionTo(BehaviourState target)

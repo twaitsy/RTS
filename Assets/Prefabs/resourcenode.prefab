@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7679704165242263515}
   - component: {fileID: 4171913741756062604}
   - component: {fileID: 3910870362403720771}
+  - component: {fileID: 3910870362403720772}
   m_Layer: 0
   m_Name: resourcenode
   m_TagString: Untagged
@@ -126,3 +127,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResourceNode
   ResourceId: resource.wood
+  definition: {fileID: 11400000, guid: b1111111111111111111111111111111, type: 2}
+--- !u!114 &3910870362403720772
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5296287499801899831}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3333333333333333333333333333333, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ResourceNodeRuntime
+  definition: {fileID: 11400000, guid: b1111111111111111111111111111111, type: 2}
+  fallbackResourceTypeId: resource.wood
+  fallbackAmount: 9999
+  fallbackGatherDifficulty: 1
+  fallbackInteractionRadius: 1.25
+  fallbackThroughputMultiplier: 1

@@ -43,6 +43,7 @@ public class BuildingRegistry : DefinitionRegistry<BuildingDefinition>
             .RequireField(nameof(BuildingDefinition.Stats), definition => definition.Stats)
             .OptionalField(nameof(BuildingDefinition.SecondaryCategoryIds), definition => definition.SecondaryCategoryIds)
             .OptionalField(nameof(BuildingDefinition.BuildCosts), definition => definition.BuildCosts)
+            .OptionalField(nameof(BuildingDefinition.AcceptedResourceTypeIds), definition => definition.AcceptedResourceTypeIds)
             .AddReference(
                 $"{nameof(BuildingDefinition.Stats)}.{nameof(SerializedStatContainer.Entries)}",
                 definition => RegistrySchema<BuildingDefinition>.ReferenceCollection(definition.Stats.Entries, stat => stat.StatId),
@@ -68,6 +69,11 @@ public class BuildingRegistry : DefinitionRegistry<BuildingDefinition>
                 definition => RegistrySchema<BuildingDefinition>.ReferenceCollection(definition.BuildCosts, amount => amount.ResourceId),
                 false,
                 new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance != null && ResourceRegistry.Instance.TryGet(targetId, out _)))
+            .AddReference(
+                nameof(BuildingDefinition.AcceptedResourceTypeIds),
+                definition => RegistrySchema<BuildingDefinition>.ReferenceCollection(definition.AcceptedResourceTypeIds, value => value),
+                false,
+                new ReferenceTargetRule(nameof(ResourceRegistry), targetId => ResourceRegistry.Instance != null && ResourceRegistry.Instance.TryGet(targetId, out _)))
             .AddConstraint(
                 nameof(BuildingDefinition.SecondaryCategoryIds),
                 definition =>
@@ -82,6 +88,25 @@ public class BuildingRegistry : DefinitionRegistry<BuildingDefinition>
                         if (string.IsNullOrWhiteSpace(ids[index]))
                             errors.Add($"{nameof(BuildingDefinition.SecondaryCategoryIds)}[{index}] must not be empty.");
                     }
+
+                    return errors;
+                })
+            .AddConstraint(
+                "DropoffValidation",
+                definition =>
+                {
+                    var errors = new List<string>();
+                    if (!definition.SupportsDropoff)
+                        return errors;
+
+                    if (definition.StorageCapacity <= 0)
+                        errors.Add($"{nameof(BuildingDefinition.StorageCapacity)} must be greater than 0 when {nameof(BuildingDefinition.SupportsDropoff)} is enabled.");
+
+                    if (definition.AcceptedResourceTypeIds == null || definition.AcceptedResourceTypeIds.Count == 0)
+                        errors.Add($"{nameof(BuildingDefinition.AcceptedResourceTypeIds)} requires at least one resource when {nameof(BuildingDefinition.SupportsDropoff)} is enabled.");
+
+                    if (definition.InteractionRadius <= 0f)
+                        errors.Add($"{nameof(BuildingDefinition.InteractionRadius)} must be greater than 0.");
 
                     return errors;
                 });

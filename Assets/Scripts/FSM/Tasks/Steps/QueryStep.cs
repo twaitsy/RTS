@@ -28,7 +28,9 @@ public class QueryStep : TaskStepDefinition
                 queryFailedEventId);
         }
 
-        context.Target = target;
+        context.ResourceTarget = target;
+        context.DropoffTarget = null;
+        context.CarriedResourceTypeId = target.ResourceTypeId;
         return TaskStepResult.AdvanceStep(querySucceededEventId);
     }
 }

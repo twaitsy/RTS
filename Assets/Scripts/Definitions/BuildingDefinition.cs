@@ -34,6 +34,25 @@ public class BuildingDefinition : ScriptableObject, IIdentifiable, IDefinitionMe
     public IReadOnlyList<StatEntry> BaseStats => stats.Entries;
     public SerializedStatContainer Stats => stats;
 
+    [Header("Dropoff/Storage")]
+    [SerializeField] private bool supportsDropoff;
+    public bool SupportsDropoff => supportsDropoff;
+
+    [SerializeField] private List<string> acceptedResourceTypeIds = new();
+    public IReadOnlyList<string> AcceptedResourceTypeIds => acceptedResourceTypeIds;
+
+    [SerializeField, Min(0)] private int storageCapacity;
+    public int StorageCapacity => storageCapacity;
+
+    [SerializeField] private bool allowPartialDelivery = true;
+    public bool AllowPartialDelivery => allowPartialDelivery;
+
+    [SerializeField, Min(0.1f)] private float interactionRadius = 1.5f;
+    public float InteractionRadius => interactionRadius;
+
+    [SerializeField] private List<Vector3> interactionPoints = new();
+    public IReadOnlyList<Vector3> InteractionPoints => interactionPoints;
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
@@ -42,6 +61,10 @@ public class BuildingDefinition : ScriptableObject, IIdentifiable, IDefinitionMe
 
         stats ??= new();
         secondaryCategoryIds ??= new();
+        acceptedResourceTypeIds ??= new();
+        interactionPoints ??= new();
+        storageCapacity = Mathf.Max(0, storageCapacity);
+        interactionRadius = Mathf.Max(0.1f, interactionRadius);
 
         foreach (var duplicateStatId in stats.FindDuplicateStatIds())
         {

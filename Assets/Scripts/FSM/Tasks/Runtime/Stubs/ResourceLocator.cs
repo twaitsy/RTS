@@ -3,37 +3,34 @@ using UnityEngine;
 
 public static class ResourceLocator
 {
-    // Registry of all active resource nodes in the world.
-    // Key = canonical resource ID (e.g., "resource.wood")
-    // Value = list of nodes of that type
-    private static readonly Dictionary<string, List<ResourceNode>> registry
-        = new Dictionary<string, List<ResourceNode>>();
+    private static readonly Dictionary<string, List<ResourceNodeRuntime>> registry
+        = new Dictionary<string, List<ResourceNodeRuntime>>();
 
-    public static void Register(ResourceNode node)
+    public static void Register(ResourceNodeRuntime node)
     {
-        if (node == null || string.IsNullOrEmpty(node.ResourceId))
+        if (node == null || string.IsNullOrEmpty(node.ResourceTypeId))
             return;
 
-        if (!registry.TryGetValue(node.ResourceId, out var list))
+        if (!registry.TryGetValue(node.ResourceTypeId, out var list))
         {
-            list = new List<ResourceNode>();
-            registry[node.ResourceId] = list;
+            list = new List<ResourceNodeRuntime>();
+            registry[node.ResourceTypeId] = list;
         }
 
         if (!list.Contains(node))
             list.Add(node);
     }
 
-    public static void Unregister(ResourceNode node)
+    public static void Unregister(ResourceNodeRuntime node)
     {
-        if (node == null || string.IsNullOrEmpty(node.ResourceId))
+        if (node == null || string.IsNullOrEmpty(node.ResourceTypeId))
             return;
 
-        if (registry.TryGetValue(node.ResourceId, out var list))
+        if (registry.TryGetValue(node.ResourceTypeId, out var list))
             list.Remove(node);
     }
 
-    public static ResourceNode FindNearest(string resourceId, Vector3 position)
+    public static ResourceNodeRuntime FindNearest(string resourceId, Vector3 position)
     {
         if (string.IsNullOrEmpty(resourceId))
             return null;
@@ -41,13 +38,13 @@ public static class ResourceLocator
         if (!registry.TryGetValue(resourceId, out var list) || list.Count == 0)
             return null;
 
-        ResourceNode best = null;
+        ResourceNodeRuntime best = null;
         float bestDist = float.MaxValue;
 
         for (int i = 0; i < list.Count; i++)
         {
             var node = list[i];
-            if (node == null)
+            if (node == null || node.IsDepleted)
                 continue;
 
             float dist = (node.transform.position - position).sqrMagnitude;
