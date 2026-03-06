@@ -68,30 +68,43 @@ public static class DefinitionValidationOrchestrator
             FindObjectsSortMode.None
         );
 
-        SeedRegistrySingletonInstances(registries);
-
         foreach (var registry in registries)
         {
             if (registry is IDefinitionRegistryValidator validator)
                 validators.Add(validator);
         }
 
-        validators.Sort((left, right) => string.Compare(left.RegistryName, right.RegistryName, StringComparison.Ordinal));
+        var singletonSnapshot = SeedRegistrySingletonInstances(validators);
 
-        foreach (var validator in validators)
+        try
         {
-            validator.CollectReferenceMap(referenceMap);
-            validator.ValidateAll(report);
-        }
+            validators.Sort((left, right) => string.Compare(left.RegistryName, right.RegistryName, StringComparison.Ordinal));
 
-        PrefabRegistry.AppendValidationIssues(report);
+            foreach (var validator in validators)
+            {
+                validator.CollectReferenceMap(referenceMap);
+                validator.ValidateAll(report);
+            }
+
+            PrefabRegistry.AppendValidationIssues(report);
+        }
+        finally
+        {
+            singletonSnapshot.Restore();
+        }
 
     }
 
-    private static void SeedRegistrySingletonInstances(IEnumerable<MonoBehaviour> registries)
+    private static SingletonInstanceSnapshot SeedRegistrySingletonInstances(IEnumerable<IDefinitionRegistryValidator> validators)
     {
-        foreach (var registry in registries)
+        var snapshot = new SingletonInstanceSnapshot();
+        var mismatchCountsByType = new Dictionary<Type, int>();
+
+        foreach (var validator in validators)
         {
+            if (validator is not MonoBehaviour registry)
+                continue;
+
             if (registry == null)
                 continue;
 
@@ -107,7 +120,10 @@ public static class DefinitionValidationOrchestrator
             if (setter == null)
                 continue;
 
-            var existing = instanceProperty.GetValue(null);
+            if (!snapshot.HasEntryFor(registryType))
+                snapshot.Add(registryType, instanceProperty, NormalizeUnityNull(instanceProperty.GetValue(null)));
+
+            var existing = NormalizeUnityNull(instanceProperty.GetValue(null));
             if (existing == null)
             {
                 setter.Invoke(null, new object[] { registry });
@@ -115,7 +131,69 @@ public static class DefinitionValidationOrchestrator
             }
 
             if (!ReferenceEquals(existing, registry))
-                Debug.LogWarning($"[Validation] Singleton mismatch for {registryType.Name}; keeping existing instance '{((MonoBehaviour)existing).name}'.");
+                mismatchCountsByType[registryType] = mismatchCountsByType.TryGetValue(registryType, out var mismatchCount)
+                    ? mismatchCount + 1
+                    : 1;
+        }
+
+        foreach (var mismatchEntry in mismatchCountsByType)
+            Debug.LogWarning($"[Validation] Singleton mismatch for {mismatchEntry.Key.Name}; kept existing instance for {mismatchEntry.Value} validator candidate(s).");
+
+        return snapshot;
+    }
+
+    private static object NormalizeUnityNull(object value)
+    {
+        if (value is UnityEngine.Object unityObject && unityObject == null)
+            return null;
+
+        return value;
+    }
+
+    private sealed class SingletonInstanceSnapshot
+    {
+        private readonly List<SnapshotEntry> entries = new();
+
+        public bool HasEntryFor(Type registryType)
+        {
+            foreach (var entry in entries)
+            {
+                if (entry.RegistryType == registryType)
+                    return true;
+            }
+
+            return false;
+        }
+
+        public void Add(Type registryType, PropertyInfo instanceProperty, object originalValue)
+        {
+            entries.Add(new SnapshotEntry(registryType, instanceProperty, originalValue));
+        }
+
+        public void Restore()
+        {
+            foreach (var entry in entries)
+            {
+                var setter = entry.InstanceProperty.GetSetMethod(true);
+                if (setter == null)
+                    continue;
+
+                setter.Invoke(null, new[] { entry.OriginalValue });
+            }
+        }
+
+        private readonly struct SnapshotEntry
+        {
+            public SnapshotEntry(Type registryType, PropertyInfo instanceProperty, object originalValue)
+            {
+                RegistryType = registryType;
+                InstanceProperty = instanceProperty;
+                OriginalValue = originalValue;
+            }
+
+            public Type RegistryType { get; }
+            public PropertyInfo InstanceProperty { get; }
+            public object OriginalValue { get; }
         }
     }
 
