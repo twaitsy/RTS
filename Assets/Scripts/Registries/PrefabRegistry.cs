@@ -17,7 +17,6 @@ public static class PrefabRegistry
     private static readonly Dictionary<string, GameObject> prefabsById = new(StringComparer.Ordinal);
     private static bool initialized;
     private static bool loggedFallbackSearch;
-    private const string MissingPrefabIssueCode = "PREFAB_DEFINITION_MISSING_PREFAB";
 
 #if UNITY_EDITOR
     [InitializeOnLoadMethod]
@@ -111,55 +110,6 @@ public static class PrefabRegistry
         EnsureInitialized();
         return allDefinitions;
     }
-
-    public static void AppendValidationIssues(DefinitionValidationReport report)
-    {
-        if (report == null)
-            return;
-
-        EnsureInitialized();
-
-        var seenIds = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var definition in allDefinitions)
-        {
-            if (definition == null)
-                continue;
-
-            var id = definition.Id?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                report.AddError(nameof(PrefabRegistry), $"[Validation] Asset '{definition.name}' has empty field '{nameof(PrefabDefinition.Id)}'.");
-                continue;
-            }
-
-            if (!seenIds.Add(id))
-            {
-                report.AddError(nameof(PrefabRegistry), $"[Validation] Duplicate PrefabDefinition id '{id}' found (asset '{definition.name}').");
-                continue;
-            }
-
-            if (definition.Prefab == null)
-            {
-                var message = $"[Validation] Asset '{definition.name}' (id: '{id}') field '{nameof(PrefabDefinition.Prefab)}' is required.";
-#if UNITY_EDITOR
-                var assetPath = AssetDatabase.GetAssetPath(definition);
-#else
-                const string assetPath = null;
-#endif
-
-                report.AddIssue(new ValidationIssue(
-                    code: MissingPrefabIssueCode,
-                    severity: ValidationIssueSeverity.Error,
-                    registry: nameof(PrefabRegistry),
-                    message: message,
-                    assetPath: assetPath,
-                    assetId: id,
-                    field: "prefab",
-                    suggestedFix: "Assign a prefab asset from Assets/Prefabs."));
-            }
-        }
-    }
-
     private static void EnsureInitialized()
     {
         if (!initialized)

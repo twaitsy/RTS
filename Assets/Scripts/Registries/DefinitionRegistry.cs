@@ -5,19 +5,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-#if UNITY_EDITOR
-public interface IDefinitionRegistryValidator
-{
-    string RegistryName { get; }
-    void ValidateAll(DefinitionValidationReport report);
-    void CollectReferenceMap(DefinitionReferenceMap map);
-}
-#endif
-
 public abstract class DefinitionRegistry<T> : MonoBehaviour
-#if UNITY_EDITOR
-    , IDefinitionRegistryValidator
-#endif
     where T : ScriptableObject, IIdentifiable
 {
     [SerializeField] protected List<T> definitions = new();
@@ -25,9 +13,6 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour
     protected Dictionary<string, T> lookup = new();
     private bool lookupDirty = true;
 
-#if UNITY_EDITOR
-    public string RegistryName => GetType().Name;
-#endif
 
     protected virtual void Awake()
     {
@@ -68,113 +53,10 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour
         lookupDirty = false;
     }
 
-#if UNITY_EDITOR
-    public void ValidateAll(DefinitionValidationReport report)
-    {
-        foreach (var dependencyError in GetValidationDependencyErrors())
-            report.AddError(RegistryName, dependencyError);
-
-        if (report.HasErrorsForRegistry(RegistryName))
-            return;
-
-        var schema = GetSchema();
-        if (schema != null)
-        {
-            RegistrySchemaValidator.Validate(
-                definitions,
-                schema,
-                definition => definition.name,
-                definition => definition.Id,
-                message => report.AddError(RegistryName, message));
-        }
-
-        ValidateDefinitions(definitions, message => report.AddError(RegistryName, message));
-    }
-
-    public void CollectReferenceMap(DefinitionReferenceMap map)
-    {
-        if (map == null)
-            return;
-
-        foreach (var definition in definitions)
-        {
-            if (definition == null || string.IsNullOrWhiteSpace(definition.Id))
-                continue;
-
-            map.AddDefinition(RegistryName, definition.Id);
-        }
-
-        var schema = GetSchema();
-        if (schema != null)
-            CollectSchemaReferences(definitions, schema, map);
-
-        CollectCustomReferences(definitions, map);
-    }
 
     protected virtual RegistrySchema<T> GetSchema()
     {
         return null;
-    }
-
-    protected virtual void CollectCustomReferences(List<T> defs, DefinitionReferenceMap map)
-    {
-        // Overridden in child registries for complex/custom reference extraction.
-    }
-
-    private void CollectSchemaReferences(List<T> defs, RegistrySchema<T> schema, DefinitionReferenceMap map)
-    {
-        foreach (var definition in defs)
-        {
-            if (definition == null || string.IsNullOrWhiteSpace(definition.Id))
-                continue;
-
-            foreach (var rule in schema.ReferenceRules)
-            {
-                var ids = rule.GetReferenceIds(definition);
-                if (ids == null)
-                    continue;
-
-                foreach (var targetId in ids)
-                {
-                    if (string.IsNullOrWhiteSpace(targetId))
-                        continue;
-
-                    var matchedTargetCount = 0;
-
-                    foreach (var target in rule.AllowedTargets)
-                    {
-                        if (TryTargetExists(target, targetId))
-                        {
-                            map.AddReference(RegistryName, definition.Id, rule.FieldName, target.TargetName, targetId);
-                            matchedTargetCount++;
-                        }
-                    }
-
-                    if (matchedTargetCount > 0 || rule.AllowedTargets.Count == 0)
-                        continue;
-
-                    foreach (var target in rule.AllowedTargets)
-                        map.AddReference(RegistryName, definition.Id, rule.FieldName, target.TargetName, targetId);
-                }
-            }
-        }
-    }
-
-    private bool TryTargetExists(ReferenceTargetRule target, string targetId)
-    {
-        if (target?.TargetExists == null)
-            return false;
-
-        try
-        {
-            return target.TargetExists(targetId);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogWarning(
-                $"[Validation] {RegistryName} target rule '{target.TargetName}' threw while resolving '{targetId}': {ex.Message}");
-            return false;
-        }
     }
 
     protected virtual IEnumerable<string> GetValidationDependencyErrors()
@@ -186,7 +68,6 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour
     {
         // Overridden in child registries
     }
-#endif
 
     public T Get(string id)
     {
