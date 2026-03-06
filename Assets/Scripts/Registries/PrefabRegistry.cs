@@ -110,6 +110,7 @@ public static class PrefabRegistry
         EnsureInitialized();
         return allDefinitions;
     }
+
     private static void EnsureInitialized()
     {
         if (!initialized)
@@ -119,6 +120,7 @@ public static class PrefabRegistry
     private static IEnumerable<PrefabDefinition> LoadDefinitions()
     {
 #if UNITY_EDITOR
+        // EDITOR PATH
         var searchFolders = GetSearchFolders();
         if (searchFolders.Length > 0)
         {
@@ -156,11 +158,12 @@ public static class PrefabRegistry
         }
 
         yield break;
-#endif
-
+#else
+        // RUNTIME PATH
         var loaded = Resources.LoadAll<PrefabDefinition>(ResourcesFolder);
         foreach (var definition in loaded.Where(definition => definition != null))
             yield return definition;
+#endif
     }
 
 #if UNITY_EDITOR

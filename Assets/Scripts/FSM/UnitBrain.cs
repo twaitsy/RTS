@@ -28,13 +28,6 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
     [Tooltip("Fallback state used only during migration when no mapping exists.")]
     public BehaviourState LegacyInitialState;
 
-    [Header("Deprecated Direct-Wired Transition Path")]
-    [Obsolete("Use MachineDefinition + LegacyStateMappings instead.")]
-    public BehaviourState InitialState;
-
-    [Obsolete("Use MachineDefinition transitions instead.")]
-    public List<BehaviourTransition> Transitions;
-
     private readonly Dictionary<string, float> lastEventTimeByName = new();
     private readonly HashSet<string> loggedMissingTaskIds = new(StringComparer.Ordinal);
 
@@ -65,7 +58,8 @@ public class UnitBrain : MonoBehaviour, IStateMachineConditionContext, ITaskEven
 
         runtime = new StateMachineRuntime();
 
-        if (!runtime.Initialize(MachineDefinition, MachineDefinitionId, LegacyStateMappings, LegacyInitialState, InitialState))
+        // Removed obsolete InitialState argument
+        if (!runtime.Initialize(MachineDefinition, MachineDefinitionId, LegacyStateMappings, LegacyInitialState))
         {
             Debug.LogError($"{nameof(UnitBrain)} on '{name}' failed to initialize FSM runtime.");
             enabled = false;

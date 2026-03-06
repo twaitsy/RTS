@@ -117,7 +117,7 @@ public static class RuntimeSmokeValidationMenu
         };
 
         var runtime = new StateMachineRuntime();
-        if (!runtime.Initialize(machine, null, mappings, idle, null))
+        if (!runtime.Initialize(machine, null, mappings, idle))
             throw new Exception("FSM smoke failed: runtime initialization failed.");
 
         var current = runtime.GetInitialRuntimeState();

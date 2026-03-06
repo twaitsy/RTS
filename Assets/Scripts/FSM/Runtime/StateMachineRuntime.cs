@@ -21,8 +21,7 @@ public sealed class StateMachineRuntime
         StateMachineDefinition machineDefinition,
         string machineDefinitionId,
         List<LegacyStateIdMapping> legacyStateMappings,
-        BehaviourState legacyInitialState,
-        BehaviourState obsoleteInitialState)
+        BehaviourState legacyInitialState)
     {
         if (!TryResolveMachineDefinition(machineDefinition, machineDefinitionId, out StateMachineDefinition resolvedDefinition))
         {
@@ -33,7 +32,8 @@ public sealed class StateMachineRuntime
         BuildStateLookups(resolvedDefinition, legacyStateMappings ?? new List<LegacyStateIdMapping>());
         BuildTransitionLookups(resolvedDefinition);
 
-        initialRuntimeState = ResolveInitialState(resolvedDefinition, legacyInitialState, obsoleteInitialState);
+        // Cleaned: no obsoleteInitialState
+        initialRuntimeState = ResolveInitialState(resolvedDefinition, legacyInitialState);
 
         if (initialRuntimeState == null)
         {
@@ -239,8 +239,7 @@ public sealed class StateMachineRuntime
 
     private BehaviourState ResolveInitialState(
         StateMachineDefinition machineDefinition,
-        BehaviourState legacyInitialState,
-        BehaviourState obsoleteInitialState)
+        BehaviourState legacyInitialState)
     {
         if (!string.IsNullOrWhiteSpace(machineDefinition.InitialStateId) &&
             runtimeStateById.TryGetValue(machineDefinition.InitialStateId, out var explicitInitialState))
@@ -251,14 +250,17 @@ public sealed class StateMachineRuntime
         if (machineDefinition.States.Count > 0)
         {
             var firstStateId = machineDefinition.States[0].stateId;
-            if (!string.IsNullOrWhiteSpace(firstStateId) && runtimeStateById.TryGetValue(firstStateId, out var initialFromDefinition))
+            if (!string.IsNullOrWhiteSpace(firstStateId) &&
+                runtimeStateById.TryGetValue(firstStateId, out var initialFromDefinition))
+            {
                 return initialFromDefinition;
+            }
         }
 
         if (legacyInitialState != null)
             return legacyInitialState;
 
-        return obsoleteInitialState;
+        return null;
     }
 
     private sealed class RuntimeTransition
@@ -281,8 +283,12 @@ public sealed class StateMachineRuntime
 
             if (!string.IsNullOrWhiteSpace(ConditionId))
             {
-                if (ConditionRegistry.Instance == null || !ConditionRegistry.Instance.TryGet(ConditionId, out ConditionDefinition conditionDef) || conditionDef == null)
+                if (ConditionRegistry.Instance == null ||
+                    !ConditionRegistry.Instance.TryGet(ConditionId, out ConditionDefinition conditionDef) ||
+                    conditionDef == null)
+                {
                     return false;
+                }
 
                 if (!conditionDef.Evaluate(new RuntimeConditionContext(conditionContext, evt)))
                     return false;
@@ -323,7 +329,8 @@ public sealed class StateMachineRuntime
                 case ConditionLeafType.AlwaysFalse:
                     return false;
                 case ConditionLeafType.TimeSinceLastEvent:
-                    if (runtimeContext == null || !runtimeContext.TryGetElapsedSecondsSinceEvent(evt, out float elapsed))
+                    if (runtimeContext == null ||
+                        !runtimeContext.TryGetElapsedSecondsSinceEvent(evt, out float elapsed))
                         return false;
                     return elapsed >= node.floatValue;
                 default:
