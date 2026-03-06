@@ -5,14 +5,19 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
+#if UNITY_EDITOR
 public interface IDefinitionRegistryValidator
 {
     string RegistryName { get; }
     void ValidateAll(DefinitionValidationReport report);
     void CollectReferenceMap(DefinitionReferenceMap map);
 }
+#endif
 
-public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistryValidator
+public abstract class DefinitionRegistry<T> : MonoBehaviour
+#if UNITY_EDITOR
+    , IDefinitionRegistryValidator
+#endif
     where T : ScriptableObject, IIdentifiable
 {
     [SerializeField] protected List<T> definitions = new();
@@ -20,7 +25,9 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
     protected Dictionary<string, T> lookup = new();
     private bool lookupDirty = true;
 
+#if UNITY_EDITOR
     public string RegistryName => GetType().Name;
+#endif
 
     protected virtual void Awake()
     {
@@ -61,6 +68,7 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
         lookupDirty = false;
     }
 
+#if UNITY_EDITOR
     public void ValidateAll(DefinitionValidationReport report)
     {
         foreach (var dependencyError in GetValidationDependencyErrors())
@@ -69,12 +77,16 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
         if (report.HasErrorsForRegistry(RegistryName))
             return;
 
-        RegistrySchemaValidator.Validate(
-            definitions,
-            GetSchema(),
-            definition => definition.name,
-            definition => definition.Id,
-            message => report.AddError(RegistryName, message));
+        var schema = GetSchema();
+        if (schema != null)
+        {
+            RegistrySchemaValidator.Validate(
+                definitions,
+                schema,
+                definition => definition.name,
+                definition => definition.Id,
+                message => report.AddError(RegistryName, message));
+        }
 
         ValidateDefinitions(definitions, message => report.AddError(RegistryName, message));
     }
@@ -159,7 +171,8 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
         }
         catch (Exception ex)
         {
-            Debug.LogWarning($"[Validation] {RegistryName} target rule '{target.TargetName}' threw while resolving '{targetId}': {ex.Message}");
+            Debug.LogWarning(
+                $"[Validation] {RegistryName} target rule '{target.TargetName}' threw while resolving '{targetId}': {ex.Message}");
             return false;
         }
     }
@@ -173,6 +186,7 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
     {
         // Overridden in child registries
     }
+#endif
 
     public T Get(string id)
     {
@@ -215,7 +229,8 @@ public abstract class DefinitionRegistry<T> : MonoBehaviour, IDefinitionRegistry
         if (assetGuids.Length == definitions.Count)
             return;
 
-        Debug.LogWarning($"{GetType().Name} scene list appears stale. Scene count={definitions.Count}, asset database count={assetGuids.Length}.");
+        Debug.LogWarning(
+            $"{GetType().Name} scene list appears stale. Scene count={definitions.Count}, asset database count={assetGuids.Length}.");
     }
 
     private static class RegistrySyncUtilitySyncState

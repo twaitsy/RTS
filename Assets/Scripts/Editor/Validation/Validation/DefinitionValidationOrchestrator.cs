@@ -18,10 +18,18 @@ public static class DefinitionValidationOrchestrator
         return report;
     }
 
-    public static DefinitionValidationReport RunValidationAndLog()
+    public static DefinitionValidationReport RunValidationAndLog(bool quiet = false)
     {
         var report = RunValidation();
 
+        if (!quiet)
+            LogIssues(report);
+
+        return report;
+    }
+
+    private static void LogIssues(DefinitionValidationReport report)
+    {
         var issues = report.Issues;
 
         foreach (var issue in issues)
@@ -42,8 +50,6 @@ public static class DefinitionValidationOrchestrator
         }
 
         Debug.Log($"[Validation] {issues.Count} issue(s) / {report.ErrorCount} error(s).");
-
-        return report;
     }
 
     private static string FormatIssueForLog(ValidationIssue issue)
@@ -51,10 +57,13 @@ public static class DefinitionValidationOrchestrator
         var builder = new StringBuilder();
         builder.Append($"[Validation] [{issue.Code}] [{issue.Registry}] {issue.Message}");
 
-        if (!string.IsNullOrWhiteSpace(issue.AssetPath) || !string.IsNullOrWhiteSpace(issue.AssetId) || !string.IsNullOrWhiteSpace(issue.Field))
+        if (!string.IsNullOrWhiteSpace(issue.AssetPath) ||
+            !string.IsNullOrWhiteSpace(issue.AssetId) ||
+            !string.IsNullOrWhiteSpace(issue.Field))
         {
             builder.Append(" | ");
-            builder.Append($"assetPath={issue.AssetPath ?? "n/a"}, assetId={issue.AssetId ?? "n/a"}, field={issue.Field ?? "n/a"}");
+            builder.Append(
+                $"assetPath={issue.AssetPath ?? "n/a"}, assetId={issue.AssetId ?? "n/a"}, field={issue.Field ?? "n/a"}");
         }
 
         return builder.ToString();
@@ -78,7 +87,8 @@ public static class DefinitionValidationOrchestrator
 
         try
         {
-            validators.Sort((left, right) => string.Compare(left.RegistryName, right.RegistryName, StringComparison.Ordinal));
+            validators.Sort((left, right) =>
+                string.Compare(left.RegistryName, right.RegistryName, StringComparison.Ordinal));
 
             foreach (var validator in validators)
             {
@@ -92,7 +102,6 @@ public static class DefinitionValidationOrchestrator
         {
             singletonSnapshot.Restore();
         }
-
     }
 
     private static SingletonInstanceSnapshot SeedRegistrySingletonInstances(IEnumerable<IDefinitionRegistryValidator> validators)
@@ -131,13 +140,17 @@ public static class DefinitionValidationOrchestrator
             }
 
             if (!ReferenceEquals(existing, registry))
-                mismatchCountsByType[registryType] = mismatchCountsByType.TryGetValue(registryType, out var mismatchCount)
-                    ? mismatchCount + 1
-                    : 1;
+            {
+                mismatchCountsByType[registryType] =
+                    mismatchCountsByType.TryGetValue(registryType, out var mismatchCount)
+                        ? mismatchCount + 1
+                        : 1;
+            }
         }
 
         foreach (var mismatchEntry in mismatchCountsByType)
-            Debug.LogWarning($"[Validation] Singleton mismatch for {mismatchEntry.Key.Name}; kept existing instance for {mismatchEntry.Value} validator candidate(s).");
+            Debug.LogWarning(
+                $"[Validation] Singleton mismatch for {mismatchEntry.Key.Name}; kept existing instance for {mismatchEntry.Value} validator candidate(s).");
 
         return snapshot;
     }

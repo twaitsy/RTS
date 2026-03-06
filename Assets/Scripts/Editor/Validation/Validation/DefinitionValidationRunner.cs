@@ -9,23 +9,34 @@ public class DefinitionValidationRunner : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
     {
+#if UNITY_EDITOR
         if (!Application.isPlaying || bootstrapCreated)
             return;
 
         bootstrapCreated = true;
+
         var runnerObject = new GameObject(nameof(DefinitionValidationRunner));
         DontDestroyOnLoad(runnerObject);
         runnerObject.hideFlags = HideFlags.HideAndDontSave;
         runnerObject.AddComponent<DefinitionValidationRunner>();
+#endif
     }
 
     private void Start()
     {
+#if UNITY_EDITOR
         if (hasRun)
             return;
 
         hasRun = true;
-        RunValidationAndLog();
+
+        // Only run validation if the toggle is enabled
+        if (ValidationSettings.ValidateOnPlay)
+        {
+            var report = DefinitionValidationOrchestrator.RunValidationAndLog(quiet: true);
+            Debug.Log($"[Validation] Play Mode check: {report.Issues.Count} issues, {report.ErrorCount} errors.");
+        }
+#endif
     }
 
     public static DefinitionValidationReport RunValidation()

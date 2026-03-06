@@ -592,7 +592,6 @@ GameObject:
   - component: {fileID: 709939215}
   - component: {fileID: 709939214}
   - component: {fileID: 709939213}
-  - component: {fileID: 709939220}
   m_Layer: 0
   m_Name: DefinitionRegistries
   m_TagString: Untagged
@@ -1737,19 +1736,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b08311e3117295acb0546ed6c258915, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitCategoryRegistry
-  definitions: []
---- !u!114 &709939220
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 709939140}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ddad40727e21c634ab5f798e1f24e5bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LawRegistry
   definitions: []
 --- !u!1 &781975409
 GameObject:
